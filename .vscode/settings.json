@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.cargo.target": "xtensa-esp32-espidf",
+  "rust-analyzer.checkOnSave.allTargets": false,
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.checkOnSave.extraArgs": ["--all-features"]
+}

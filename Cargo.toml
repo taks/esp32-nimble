@@ -1,0 +1,33 @@
+[package]
+name = "ble-client"
+version = "0.0.1"
+authors = ["taks <857tn859@gmail.com>"]
+edition = "2021"
+resolver = "2"
+repository = "https://github.com/taks/ble-client"
+license = "MIT"
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug = true
+opt-level = "z"
+
+[features]
+pio = ["esp-idf-sys/pio"]
+
+[dependencies]
+log = { version = "0.4", default-features = false }
+esp-idf-sys = { version = "0.31.11", default-features = false, features = ["binstart", "panic_handler", "alloc_handler"] }
+esp-idf-hal = { version = "0.39.2", default-features = false, features = ["critical-section"] }
+esp-idf-svc = { version = "0.43.1", default-features = false, features = ["alloc"] }
+
+once_cell = { version = "1.16.0", default-features = false, features = ["critical-section"] }
+
+[dev-dependencies]
+embedded-hal = { version = "=1.0.0-alpha.9", default-features = false }
+
+[build-dependencies]
+embuild = "0.30.4"
+anyhow = "1"

@@ -5,8 +5,8 @@ extern crate alloc;
 
 use ble_client::ble_device::BLEDevice;
 
-use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use embedded_hal::delay::DelayUs;
+use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 
 use log::*;
 
@@ -28,9 +28,7 @@ fn main() {
     .on_result(|param| {
       info!("Advertised Device: {:X?}", param.bda);
     })
-    .on_completed(|| {
-      info!("Scan end.")
-    });
+    .on_completed(|| info!("Scan end."));
   ble_scan.start(5);
 
   let mut delay = esp_idf_hal::delay::Ets {};

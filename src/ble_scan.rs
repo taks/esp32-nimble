@@ -36,7 +36,9 @@ impl BLEScan {
     self
   }
 
-  pub fn on_result<C: Fn(&esp_ble_gap_cb_param_t_ble_scan_result_evt_param) + Send + Sync + 'static>(
+  pub fn on_result<
+    C: Fn(&esp_ble_gap_cb_param_t_ble_scan_result_evt_param) + Send + Sync + 'static,
+  >(
     &mut self,
     callback: C,
   ) -> &mut Self {
@@ -44,10 +46,7 @@ impl BLEScan {
     self
   }
 
-  pub fn on_completed<C: Fn() + Send + Sync + 'static>(
-    &mut self,
-    callback: C,
-  ) -> &mut Self {
+  pub fn on_completed<C: Fn() + Send + Sync + 'static>(&mut self, callback: C) -> &mut Self {
     self.on_completed = Some(Arc::new(callback));
     self
   }
@@ -101,7 +100,7 @@ impl BLEScan {
             if let Some(callback) = &self.on_result {
               callback(param);
             }
-          },
+          }
           _ => {}
         }
       }

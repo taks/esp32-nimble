@@ -1,17 +1,28 @@
+use core::sync::atomic::AtomicU16;
+
 use alloc::boxed::Box;
+use alloc::vec::Vec;
 use esp_idf_sys::*;
 use log::*;
 use once_cell::sync::Lazy;
 
+use crate::ble_client::BLEClient;
 use crate::ble_scan::BLEScan;
 use crate::leaky_box_raw;
+use crate::utilities::extend_lifetime_mut;
 
+static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
+  BLEDevice::init();
+  BLEDevice {}
+});
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
+static mut CONNECTED_CLIENTS: Lazy<Vec<&mut BLEClient>> = Lazy::new(Vec::new);
+static APP_ID_COUNTER: AtomicU16 = AtomicU16::new(0);
 
 pub struct BLEDevice {}
 
 impl BLEDevice {
-  pub fn init(device_name: &str) -> Self {
+  fn init() {
     // NVS initialisation.
     unsafe {
       let result = nvs_flash_init();
@@ -61,16 +72,38 @@ impl BLEDevice {
       esp_nofail!(esp_ble_gattc_register_callback(Some(Self::esp_gattc_cb)));
       // client
       // esp_nofail!(esp_ble_gattc_app_register(PROFILE_A_APP_ID));
-      esp_nofail!(esp_ble_gap_set_device_name(
-        device_name.as_ptr().cast::<i8>()
-      ));
     }
-
-    Self {}
   }
 
-  pub fn get_scan(self) -> &'static mut BLEScan {
+  pub fn take() -> &'static Self {
+    unsafe { Lazy::force(&BLE_DEVICE) }
+  }
+
+  pub fn set_device_name(device_name: &str) -> Result<(), EspError> {
+    unsafe {
+      esp!(esp_ble_gap_set_device_name(
+        device_name.as_ptr().cast::<i8>()
+      ))
+    }
+  }
+
+  pub fn get_scan(&self) -> &'static mut BLEScan {
     unsafe { Lazy::force_mut(&mut BLE_SCAN) }
+  }
+
+  pub(crate) fn add_device(ble_client: &mut BLEClient) -> u16 {
+    let clients = unsafe { Lazy::force_mut(&mut CONNECTED_CLIENTS) };
+
+    clients.push(unsafe { extend_lifetime_mut(ble_client) });
+
+    APP_ID_COUNTER.fetch_add(1, core::sync::atomic::Ordering::SeqCst)
+  }
+
+  pub(crate) fn remove_device(ble_client: &mut BLEClient) {
+    let clients = unsafe { Lazy::force_mut(&mut CONNECTED_CLIENTS) };
+    if let Some(index) = clients.iter().position(|x| core::ptr::eq(*x, ble_client)) {
+      clients.swap_remove(index);
+    }
   }
 
   extern "C" fn esp_gap_cb(event: esp_gap_ble_cb_event_t, param: *mut esp_ble_gap_cb_param_t) {
@@ -83,5 +116,10 @@ impl BLEDevice {
     gattc_if: esp_gatt_if_t,
     param: *mut esp_ble_gattc_cb_param_t,
   ) {
+    let clients = unsafe { Lazy::force_mut(&mut CONNECTED_CLIENTS) };
+
+    for c in clients.iter_mut() {
+      c.handle_gattc_event(event, gattc_if, param);
+    }
   }
 }

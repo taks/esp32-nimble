@@ -3,11 +3,11 @@
 
 extern crate alloc;
 
-use ble_client::BLEDevice;
-
+use alloc::sync::Arc;
+use ble_client::{utilities::mutex::Mutex, *};
 use embedded_hal::delay::DelayUs;
 use esp_idf_hal::task::executor::{EspExecutor, Local};
-use esp_idf_sys as _;
+use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use log::*;
 
 #[no_mangle]
@@ -32,15 +32,34 @@ fn main() {
     .spawn_local(async {
       let ble_device = BLEDevice::take();
       let ble_scan = ble_device.get_scan();
+      let connect_device = Arc::new(Mutex::new(None));
+
+      let device0 = connect_device.clone();
       ble_scan
         .active_scan(true)
         .interval(100)
         .window(99)
-        .on_result(|param| {
-          info!("Advertised Device: {:?}", param);
+        .on_result(move |device| {
+          if device.name.len() > 0 {
+            BLEDevice::take().get_scan().stop();
+            (*device0.lock()) = Some(device.clone());
+          }
         });
-      ble_scan.start(5).await;
+      ble_scan.start(10).await;
       info!("Scan end");
+
+      let device = &*connect_device.lock();
+      info!("Advertised Device: {:?}", device);
+      if let Some(device) = device {
+        let mut client = BLEClient::new();
+        client.connect(device.addr, device.addr_type).await.unwrap();
+        info!("Connected");
+        for s in client.get_services().await.unwrap() {
+          info!(" {:?}", s);
+        }
+        client.disconnect().unwrap();
+        info!("Disconnected");
+      }
     })
     .unwrap();
 

@@ -39,7 +39,7 @@ fn main() {
         .on_result(|param| {
           info!("Advertised Device: {:?}", param);
         });
-      ble_scan.start(5).await;
+      ble_scan.start(5000).await;
       info!("Scan end");
     })
     .unwrap();

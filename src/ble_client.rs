@@ -1,68 +1,84 @@
-use crate::{utilities::BleUuid, BLEAddress, BLEDevice, BLERemoteService, Signal};
+use crate::{
+  ble_device::OWN_ADDR_TYPE, utilities::BleUuid, BLEAddress, BLERemoteService, BLEReturnCode,
+  Signal,
+};
 use alloc::vec::Vec;
-use esp_idf_sys::*;
+use esp_idf_sys::{c_types::c_void, *};
 
 pub struct BLEClient {
-  address: BLEAddress,
-  connected: bool,
-  gattc_if: esp_gatt_if_t,
+  address: Option<BLEAddress>,
   conn_id: u16,
   services: Option<Vec<BLERemoteService>>,
-  app_id: u16,
   signal: Signal<u32>,
+  connect_timeout_ms: u32,
+  ble_gap_conn_params: ble_gap_conn_params,
 }
 
 impl BLEClient {
   pub fn new() -> Self {
     Self {
-      address: [0; 6],
-      connected: false,
-      gattc_if: esp_idf_sys::ESP_GATT_IF_NONE as _,
-      conn_id: esp_idf_sys::ESP_GATT_IF_NONE as _,
+      address: None,
+      conn_id: esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _,
       services: None,
-      app_id: 0,
+      connect_timeout_ms: 30000,
+      ble_gap_conn_params: ble_gap_conn_params {
+        scan_itvl: 16,
+        scan_window: 16,
+        itvl_min: BLE_GAP_INITIAL_CONN_ITVL_MIN as _,
+        itvl_max: BLE_GAP_INITIAL_CONN_ITVL_MAX as _,
+        latency: BLE_GAP_INITIAL_CONN_LATENCY as _,
+        supervision_timeout: BLE_GAP_INITIAL_SUPERVISION_TIMEOUT as _,
+        min_ce_len: BLE_GAP_INITIAL_CONN_MIN_CE_LEN as _,
+        max_ce_len: BLE_GAP_INITIAL_CONN_MAX_CE_LEN as _,
+      },
       signal: Signal::new(),
     }
   }
 
-  pub async fn connect(
-    &mut self,
-    address: BLEAddress,
-    addr_type: esp_ble_addr_type_t,
-  ) -> Result<(), EspError> {
-    self.app_id = BLEDevice::add_device(self);
+  pub async fn connect(&mut self, addr: &BLEAddress) -> Result<(), BLEReturnCode> {
     unsafe {
-      esp!(esp_idf_sys::esp_ble_gattc_app_register(0))?;
+      if esp_idf_sys::ble_gap_conn_find_by_addr(addr, core::ptr::null_mut()) == 0 {
+        ::log::warn!("A connection to {:X?} already exists", addr.val);
+        return BLEReturnCode::fail();
+      }
 
-      esp!(self.signal.wait().await)?;
+      let rc = esp_idf_sys::ble_gap_connect(
+        OWN_ADDR_TYPE,
+        addr,
+        self.connect_timeout_ms as _,
+        &self.ble_gap_conn_params,
+        Some(Self::handle_gap_event),
+        self as *mut Self as _,
+      ) as _;
 
-      self.address = address;
-
-      esp!(esp_idf_sys::esp_ble_gattc_open(
-        self.gattc_if,
-        self.address.as_mut_ptr(),
-        addr_type,
-        true
-      ))?;
-
-      esp!(self.signal.wait().await)?;
-      self.connected = true;
+      if rc != 0 {
+        return BLEReturnCode::convert(rc);
+      }
     }
+
+    self.signal.wait().await;
+    self.address = Some(*addr);
 
     Ok(())
   }
 
-  pub fn disconnect(&self) -> Result<(), EspError> {
+  pub fn disconnect(&self) -> Result<(), BLEReturnCode> {
+    if !self.connected() {
+      return Ok(());
+    }
+
     unsafe {
-      esp!(esp_idf_sys::esp_ble_gattc_close(
-        self.gattc_if,
-        self.conn_id
-      ))
+      let rc = ble_gap_terminate(
+        self.conn_id,
+        esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _,
+      );
+
+      BLEReturnCode::convert(rc as _)
     }
   }
 
   pub fn connected(&self) -> bool {
-    self.connected
+    self.conn_id != (BLE_HS_CONN_HANDLE_NONE as _)
   }
 
   pub async fn get_services(
@@ -71,11 +87,11 @@ impl BLEClient {
     if self.services.is_none() {
       self.services = Some(Vec::new());
       unsafe {
-        esp!(esp_idf_sys::esp_ble_gattc_search_service(
-          self.gattc_if,
+        ble_gattc_disc_all_svcs(
           self.conn_id,
-          core::ptr::null_mut()
-        ))?;
+          Some(Self::service_discovered_cb),
+          self as *mut Self as _,
+        );
       }
       esp!(self.signal.wait().await)?;
     }
@@ -91,63 +107,65 @@ impl BLEClient {
       .ok_or(EspError::from(ESP_FAIL).unwrap())
   }
 
-  pub(crate) fn handle_gattc_event(
-    &mut self,
-    event: esp_gattc_cb_event_t,
-    gattc_if: esp_gatt_if_t,
-    param: *mut esp_ble_gattc_cb_param_t,
-  ) {
-    if self.gattc_if == (esp_idf_sys::ESP_GATT_IF_NONE as _)
-      && event != esp_idf_sys::esp_gattc_cb_event_t_ESP_GATTC_REG_EVT
-    {
-      return;
-    }
+  extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
+    let event = unsafe { &*event };
+    let mut client = unsafe { &mut *(arg as *mut Self) };
 
-    match event {
-      esp_idf_sys::esp_gattc_cb_event_t_ESP_GATTC_DISCONNECT_EVT => {
-        let disconnect = unsafe { (*param).disconnect };
-        if disconnect.conn_id != self.conn_id {
-          return;
+    ::log::info!("handle_gap_event {}", event.type_);
+
+    match event.type_ as _ {
+      BLE_GAP_EVENT_CONNECT => {
+        let connect = unsafe { &event.__bindgen_anon_1.connect };
+        if connect.status == 0 {
+          client.conn_id = connect.conn_handle;
+          client.signal.signal(0);
         }
-        self.connected = false;
-        unsafe {
-          esp_idf_sys::esp_ble_gattc_app_unregister(self.gattc_if);
-        }
-        BLEDevice::remove_device(self);
       }
-      esp_idf_sys::esp_gattc_cb_event_t_ESP_GATTC_OPEN_EVT => {
-        self.conn_id = unsafe { (*param).open.conn_id };
-        self.signal.signal(unsafe { (*param).open.status });
-      }
-      esp_idf_sys::esp_gattc_cb_event_t_ESP_GATTC_REG_EVT => {
-        self.gattc_if = gattc_if;
-        self.signal.signal(unsafe { (*param).reg.status });
-      }
-      esp_idf_sys::esp_gattc_cb_event_t_ESP_GATTC_SEARCH_CMPL_EVT => {
-        let search_cmpl = unsafe { (*param).search_cmpl };
-        if search_cmpl.conn_id != self.conn_id {
-          return;
+      BLE_GAP_EVENT_DISCONNECT => {
+        let disconnect = unsafe { &event.__bindgen_anon_1.disconnect };
+        if client.conn_id != disconnect.conn.conn_handle {
+          return 0;
         }
-        if search_cmpl.status != esp_idf_sys::esp_gatt_status_t_ESP_GATT_OK {
-          log::error!(
-            "search service failed, error status = {:X}",
-            search_cmpl.status
-          );
-          return;
-        }
-        self.signal.signal(0);
-      }
-      esp_idf_sys::esp_gattc_cb_event_t_ESP_GATTC_SEARCH_RES_EVT => {
-        let search_res = unsafe { (*param).search_res };
-        if search_res.conn_id != self.conn_id {
-          return;
-        }
-        let uuid = BleUuid::from(search_res.srvc_id);
-        let remote_service =
-          BLERemoteService::new(uuid, search_res.start_handle, search_res.end_handle);
-        self.services.as_mut().unwrap().push(remote_service);
+        client.conn_id = BLE_HS_CONN_HANDLE_NONE as _;
+
+        ::log::info!(
+          "Disconnected: {:?}",
+          BLEReturnCode::from(disconnect.reason as _)
+        );
       }
       _ => {}
     }
+    0
+  }
+
+  extern "C" fn service_discovered_cb(
+    conn_handle: u16,
+    error: *const ble_gatt_error,
+    service: *const ble_gatt_svc,
+    arg: *mut c_void,
+  ) -> i32 {
+    let client = unsafe { &mut *(arg as *mut Self) };
+    if client.conn_id != conn_handle {
+      return 0;
+    }
+
+    let error = unsafe { &*error };
+    let service = unsafe { &*service };
+
+    if error.status == 0 {
+      // Found a service - add it to the vector
+      let service = BLERemoteService::new(service);
+      client.services.as_mut().unwrap().push(service);
+      return 0;
+    }
+
+    let ret = if error.status == (BLE_HS_EDONE as _) {
+      0
+    } else {
+      error.status as _
+    };
+
+    client.signal.signal(ret);
+    ret as _
   }
 }

@@ -1,7 +1,4 @@
 use alloc::string::String;
-use esp_idf_sys::{
-  esp_bt_uuid_t, esp_gatt_id_t, ESP_UUID_LEN_128, ESP_UUID_LEN_16, ESP_UUID_LEN_32,
-};
 
 /// A Bluetooth UUID.
 #[derive(Copy, Clone)]
@@ -94,32 +91,23 @@ impl PartialEq for BleUuid {
   }
 }
 
-impl From<BleUuid> for esp_gatt_id_t {
-  fn from(val: BleUuid) -> Self {
-    Self {
-      uuid: val.into(),
-      inst_id: 0x00,
-    }
-  }
-}
-
-impl From<BleUuid> for esp_bt_uuid_t {
+impl From<BleUuid> for esp_idf_sys::ble_uuid_any_t {
   #[allow(clippy::cast_possible_truncation)]
   fn from(val: BleUuid) -> Self {
     let mut result: Self = Self::default();
 
     match val {
       BleUuid::Uuid16(uuid) => {
-        result.len = ESP_UUID_LEN_16 as u16;
-        result.uuid.uuid16 = uuid;
+        result.u.type_ = esp_idf_sys::BLE_UUID_TYPE_16 as _;
+        result.u16_.value = uuid;
       }
       BleUuid::Uuid32(uuid) => {
-        result.len = ESP_UUID_LEN_32 as u16;
-        result.uuid.uuid32 = uuid;
+        result.u.type_ = esp_idf_sys::BLE_UUID_TYPE_32 as _;
+        result.u32_.value = uuid;
       }
       BleUuid::Uuid128(uuid) => {
-        result.len = ESP_UUID_LEN_128 as u16;
-        result.uuid.uuid128 = uuid;
+        result.u.type_ = esp_idf_sys::BLE_UUID_TYPE_128 as _;
+        result.u128_.value = uuid;
       }
     }
 
@@ -127,23 +115,17 @@ impl From<BleUuid> for esp_bt_uuid_t {
   }
 }
 
-impl From<esp_bt_uuid_t> for BleUuid {
-  fn from(uuid: esp_bt_uuid_t) -> Self {
+impl From<esp_idf_sys::ble_uuid_any_t> for BleUuid {
+  fn from(uuid: esp_idf_sys::ble_uuid_any_t) -> Self {
     unsafe {
-      match uuid.len {
-        2 => Self::Uuid16(uuid.uuid.uuid16),
-        4 => Self::Uuid32(uuid.uuid.uuid32),
-        16 => Self::Uuid128(uuid.uuid.uuid128),
+      match uuid.u.type_ as _ {
+        esp_idf_sys::BLE_UUID_TYPE_16 => Self::Uuid16(uuid.u16_.value),
+        esp_idf_sys::BLE_UUID_TYPE_32 => Self::Uuid32(uuid.u32_.value),
+        esp_idf_sys::BLE_UUID_TYPE_128 => Self::Uuid128(uuid.u128_.value),
         // Never happens
         _ => unreachable!("Invalid UUID length"),
       }
     }
-  }
-}
-
-impl From<esp_gatt_id_t> for BleUuid {
-  fn from(uuid: esp_gatt_id_t) -> Self {
-    Self::from(uuid.uuid)
   }
 }
 

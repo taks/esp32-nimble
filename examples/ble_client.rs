@@ -41,18 +41,19 @@ fn main() {
         .window(99)
         .on_result(move |device| {
           if device.name.len() > 0 {
-            BLEDevice::take().get_scan().stop();
+            BLEDevice::take().get_scan().stop().unwrap();
             (*device0.lock()) = Some(device.clone());
+            info!("Advertised Device: {:?}", device);
           }
         });
-      ble_scan.start(10).await;
+      ble_scan.start(10000).await.unwrap();
       info!("Scan end");
 
       let device = &*connect_device.lock();
       info!("Advertised Device: {:?}", device);
       if let Some(device) = device {
         let mut client = BLEClient::new();
-        client.connect(device.addr, device.addr_type).await.unwrap();
+        client.connect(&device.addr).await.unwrap();
         info!("Connected");
         for s in client.get_services().await.unwrap() {
           info!(" {:?}", s);

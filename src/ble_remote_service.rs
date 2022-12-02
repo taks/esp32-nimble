@@ -8,11 +8,11 @@ pub struct BLERemoteService {
 }
 
 impl BLERemoteService {
-  pub fn new(uuid: BleUuid, start_handle: u16, end_handle: u16) -> Self {
+  pub fn new(service: &esp_idf_sys::ble_gatt_svc) -> Self {
     Self {
-      uuid,
-      start_handle,
-      end_handle,
+      uuid: BleUuid::from(service.uuid),
+      start_handle: service.start_handle,
+      end_handle: service.end_handle,
     }
   }
 }

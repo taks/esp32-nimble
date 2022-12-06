@@ -4,8 +4,6 @@
 extern crate alloc;
 
 use ble_client::BLEDevice;
-
-use embedded_hal::delay::DelayUs;
 use esp_idf_hal::task::executor::{EspExecutor, Local};
 use esp_idf_sys as _;
 use log::*;
@@ -28,7 +26,7 @@ fn main() {
   };
 
   let executor = EspExecutor::<16, Local>::new();
-  let task = executor
+  let _task = executor
     .spawn_local(async {
       let ble_device = BLEDevice::take();
       let ble_scan = ble_device.get_scan();
@@ -39,10 +37,20 @@ fn main() {
         .on_result(|param| {
           info!("Advertised Device: {:?}", param);
         });
-      ble_scan.start(5000).await;
+      ble_scan.start(5000).await.unwrap();
       info!("Scan end");
     })
     .unwrap();
 
   executor.run(|| true);
+}
+
+#[panic_handler]
+#[allow(dead_code)]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+  ::log::error!("{:?}", info);
+  unsafe {
+    esp_idf_sys::abort();
+    core::hint::unreachable_unchecked();
+  }
 }

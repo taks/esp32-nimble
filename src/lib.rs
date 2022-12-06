@@ -18,6 +18,9 @@ pub use self::ble_client::BLEClient;
 mod ble_device;
 pub use self::ble_device::BLEDevice;
 
+mod ble_remote_characteristic;
+pub use self::ble_remote_characteristic::BLERemoteCharacteristic;
+
 mod ble_remote_service;
 pub use self::ble_remote_service::BLERemoteService;
 

@@ -7,37 +7,51 @@ use crate::BLEAddress;
 
 #[derive(Debug, Clone)]
 pub struct BLEAdvertisedDevice {
-  pub addr: BLEAddress,
-  pub ad_flag: Option<u8>,
-  pub name: String,
-  pub rssi: i32,
-  pub service_uuids: Vec<BleUuid>,
-  pub service_data: Vec<(BleUuid, Box<[u8]>)>,
-  pub tx_power: Option<u8>,
-  pub manufacture_data: Option<Vec<u8>>,
+  addr: BLEAddress,
+  adv_type: u8,
+  ad_flag: Option<u8>,
+  appearance: Option<u16>,
+  name: String,
+  rssi: i32,
+  service_uuids: Vec<BleUuid>,
+  service_data: Vec<(BleUuid, Box<[u8]>)>,
+  tx_power: Option<u8>,
+  manufacture_data: Option<Vec<u8>>,
 }
 
 impl BLEAdvertisedDevice {
   pub(crate) fn new(param: &esp_idf_sys::ble_gap_disc_desc) -> Self {
-    let mut ret = Self {
+    Self {
       addr: param.addr,
+      adv_type: param.event_type,
       ad_flag: None,
+      appearance: None,
       name: String::new(),
       rssi: param.rssi as _,
       service_uuids: Vec::new(),
       service_data: Vec::new(),
       tx_power: None,
       manufacture_data: None,
-    };
-
-    let data = unsafe { core::slice::from_raw_parts(param.data, param.length_data as _) };
-    ::log::debug!("DATA: {:X?}", data);
-    ret.parse_advertisement(data);
-
-    ret
+    }
   }
 
-  fn parse_advertisement(&mut self, payload: &[u8]) {
+  pub fn name(&self) -> &str {
+    &self.name
+  }
+
+  pub fn addr(&self) -> &BLEAddress {
+    &self.addr
+  }
+
+  pub fn rssi(&self) -> i32 {
+    self.rssi
+  }
+
+  pub(crate) fn adv_type(&self) -> u8 {
+    self.adv_type
+  }
+
+  pub(crate) fn parse_advertisement(&mut self, payload: &[u8]) {
     let mut payload = payload;
 
     loop {
@@ -74,6 +88,13 @@ impl BLEAdvertisedDevice {
               data = data_;
             }
           }
+          esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS128
+          | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_UUIDS128 => {
+            self
+              .service_uuids
+              .push(BleUuid::Uuid128(data.try_into().unwrap()));
+          }
+
           esp_idf_sys::BLE_HS_ADV_TYPE_SVC_DATA_UUID16 => {
             // Adv Data Type: 0x16 (Service Data) - 2 byte UUID
             if length < 2 {
@@ -84,8 +105,14 @@ impl BLEAdvertisedDevice {
               self.service_data.push((uuid, service_data.into()));
             }
           }
+          esp_idf_sys::BLE_HS_ADV_TYPE_APPEARANCE => {
+            self.appearance = Some(u16::from_le_bytes(data.try_into().unwrap()));
+          }
           esp_idf_sys::BLE_HS_ADV_TYPE_MFG_DATA => {
             self.manufacture_data = Some(data.to_vec());
+          }
+          esp_idf_sys::BLE_HS_ADV_TYPE_SLAVE_ITVL_RANGE => {
+            // DO NOTHING
           }
           _ => {
             ::log::info!("Unhandled type: adType: 0x{:X}", type_);

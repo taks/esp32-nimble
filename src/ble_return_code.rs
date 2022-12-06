@@ -43,6 +43,8 @@ fn return_code_to_string(rc: u32) -> Option<&'static str> {
       esp_idf_sys::BLE_HS_ENOADDR => {
         Some("Operation requires an identity address but none configured.")
       }
+      esp_idf_sys::BLE_HS_ENOTCONN => Some("No open connection with the specified handle."),
+      esp_idf_sys::BLE_HS_ETIMEOUT => Some("Operation timed out."),
       _ => None,
     }
   } else {

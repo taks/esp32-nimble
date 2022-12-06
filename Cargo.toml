@@ -19,7 +19,7 @@ pio = ["esp-idf-sys/pio"]
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-sys = { version = "0.31.11", default-features = false, features = ["binstart", "panic_handler", "alloc_handler"] }
+esp-idf-sys = { version = "0.31.11", default-features = false }
 esp-idf-hal = { version = "0.39.2", default-features = false, features = ["critical-section", "embassy-sync"] }
 esp-idf-svc = { version = "0.43.1", default-features = false, features = ["alloc"] }
 embedded-svc = { version = "0.23.0", default-features = false }
@@ -27,8 +27,10 @@ embedded-svc = { version = "0.23.0", default-features = false }
 critical-section = { version = "1.1.1" }
 once_cell = { version = "1.16.0", default-features = false, features = ["critical-section"] }
 embassy-sync = { version = "0.1.0" }
+bitflags = { version = "2.0.0-rc.1" }
 
 [dev-dependencies]
+esp-idf-sys = { version = "0.31.11", default-features = false, features = ["binstart", "alloc_handler"] }
 esp-idf-hal = { version = "0.39.2", default-features = false, features = ["critical-section", "edge-executor", "embassy-sync"] }
 embedded-hal = { version = "=1.0.0-alpha.9", default-features = false }
 thingbuf = { version = "0.1.3", default-features = false, features = ["alloc"] }

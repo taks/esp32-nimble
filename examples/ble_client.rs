@@ -5,7 +5,6 @@ extern crate alloc;
 
 use alloc::sync::Arc;
 use ble_client::{utilities::mutex::Mutex, *};
-use embedded_hal::delay::DelayUs;
 use esp_idf_hal::task::executor::{EspExecutor, Local};
 use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use log::*;
@@ -18,6 +17,8 @@ fn main() {
 
   // Bind the log crate to the ESP Logging facilities
   esp_idf_svc::log::EspLogger::initialize_default();
+  esp_idf_svc::log::EspLogger.set_target_level("NimBLE", log::LevelFilter::Warn);
+
   log::set_max_level(log::LevelFilter::Debug);
 
   // WDT OFF
@@ -28,7 +29,7 @@ fn main() {
   };
 
   let executor = EspExecutor::<16, Local>::new();
-  let task = executor
+  let _task = executor
     .spawn_local(async {
       let ble_device = BLEDevice::take();
       let ble_scan = ble_device.get_scan();
@@ -40,24 +41,30 @@ fn main() {
         .interval(100)
         .window(99)
         .on_result(move |device| {
-          if device.name.len() > 0 {
+          if device.name().contains("ESP32") {
             BLEDevice::take().get_scan().stop().unwrap();
             (*device0.lock()) = Some(device.clone());
-            info!("Advertised Device: {:?}", device);
           }
         });
       ble_scan.start(10000).await.unwrap();
       info!("Scan end");
 
       let device = &*connect_device.lock();
-      info!("Advertised Device: {:?}", device);
       if let Some(device) = device {
+        info!("Advertised Device: {:?}", device);
+
         let mut client = BLEClient::new();
-        client.connect(&device.addr).await.unwrap();
+        info!("Connecting");
+        client.connect(device.addr()).await.unwrap();
         info!("Connected");
-        for s in client.get_services().await.unwrap() {
-          info!(" {:?}", s);
+        for service in client.get_services().await.unwrap() {
+          info!(" {:?}", service.uuid());
+
+          for get_characteristic in service.get_characteristics().await.unwrap() {
+            info!("  {:?}", get_characteristic.uuid());
+          }
         }
+        info!("Disconnecting");
         client.disconnect().unwrap();
         info!("Disconnected");
       }
@@ -65,4 +72,14 @@ fn main() {
     .unwrap();
 
   executor.run(|| true);
+}
+
+#[panic_handler]
+#[allow(dead_code)]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+  ::log::error!("{:?}", info);
+  unsafe {
+    esp_idf_sys::abort();
+    core::hint::unreachable_unchecked();
+  }
 }

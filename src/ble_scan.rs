@@ -1,5 +1,5 @@
 use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal};
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use esp_idf_sys::{c_types::c_void, *};
 
 pub struct BLEScan {
@@ -8,6 +8,7 @@ pub struct BLEScan {
   on_completed: Option<Box<dyn FnMut() + Send + Sync>>,
   scan_params: esp_idf_sys::ble_gap_disc_params,
   stopped: bool,
+  scan_results: Vec<BLEAdvertisedDevice>,
   signal: Signal<()>,
 }
 
@@ -24,6 +25,7 @@ impl BLEScan {
         _bitfield_1: __BindgenBitfieldUnit::new([0; 1]),
       },
       stopped: true,
+      scan_results: Vec::new(),
       signal: Signal::new(),
     };
     ret.scan_params.set_limited(0);
@@ -98,9 +100,35 @@ impl BLEScan {
       esp_idf_sys::BLE_GAP_EVENT_EXT_DISC | esp_idf_sys::BLE_GAP_EVENT_DISC => {
         let disc = unsafe { &event.__bindgen_anon_1.disc };
 
-        let advertised_device = BLEAdvertisedDevice::new(disc);
+        let mut advertised_device = scan
+          .scan_results
+          .iter_mut()
+          .find(|x| x.addr().val == disc.addr.val);
+
+        if advertised_device.is_none() {
+          if disc.event_type != BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {
+            let device = BLEAdvertisedDevice::new(disc);
+            scan.scan_results.push(device);
+            advertised_device = scan.scan_results.last_mut();
+          } else {
+            return 0;
+          }
+        }
+
+        let advertised_device = advertised_device.unwrap();
+
+        let data = unsafe { core::slice::from_raw_parts(disc.data, disc.length_data as _) };
+        ::log::debug!("DATA: {:X?}", data);
+        advertised_device.parse_advertisement(data);
+
         if let Some(callback) = scan.on_result.as_mut() {
-          callback(&advertised_device);
+          if scan.scan_params.passive() != 0
+            || (advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _
+              && advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _)
+            || disc.event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
+          {
+            callback(advertised_device);
+          }
         }
       }
       esp_idf_sys::BLE_GAP_EVENT_DISC_COMPLETE => {

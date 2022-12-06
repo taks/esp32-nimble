@@ -1,5 +1,5 @@
 use crate::{
-  ble_device::OWN_ADDR_TYPE, utilities::BleUuid, BLEAddress, BLERemoteService, BLEReturnCode,
+  ble, ble_device::OWN_ADDR_TYPE, utilities::BleUuid, BLEAddress, BLERemoteService, BLEReturnCode,
   Signal,
 };
 use alloc::vec::Vec;
@@ -56,7 +56,7 @@ impl BLEClient {
       }
     }
 
-    self.signal.wait().await;
+    ble!(self.signal.wait().await)?;
     self.address = Some(*addr);
 
     Ok(())
@@ -83,7 +83,7 @@ impl BLEClient {
 
   pub async fn get_services(
     &mut self,
-  ) -> Result<core::slice::Iter<'_, BLERemoteService>, EspError> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteService>, BLEReturnCode> {
     if self.services.is_none() {
       self.services = Some(Vec::new());
       unsafe {
@@ -93,18 +93,20 @@ impl BLEClient {
           self as *mut Self as _,
         );
       }
-      esp!(self.signal.wait().await)?;
+      ble!(self.signal.wait().await)?;
     }
 
-    Ok(self.services.as_ref().unwrap().iter())
+    Ok(self.services.as_mut().unwrap().iter_mut())
   }
 
-  pub async fn get_service(&mut self, uuid: BleUuid) -> Result<BLERemoteService, EspError> {
+  pub async fn get_service(
+    &mut self,
+    uuid: BleUuid,
+  ) -> Result<&mut BLERemoteService, BLEReturnCode> {
     let mut iter = self.get_services().await?;
     iter
-      .find(|x| x.uuid == uuid)
-      .copied()
-      .ok_or(EspError::from(ESP_FAIL).unwrap())
+      .find(|x| x.uuid() == uuid)
+      .ok_or_else(|| BLEReturnCode::fail().unwrap_err())
   }
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
@@ -116,9 +118,14 @@ impl BLEClient {
     match event.type_ as _ {
       BLE_GAP_EVENT_CONNECT => {
         let connect = unsafe { &event.__bindgen_anon_1.connect };
+
         if connect.status == 0 {
           client.conn_id = connect.conn_handle;
           client.signal.signal(0);
+        } else {
+          ::log::info!("connect_status {}", connect.status);
+          client.conn_id = BLE_HS_CONN_HANDLE_NONE as _;
+          client.signal.signal(connect.status as _);
         }
       }
       BLE_GAP_EVENT_DISCONNECT => {
@@ -154,7 +161,7 @@ impl BLEClient {
 
     if error.status == 0 {
       // Found a service - add it to the vector
-      let service = BLERemoteService::new(service);
+      let service = BLERemoteService::new(client.conn_id, service);
       client.services.as_mut().unwrap().push(service);
       return 0;
     }

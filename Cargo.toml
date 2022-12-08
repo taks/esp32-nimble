@@ -6,6 +6,10 @@ edition = "2021"
 resolver = "2"
 repository = "https://github.com/taks/esp32-nimble"
 license = "MIT"
+description = "A wrapper for the ESP32 NimBLE Bluetooth stack."
+readme = "README.md"
+keywords = ["bluetooth", "ble", "esp32", "embedded", "async"]
+categories = ["embedded", "hardware-support"]
 
 [profile.release]
 opt-level = "s"
@@ -15,7 +19,6 @@ debug = true
 opt-level = "z"
 
 [features]
-pio = ["esp-idf-sys/pio"]
 
 [dependencies]
 log = { version = "0.4", default-features = false }

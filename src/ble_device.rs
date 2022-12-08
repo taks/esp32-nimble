@@ -1,3 +1,4 @@
+use alloc::ffi::CString;
 use esp_idf_sys::c_types::c_void;
 use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
@@ -55,10 +56,11 @@ impl BLEDevice {
     unsafe { Lazy::force_mut(&mut BLE_SCAN) }
   }
 
+  #[allow(temporary_cstring_as_ptr)]
   pub fn set_device_name(device_name: &str) -> Result<(), EspError> {
     unsafe {
       esp!(esp_idf_sys::ble_svc_gap_device_name_set(
-        device_name.as_ptr().cast::<i8>()
+        CString::new(device_name).unwrap().as_ptr()
       ))
     }
   }

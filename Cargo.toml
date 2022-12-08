@@ -1,10 +1,10 @@
 [package]
-name = "ble-client"
+name = "esp32-nimble"
 version = "0.0.1"
 authors = ["taks <857tn859@gmail.com>"]
 edition = "2021"
 resolver = "2"
-repository = "https://github.com/taks/ble-client"
+repository = "https://github.com/taks/esp32-nimble"
 license = "MIT"
 
 [profile.release]
@@ -32,8 +32,10 @@ bitflags = { version = "2.0.0-rc.1" }
 [dev-dependencies]
 esp-idf-sys = { version = "0.31.11", default-features = false, features = ["binstart", "alloc_handler"] }
 esp-idf-hal = { version = "0.39.2", default-features = false, features = ["critical-section", "edge-executor", "embassy-sync"] }
+esp-idf-svc = { version = "0.43.1", default-features = false, features = ["alloc", "embassy-time-driver", "embassy-time-isr-queue"] }
 embedded-hal = { version = "=1.0.0-alpha.9", default-features = false }
 thingbuf = { version = "0.1.3", default-features = false, features = ["alloc"] }
+embassy-time = { version = "0.1", features = ["tick-hz-1_000_000"] }
 
 [build-dependencies]
 embuild = "0.30.4"

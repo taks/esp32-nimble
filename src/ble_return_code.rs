@@ -15,10 +15,9 @@ impl BLEReturnCode {
   }
 
   pub fn check_and_return<T>(error: u32, value: T) -> Result<T, Self> {
-    if error == 0 {
-      Ok(value)
-    } else {
-      Err(Self(error))
+    match error {
+      0 | esp_idf_sys::BLE_HS_EDONE => Ok(value),
+      error => Err(Self(error)),
     }
   }
   pub fn convert(error: u32) -> Result<(), Self> {
@@ -37,14 +36,16 @@ impl core::fmt::Debug for BLEReturnCode {
   }
 }
 
-fn return_code_to_string(rc: u32) -> Option<&'static str> {
+pub(crate) fn return_code_to_string(rc: u32) -> Option<&'static str> {
   if rc < 0x200 {
     match rc {
+      esp_idf_sys::BLE_HS_EINVAL => Some("One or more arguments are invalid."),
+      esp_idf_sys::BLE_HS_ENOTCONN => Some("No open connection with the specified handle."),
+      esp_idf_sys::BLE_HS_ETIMEOUT => Some("Operation timed out."),
+      esp_idf_sys::BLE_HS_EDONE => Some("Operation completed successfully."),
       esp_idf_sys::BLE_HS_ENOADDR => {
         Some("Operation requires an identity address but none configured.")
       }
-      esp_idf_sys::BLE_HS_ENOTCONN => Some("No open connection with the specified handle."),
-      esp_idf_sys::BLE_HS_ETIMEOUT => Some("Operation timed out."),
       _ => None,
     }
   } else {

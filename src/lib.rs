@@ -21,6 +21,9 @@ pub use self::ble_device::BLEDevice;
 mod ble_remote_characteristic;
 pub use self::ble_remote_characteristic::BLERemoteCharacteristic;
 
+mod ble_remote_descriptor;
+pub use self::ble_remote_descriptor::BLERemoteDescriptor;
+
 mod ble_remote_service;
 pub use self::ble_remote_service::BLERemoteService;
 

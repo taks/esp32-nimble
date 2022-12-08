@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use ble_client::BLEDevice;
+use esp32_nimble::BLEDevice;
 use esp_idf_hal::task::executor::{EspExecutor, Local};
 use esp_idf_sys as _;
 use log::*;

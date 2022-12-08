@@ -4,18 +4,16 @@
 extern crate alloc;
 
 use alloc::sync::Arc;
-use ble_client::{utilities::mutex::Mutex, *};
+use embassy_time::{Duration, Timer};
+use esp32_nimble::{utilities::mutex::Mutex, utilities::BleUuid, *};
 use esp_idf_hal::task::executor::{EspExecutor, Local};
-use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
+use esp_idf_sys as _;
 use log::*;
 
 #[no_mangle]
 fn main() {
-  // Temporary. Will disappear once ESP-IDF 4.4 is released, but for now it is necessary to call this function once,
-  // or else some patches to the runtime implemented by esp-idf-sys might not link properly.
   esp_idf_sys::link_patches();
 
-  // Bind the log crate to the ESP Logging facilities
   esp_idf_svc::log::EspLogger::initialize_default();
   esp_idf_svc::log::EspLogger.set_target_level("NimBLE", log::LevelFilter::Warn);
 
@@ -27,6 +25,8 @@ fn main() {
       esp_idf_hal::cpu::core() as u32,
     ));
   };
+
+  esp_idf_svc::timer::embassy_time::driver::link();
 
   let executor = EspExecutor::<16, Local>::new();
   let _task = executor
@@ -47,26 +47,44 @@ fn main() {
           }
         });
       ble_scan.start(10000).await.unwrap();
-      info!("Scan end");
 
       let device = &*connect_device.lock();
       if let Some(device) = device {
         info!("Advertised Device: {:?}", device);
 
         let mut client = BLEClient::new();
-        info!("Connecting");
         client.connect(device.addr()).await.unwrap();
-        info!("Connected");
-        for service in client.get_services().await.unwrap() {
-          info!(" {:?}", service.uuid());
 
-          for get_characteristic in service.get_characteristics().await.unwrap() {
-            info!("  {:?}", get_characteristic.uuid());
-          }
-        }
-        info!("Disconnecting");
+        let service = client
+          .get_service(BleUuid::from_uuid128_string(
+            "fafafafa-fafa-fafa-fafa-fafafafafafa",
+          ))
+          .await
+          .unwrap();
+
+        let uuid = BleUuid::from_uuid128_string("d4e0e0d0-1a2b-11e9-ab14-d663bd873d93");
+        let characteristic = service.get_characteristic(uuid).await.unwrap();
+        let value = characteristic.read_value().await.unwrap();
+        ::log::info!(
+          "{:?} value: {}",
+          uuid,
+          core::str::from_utf8(&value).unwrap()
+        );
+
+        let uuid = BleUuid::from_uuid128_string("a3c87500-8ed3-4bdf-8a39-a01bebede295");
+        let characteristic = service.get_characteristic(uuid).await.unwrap();
+        ::log::info!("subscribe {:?}", uuid);
+        characteristic
+          .on_notify(|data| {
+            ::log::info!("{}", core::str::from_utf8(&data).unwrap());
+          })
+          .subscribe(true, false)
+          .await
+          .unwrap();
+
+        Timer::after(Duration::from_secs(10)).await;
+
         client.disconnect().unwrap();
-        info!("Disconnected");
       }
     })
     .unwrap();

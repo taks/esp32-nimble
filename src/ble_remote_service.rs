@@ -1,60 +1,87 @@
-use crate::{utilities::BleUuid, BLERemoteCharacteristic, Signal};
+use crate::{
+  ble,
+  ble_client::BLEClientState,
+  utilities::{BleUuid, UnsafeArc, WeakUnsafeCell},
+  BLERemoteCharacteristic, BLEReturnCode, Signal,
+};
 use alloc::vec::Vec;
 use esp_idf_sys::{c_types::c_void, *};
 
-pub struct BLERemoteService {
-  conn_handle: u16,
+pub(crate) struct BLERemoteServiceState {
+  client: WeakUnsafeCell<BLEClientState>,
   uuid: BleUuid,
   start_handle: u16,
-  end_handle: u16,
-  characteristics: Option<Vec<BLERemoteCharacteristic>>,
+  pub(crate) end_handle: u16,
+  pub(crate) characteristics: Option<Vec<UnsafeArc<BLERemoteCharacteristic>>>,
   signal: Signal<u32>,
 }
 
+impl BLERemoteServiceState {
+  pub(crate) fn conn_handle(&self) -> u16 {
+    match self.client.upgrade() {
+      Some(x) => x.conn_handle(),
+      None => BLE_HS_CONN_HANDLE_NONE as _,
+    }
+  }
+}
+
+pub struct BLERemoteService {
+  pub(crate) state: UnsafeArc<BLERemoteServiceState>,
+}
+
 impl BLERemoteService {
-  pub fn new(conn_handle: u16, service: &esp_idf_sys::ble_gatt_svc) -> Self {
+  pub(crate) fn new(
+    client: WeakUnsafeCell<BLEClientState>,
+    service: &esp_idf_sys::ble_gatt_svc,
+  ) -> Self {
     Self {
-      conn_handle,
-      uuid: BleUuid::from(service.uuid),
-      start_handle: service.start_handle,
-      end_handle: service.end_handle,
-      characteristics: None,
-      signal: Signal::new(),
+      state: UnsafeArc::new(BLERemoteServiceState {
+        client,
+        uuid: BleUuid::from(service.uuid),
+        start_handle: service.start_handle,
+        end_handle: service.end_handle,
+        characteristics: None,
+        signal: Signal::new(),
+      }),
     }
   }
 
   pub fn uuid(&self) -> BleUuid {
-    self.uuid
+    self.state.uuid
+  }
+
+  fn conn_handle(&self) -> u16 {
+    self.state.client.upgrade().unwrap().conn_handle()
   }
 
   pub async fn get_characteristics(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, BLERemoteCharacteristic>, EspError> {
-    if self.characteristics.is_none() {
-      self.characteristics = Some(Vec::new());
+  ) -> Result<core::slice::IterMut<'_, UnsafeArc<BLERemoteCharacteristic>>, BLEReturnCode> {
+    if self.state.characteristics.is_none() {
+      self.state.characteristics = Some(Vec::new());
       unsafe {
-        esp_idf_sys::ble_gattc_disc_all_chrs(
-          self.conn_handle,
-          self.start_handle,
-          self.end_handle,
+        ble!(esp_idf_sys::ble_gattc_disc_all_chrs(
+          self.conn_handle(),
+          self.state.start_handle,
+          self.state.end_handle,
           Some(Self::characteristic_disc_cb),
           self as *mut Self as _,
-        );
+        ))?;
       }
-      esp!(self.signal.wait().await)?;
+      ble!(self.state.signal.wait().await)?;
     }
 
-    Ok(self.characteristics.as_mut().unwrap().iter_mut())
+    Ok(self.state.characteristics.as_mut().unwrap().iter_mut())
   }
 
   pub async fn get_characteristic(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut BLERemoteCharacteristic, EspError> {
+  ) -> Result<&mut UnsafeArc<BLERemoteCharacteristic>, BLEReturnCode> {
     let mut iter = self.get_characteristics().await?;
     iter
       .find(|x| x.uuid() == uuid)
-      .ok_or(EspError::from(ESP_FAIL).unwrap())
+      .ok_or_else(|| BLEReturnCode::fail().unwrap_err())
   }
 
   extern "C" fn characteristic_disc_cb(
@@ -64,32 +91,29 @@ impl BLERemoteService {
     arg: *mut c_void,
   ) -> i32 {
     let service = unsafe { &mut *(arg as *mut Self) };
-    if service.conn_handle != conn_handle {
+    if service.conn_handle() != conn_handle {
       return 0;
     }
     let error = unsafe { &*error };
     let chr = unsafe { &*chr };
 
     if error.status == 0 {
-      let chr = BLERemoteCharacteristic::new(conn_handle, chr);
-      service.characteristics.as_mut().unwrap().push(chr);
+      let chr = UnsafeArc::new(BLERemoteCharacteristic::new(
+        UnsafeArc::downgrade(&service.state),
+        chr,
+      ));
+      service.state.characteristics.as_mut().unwrap().push(chr);
       return 0;
     }
 
-    let ret = if error.status == (BLE_HS_EDONE as _) {
-      0
-    } else {
-      error.status as _
-    };
-
-    service.signal.signal(ret);
-    ret as _
+    service.state.signal.signal(error.status as _);
+    error.status as _
   }
 }
 
 impl core::fmt::Debug for BLERemoteService {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    write!(f, "BLERemoteService[{}]", self.uuid)?;
+    write!(f, "BLERemoteService[{}]", self.state.uuid)?;
     Ok(())
   }
 }

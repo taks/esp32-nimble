@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   workflow_dispatch:
 
 env:
@@ -13,19 +13,25 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - riscv32imc-esp-espidf
+          - xtensa-esp32-espidf
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup | libncurses5
-      run: sudo apt-get install libncurses5
-    - name: Install Rust for Xtensa
-      uses: esp-rs/xtensa-toolchain@v1.3
-      with:
-        default: true
-        ldproxy: true
-    - uses: Swatinem/rust-cache@v2
-    - name: Build
-      run: cargo build --verbose --examples
-    - name: Fmt check
-      run: cargo fmt --check
-    - name: Clippy check
-      run: cargo clippy --all-features -- -D warnings
+      - uses: actions/checkout@v3
+      - name: Setup | libncurses5
+        run: sudo apt-get install libncurses5
+      - name: Install Rust for Xtensa
+        uses: esp-rs/xtensa-toolchain@v1.3
+        with:
+          default: true
+          ldproxy: true
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --target ${{ matrix.target }} --verbose --examples
+      - name: Fmt check
+        run: cargo fmt --check
+      - name: Clippy check
+        run: cargo clippy --all-features -- -D warnings

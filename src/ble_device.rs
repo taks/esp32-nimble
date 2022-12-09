@@ -60,7 +60,7 @@ impl BLEDevice {
   pub fn set_device_name(device_name: &str) -> Result<(), EspError> {
     unsafe {
       esp!(esp_idf_sys::ble_svc_gap_device_name_set(
-        CString::new(device_name).unwrap().as_ptr()
+        CString::new(device_name).unwrap().as_ptr().cast()
       ))
     }
   }

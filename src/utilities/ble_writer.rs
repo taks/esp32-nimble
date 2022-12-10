@@ -59,7 +59,7 @@ impl BLEWriter {
     conn_handle: u16,
     error: *const esp_idf_sys::ble_gatt_error,
     _service: *mut esp_idf_sys::ble_gatt_attr,
-    arg: *mut esp_idf_sys::c_types::c_void,
+    arg: *mut core::ffi::c_void,
   ) -> i32 {
     let writer = unsafe { &mut *(arg as *mut Self) };
     if writer.conn_handle != conn_handle {

@@ -5,7 +5,7 @@ use crate::{
   BLERemoteCharacteristic, BLEReturnCode, Signal,
 };
 use alloc::vec::Vec;
-use esp_idf_sys::{c_types::c_void, *};
+use core::ffi::c_void;
 
 pub(crate) struct BLERemoteServiceState {
   client: WeakUnsafeCell<BLEClientState>,
@@ -20,7 +20,7 @@ impl BLERemoteServiceState {
   pub(crate) fn conn_handle(&self) -> u16 {
     match self.client.upgrade() {
       Some(x) => x.conn_handle(),
-      None => BLE_HS_CONN_HANDLE_NONE as _,
+      None => esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _,
     }
   }
 }
@@ -86,8 +86,8 @@ impl BLERemoteService {
 
   extern "C" fn characteristic_disc_cb(
     conn_handle: u16,
-    error: *const ble_gatt_error,
-    chr: *const ble_gatt_chr,
+    error: *const esp_idf_sys::ble_gatt_error,
+    chr: *const esp_idf_sys::ble_gatt_chr,
     arg: *mut c_void,
   ) -> i32 {
     let service = unsafe { &mut *(arg as *mut Self) };

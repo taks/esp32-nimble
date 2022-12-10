@@ -1,6 +1,6 @@
 use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal};
 use alloc::{boxed::Box, vec::Vec};
-use esp_idf_sys::{c_types::c_void, *};
+use core::ffi::c_void;
 
 pub struct BLEScan {
   #[allow(clippy::type_complexity)]
@@ -22,7 +22,7 @@ impl BLEScan {
         window: 0,
         filter_policy: esp_idf_sys::BLE_HCI_SCAN_FILT_NO_WL as _,
         _bitfield_align_1: [0; 0],
-        _bitfield_1: __BindgenBitfieldUnit::new([0; 1]),
+        _bitfield_1: esp_idf_sys::__BindgenBitfieldUnit::new([0; 1]),
       },
       stopped: true,
       scan_results: Vec::new(),
@@ -82,11 +82,11 @@ impl BLEScan {
     Ok(())
   }
 
-  pub fn stop(&mut self) -> Result<(), EspError> {
+  pub fn stop(&mut self) -> Result<(), BLEReturnCode> {
     self.stopped = true;
     let rc = unsafe { esp_idf_sys::ble_gap_disc_cancel() };
     if rc != 0 && rc != (esp_idf_sys::BLE_HS_EALREADY as _) {
-      return EspError::convert(esp_idf_sys::ESP_FAIL);
+      return BLEReturnCode::convert(rc as _);
     }
 
     if let Some(callback) = self.on_completed.as_mut() {
@@ -111,7 +111,7 @@ impl BLEScan {
           .find(|x| x.addr().val == disc.addr.val);
 
         if advertised_device.is_none() {
-          if disc.event_type != BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {
+          if disc.event_type != esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {
             let device = BLEAdvertisedDevice::new(disc);
             scan.scan_results.push(device);
             advertised_device = scan.scan_results.last_mut();

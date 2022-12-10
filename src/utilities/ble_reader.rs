@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use esp_idf_sys::c_types::c_void;
+use core::ffi::c_void;
 
 use crate::{ble, BLEReturnCode, Signal};
 

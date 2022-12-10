@@ -1,5 +1,5 @@
 use alloc::ffi::CString;
-use esp_idf_sys::c_types::c_void;
+use core::ffi::c_void;
 use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 

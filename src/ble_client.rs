@@ -6,7 +6,8 @@ use crate::{
   BLEAddress, BLERemoteService, BLEReturnCode, Signal,
 };
 use alloc::{string::ToString, vec::Vec};
-use esp_idf_sys::{c_types::c_void, *};
+use core::ffi::c_void;
+use esp_idf_sys::*;
 
 pub(crate) struct BLEClientState {
   address: Option<BLEAddress>,
@@ -79,7 +80,7 @@ impl BLEClient {
     }
 
     unsafe {
-      let rc = ble_gap_terminate(
+      let rc = esp_idf_sys::ble_gap_terminate(
         self.state.conn_handle,
         esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _,
       );
@@ -89,7 +90,7 @@ impl BLEClient {
   }
 
   pub fn connected(&self) -> bool {
-    self.state.conn_handle != (BLE_HS_CONN_HANDLE_NONE as _)
+    self.state.conn_handle != (esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _)
   }
 
   pub async fn get_services(
@@ -98,7 +99,7 @@ impl BLEClient {
     if self.state.services.is_none() {
       self.state.services = Some(Vec::new());
       unsafe {
-        ble_gattc_disc_all_svcs(
+        esp_idf_sys::ble_gattc_disc_all_svcs(
           self.state.conn_handle,
           Some(Self::service_discovered_cb),
           self as *mut Self as _,
@@ -133,7 +134,7 @@ impl BLEClient {
           client.state.signal.signal(0);
         } else {
           ::log::info!("connect_status {}", connect.status);
-          client.state.conn_handle = BLE_HS_CONN_HANDLE_NONE as _;
+          client.state.conn_handle = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
           client.state.signal.signal(connect.status as _);
         }
       }
@@ -142,7 +143,7 @@ impl BLEClient {
         if client.state.conn_handle != disconnect.conn.conn_handle {
           return 0;
         }
-        client.state.conn_handle = BLE_HS_CONN_HANDLE_NONE as _;
+        client.state.conn_handle = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 
         ::log::info!(
           "Disconnected: {}",
@@ -182,8 +183,8 @@ impl BLEClient {
 
   extern "C" fn service_discovered_cb(
     conn_handle: u16,
-    error: *const ble_gatt_error,
-    service: *const ble_gatt_svc,
+    error: *const esp_idf_sys::ble_gatt_error,
+    service: *const esp_idf_sys::ble_gatt_svc,
     arg: *mut c_void,
   ) -> i32 {
     let client = unsafe { &mut *(arg as *mut Self) };
@@ -204,7 +205,7 @@ impl BLEClient {
       return 0;
     }
 
-    let ret = if error.status == (BLE_HS_EDONE as _) {
+    let ret = if error.status == (esp_idf_sys::BLE_HS_EDONE as _) {
       0
     } else {
       error.status as _

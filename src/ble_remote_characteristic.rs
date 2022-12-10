@@ -6,7 +6,7 @@ use crate::{
 };
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
-use esp_idf_sys::c_types::c_void;
+use core::ffi::c_void;
 
 bitflags! {
   #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

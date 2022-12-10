@@ -39,6 +39,11 @@ impl BLEScan {
     self
   }
 
+  pub fn filter_duplicates(&mut self, val: bool) -> &mut Self {
+    self.scan_params.set_filter_duplicates(val as _);
+    self
+  }
+
   pub fn on_result(
     &mut self,
     callback: impl FnMut(&BLEAdvertisedDevice) + Send + Sync + 'static,

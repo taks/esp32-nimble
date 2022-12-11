@@ -1,9 +1,9 @@
 use alloc::ffi::CString;
 use core::ffi::c_void;
-use esp_idf_sys::{esp, esp_nofail, EspError};
+use esp_idf_sys::esp_nofail;
 use once_cell::sync::Lazy;
 
-use crate::ble_scan::BLEScan;
+use crate::{ble_scan::BLEScan, ble, BLEReturnCode};
 
 static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   BLEDevice::init();
@@ -57,9 +57,9 @@ impl BLEDevice {
   }
 
   #[allow(temporary_cstring_as_ptr)]
-  pub fn set_device_name(device_name: &str) -> Result<(), EspError> {
+  pub fn set_device_name(device_name: &str) -> Result<(), BLEReturnCode> {
     unsafe {
-      esp!(esp_idf_sys::ble_svc_gap_device_name_set(
+      ble!(esp_idf_sys::ble_svc_gap_device_name_set(
         CString::new(device_name).unwrap().as_ptr().cast()
       ))
     }

@@ -28,8 +28,8 @@ impl BLEScan {
       scan_results: Vec::new(),
       signal: Signal::new(),
     };
-    ret.scan_params.set_limited(0);
-    ret.scan_params.set_filter_duplicates(true as _);
+    ret.limited(false);
+    ret.filter_duplicates(true);
     ret.active_scan(false).interval(100).window(100);
     ret
   }
@@ -44,6 +44,21 @@ impl BLEScan {
     self
   }
 
+  pub fn limited(&mut self, val: bool) -> &mut Self {
+    self.scan_params.set_limited(val as _);
+    self
+  }
+
+  pub fn interval(&mut self, interval_msecs: u16) -> &mut Self {
+    self.scan_params.itvl = ((interval_msecs as f32) / 0.625) as u16;
+    self
+  }
+
+  pub fn window(&mut self, window_msecs: u16) -> &mut Self {
+    self.scan_params.window = ((window_msecs as f32) / 0.625) as u16;
+    self
+  }
+
   pub fn on_result(
     &mut self,
     callback: impl FnMut(&BLEAdvertisedDevice) + Send + Sync + 'static,
@@ -54,15 +69,6 @@ impl BLEScan {
 
   pub fn on_completed(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {
     self.on_completed = Some(Box::new(callback));
-    self
-  }
-  pub fn interval(&mut self, interval_msecs: u16) -> &mut Self {
-    self.scan_params.itvl = ((interval_msecs as f32) / 0.625) as u16;
-    self
-  }
-
-  pub fn window(&mut self, window_msecs: u16) -> &mut Self {
-    self.scan_params.window = ((window_msecs as f32) / 0.625) as u16;
     self
   }
 
@@ -95,6 +101,14 @@ impl BLEScan {
     self.signal.signal(());
 
     Ok(())
+  }
+
+  pub fn get_results(&mut self) -> core::slice::Iter<'_, BLEAdvertisedDevice> {
+    self.scan_results.iter()
+  }
+
+  pub fn clear_results(&mut self) {
+    self.scan_results.clear();
   }
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {

@@ -43,3 +43,6 @@ embassy-time = { version = "0.1", features = ["tick-hz-1_000_000"] }
 [build-dependencies]
 embuild = "0.31.0"
 anyhow = "1.0.58"
+
+[patch.crates-io]
+esp-idf-sys = { git = 'https://github.com/esp-rs/esp-idf-sys.git', branch = 'master' }

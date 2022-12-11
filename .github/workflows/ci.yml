@@ -14,6 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         target:
           - riscv32imc-esp-espidf
@@ -33,5 +34,6 @@ jobs:
         run: cargo build --target ${{ matrix.target }} --verbose --examples
       - name: Fmt check
         run: cargo fmt --check
+        continue-on-error: true
       - name: Clippy check
         run: cargo clippy --all-features -- -D warnings

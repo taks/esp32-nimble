@@ -4,26 +4,26 @@ use core::{
   ops::{Deref, DerefMut},
 };
 
-pub struct UnsafeArc<T: ?Sized> {
+pub struct ArcUnsafeCell<T: ?Sized> {
   value: Arc<UnsafeCell<T>>,
 }
 
-impl<T> UnsafeArc<T> {
+impl<T> ArcUnsafeCell<T> {
   #[inline(always)]
-  pub(crate) fn new(value: T) -> UnsafeArc<T> {
+  pub(crate) fn new(value: T) -> ArcUnsafeCell<T> {
     Self {
       value: Arc::new(UnsafeCell::new(value)),
     }
   }
 
-  pub fn downgrade(this: &UnsafeArc<T>) -> WeakUnsafeCell<T> {
+  pub fn downgrade(this: &ArcUnsafeCell<T>) -> WeakUnsafeCell<T> {
     WeakUnsafeCell {
       value: Arc::downgrade(&this.value),
     }
   }
 }
 
-impl<T: ?Sized> Deref for UnsafeArc<T> {
+impl<T: ?Sized> Deref for ArcUnsafeCell<T> {
   type Target = T;
 
   #[inline]
@@ -32,7 +32,7 @@ impl<T: ?Sized> Deref for UnsafeArc<T> {
   }
 }
 
-impl<T: ?Sized> DerefMut for UnsafeArc<T> {
+impl<T: ?Sized> DerefMut for ArcUnsafeCell<T> {
   #[inline]
   fn deref_mut(&mut self) -> &mut T {
     unsafe { &mut *self.value.get() }
@@ -44,7 +44,7 @@ pub struct WeakUnsafeCell<T: ?Sized> {
 }
 
 impl<T> WeakUnsafeCell<T> {
-  pub fn upgrade(&self) -> Option<UnsafeArc<T>> {
-    self.value.upgrade().map(|x| UnsafeArc { value: x })
+  pub fn upgrade(&self) -> Option<ArcUnsafeCell<T>> {
+    self.value.upgrade().map(|x| ArcUnsafeCell { value: x })
   }
 }

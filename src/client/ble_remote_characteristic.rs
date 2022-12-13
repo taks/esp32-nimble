@@ -1,8 +1,8 @@
+use super::ble_remote_service::BLERemoteServiceState;
 use crate::{
   ble,
-  ble_remote_service::BLERemoteServiceState,
-  utilities::{BLEReader, BLEWriter, BleUuid, UnsafeArc, WeakUnsafeCell},
-  BLERemoteDescriptor, BLEReturnCode, Signal,
+  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell},
+  BLEReader, BLERemoteDescriptor, BLEReturnCode, BLEWriter, Signal,
 };
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
@@ -29,7 +29,7 @@ pub(crate) struct BLERemoteCharacteristicState {
   pub handle: u16,
   end_handle: u16,
   properties: GattCharacteristicProperties,
-  descriptors: Option<Vec<UnsafeArc<BLERemoteDescriptor>>>,
+  descriptors: Option<Vec<ArcUnsafeCell<BLERemoteDescriptor>>>,
   signal: Signal<u32>,
   on_notify: Option<Box<dyn FnMut(&[u8]) + Send + Sync>>,
 }
@@ -44,7 +44,7 @@ impl BLERemoteCharacteristicState {
 }
 
 pub struct BLERemoteCharacteristic {
-  state: UnsafeArc<BLERemoteCharacteristicState>,
+  state: ArcUnsafeCell<BLERemoteCharacteristicState>,
 }
 
 impl BLERemoteCharacteristic {
@@ -53,7 +53,7 @@ impl BLERemoteCharacteristic {
     chr: &esp_idf_sys::ble_gatt_chr,
   ) -> Self {
     Self {
-      state: UnsafeArc::new(BLERemoteCharacteristicState {
+      state: ArcUnsafeCell::new(BLERemoteCharacteristicState {
         service,
         uuid: BleUuid::from(chr.uuid),
         handle: chr.val_handle,
@@ -80,7 +80,7 @@ impl BLERemoteCharacteristic {
 
   pub async fn get_descriptors(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, UnsafeArc<BLERemoteDescriptor>>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, ArcUnsafeCell<BLERemoteDescriptor>>, BLEReturnCode> {
     if self.state.descriptors.is_none() {
       self.state.descriptors = Some(Vec::new());
 
@@ -116,7 +116,7 @@ impl BLERemoteCharacteristic {
   pub async fn get_descriptor(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut UnsafeArc<BLERemoteDescriptor>, BLEReturnCode> {
+  ) -> Result<&mut ArcUnsafeCell<BLERemoteDescriptor>, BLEReturnCode> {
     let mut iter = self.get_descriptors().await?;
     iter
       .find(|x| x.uuid() == uuid)
@@ -161,8 +161,8 @@ impl BLERemoteCharacteristic {
     let dsc = unsafe { &*dsc };
 
     if error.status == 0 {
-      let descriptor = UnsafeArc::new(BLERemoteDescriptor::new(
-        UnsafeArc::downgrade(&characteristic.state),
+      let descriptor = ArcUnsafeCell::new(BLERemoteDescriptor::new(
+        ArcUnsafeCell::downgrade(&characteristic.state),
         dsc,
       ));
       characteristic

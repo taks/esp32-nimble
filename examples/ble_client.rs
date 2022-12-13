@@ -98,6 +98,5 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
   ::log::error!("{:?}", info);
   unsafe {
     esp_idf_sys::abort();
-    core::hint::unreachable_unchecked();
   }
 }

@@ -21,7 +21,8 @@ jobs:
           - xtensa-esp32-espidf
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
       - name: Setup | libncurses5
         run: sudo apt-get install libncurses5
       - name: Install Rust for Xtensa

@@ -1,0 +1,32 @@
+name: Publish
+
+on:
+  workflow_dispatch
+
+env:
+  rust_toolchain: nightly
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v3
+      - name: Setup | libncurses5
+        run: sudo apt-get install libncurses5
+      - name: Install Rust for Xtensa
+        uses: esp-rs/xtensa-toolchain@v1.3
+        with:
+          default: true
+          ldproxy: true
+      - name: Build Documentation
+        run: cargo doc --no-deps --target xtensa-esp32-espidf
+      - name: Deploy Documentation
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force_orphan: true
+          publish_dir: ./target/xtensa-esp32-espidf/doc
+

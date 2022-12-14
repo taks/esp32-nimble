@@ -1,8 +1,9 @@
 use super::ble_remote_service::BLERemoteServiceState;
+use super::{BLEReader, BLEWriter};
 use crate::{
   ble,
   utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell},
-  BLEReader, BLERemoteDescriptor, BLEReturnCode, BLEWriter, Signal,
+  BLERemoteDescriptor, BLEReturnCode, Signal,
 };
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;

@@ -17,7 +17,7 @@ mod ble_scan;
 pub use self::ble_scan::BLEScan;
 
 mod ble_reader;
-pub(crate) use ble_reader::BLEReader;
+pub(self) use ble_reader::BLEReader;
 
 mod ble_writer;
-pub(crate) use ble_writer::BLEWriter;
+pub(self) use ble_writer::BLEWriter;

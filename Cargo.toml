@@ -33,8 +33,8 @@ embassy-sync = { version = "0.1.0" }
 bitflags = { version = "2.0.0-rc.1" }
 
 [dev-dependencies]
-esp-idf-sys = { version = "0.32.0", default-features = false, features = ["binstart", "alloc_handler"] }
-esp-idf-hal = { version = "0.40.0", default-features = false, features = ["critical-section", "edge-executor", "embassy-sync"] }
+esp-idf-sys = { version = "0.32.1", default-features = false, features = ["binstart", "alloc_handler"] }
+esp-idf-hal = { version = "0.40.1", default-features = false, features = ["critical-section", "edge-executor", "embassy-sync"] }
 esp-idf-svc = { version = "0.44.0", default-features = false, features = ["alloc", "embassy-time-driver", "embassy-time-isr-queue"] }
 embedded-hal = { version = "=1.0.0-alpha.9", default-features = false }
 thingbuf = { version = "0.1.3", default-features = false, features = ["alloc"] }
@@ -43,6 +43,3 @@ embassy-time = { version = "0.1", features = ["tick-hz-1_000_000"] }
 [build-dependencies]
 embuild = "0.31.0"
 anyhow = "1.0.58"
-
-[patch.crates-io]
-esp-idf-sys = { git = 'https://github.com/esp-rs/esp-idf-sys.git', branch = 'master' }

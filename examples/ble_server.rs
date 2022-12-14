@@ -42,6 +42,20 @@ fn main() {
   );
   notifying_characteristic.lock().set_value(b"Initial value.");
 
+  // A writable characteristic.
+  let writable_characteristic = service.lock().create_characteristic(
+    BleUuid::from_uuid128_string("3c9a3f00-8ed3-4bdf-8a39-a01bebede295"),
+    NimbleProperties::Read | NimbleProperties::Write,
+  );
+  writable_characteristic
+    .lock()
+    .on_read(move |_, _| {
+      ::log::info!("Read from writable characteristic.");
+    })
+    .on_write(move |value, _param| {
+      ::log::info!("Wrote to writable characteristic: {:?}", value);
+    });
+
   let ble_advertising = ble_device.get_advertising();
   ble_advertising
     .name("ESP32-GATT-Server")
@@ -49,7 +63,7 @@ fn main() {
       "fafafafa-fafa-fafa-fafa-fafafafafafa",
     ));
 
-  ble_advertising.start(None).unwrap();
+  ble_advertising.start().unwrap();
 
   let mut counter = 0;
   loop {

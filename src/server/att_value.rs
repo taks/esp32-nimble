@@ -21,8 +21,16 @@ impl AttValue {
     self.value.len()
   }
 
+  pub fn clear(&mut self) {
+    self.value.clear();
+  }
+
   pub fn set_value(&mut self, value: &[u8]) {
     self.value.clear();
+    self.value.extend_from_slice(value);
+  }
+
+  pub fn extend(&mut self, value: &[u8]) {
     self.value.extend_from_slice(value);
   }
 }

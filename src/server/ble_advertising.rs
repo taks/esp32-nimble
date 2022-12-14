@@ -72,7 +72,11 @@ impl BLEAdvertising {
     self.adv_data_set = false;
   }
 
-  pub fn start(&mut self, duration_ms: Option<i32>) -> Result<(), BLEReturnCode> {
+  pub fn start(&mut self) -> Result<(), BLEReturnCode> {
+    self.start_with_duration(i32::MAX)
+  }
+
+  fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
     let mut server = unsafe { Lazy::get_mut(&mut crate::ble_device::BLE_SERVER) };
     if let Some(server) = server.as_mut() {
       if !server.started {
@@ -195,7 +199,7 @@ impl BLEAdvertising {
       ble!(esp_idf_sys::ble_gap_adv_start(
         crate::ble_device::OWN_ADDR_TYPE,
         core::ptr::null(),
-        duration_ms.unwrap_or(i32::MAX),
+        duration_ms,
         &self.adv_params,
         Some(handle_gap_event),
         self as *mut Self as _,

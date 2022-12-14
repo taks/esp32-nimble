@@ -13,3 +13,6 @@ pub use self::ble_server::BLEServer;
 
 mod ble_service;
 pub use self::ble_service::BLEService;
+
+mod utilities;
+pub(self) use self::utilities::*;

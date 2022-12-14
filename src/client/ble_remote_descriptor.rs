@@ -1,9 +1,10 @@
 use alloc::vec::Vec;
 
 use super::ble_remote_characteristic::BLERemoteCharacteristicState;
+use super::{BLEReader, BLEWriter};
 use crate::{
   utilities::{BleUuid, WeakUnsafeCell},
-  BLEReader, BLEReturnCode, BLEWriter,
+  BLEReturnCode,
 };
 
 pub struct BLERemoteDescriptor {

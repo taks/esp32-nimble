@@ -32,7 +32,7 @@ bitflags! {
 }
 
 bitflags! {
-  #[derive(PartialEq, PartialOrd)]
+  #[derive(Debug, PartialEq, PartialOrd)]
   struct NimbleSub: u16 {
     const Notify = 0x0001;
     const Indicate = 0x0002;
@@ -45,7 +45,8 @@ pub struct BLECharacteristic {
   pub(crate) handle: u16,
   pub(crate) properties: NimbleProperties,
   value: AttValue,
-  on_read: Option<Box<dyn FnMut(&mut AttValue) + Send + Sync>>,
+  on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_write: Option<Box<dyn FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
   subscribed_list: Vec<(u16, NimbleSub)>,
 }
 
@@ -57,6 +58,7 @@ impl BLECharacteristic {
       properties,
       value: AttValue::new(),
       on_read: None,
+      on_write: None,
       subscribed_list: Vec::new(),
     }
   }
@@ -68,9 +70,17 @@ impl BLECharacteristic {
 
   pub fn on_read(
     &mut self,
-    callback: impl FnMut(&mut AttValue) + Send + Sync + 'static,
+    callback: impl FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_read = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_write(
+    &mut self,
+    callback: impl FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_write = Some(Box::new(callback));
     self
   }
 
@@ -105,8 +115,8 @@ impl BLECharacteristic {
         if rc != 0 {
           server.clear_indicate_wait(it.0);
         }
-      } else if it.1.contains(NimbleSub::Indicate)
-        && self.properties.contains(NimbleProperties::Indicate)
+      } else if it.1.contains(NimbleSub::Notify)
+        && self.properties.contains(NimbleProperties::Notify)
       {
         let om = unsafe {
           esp_idf_sys::ble_hs_mbuf_from_flat(
@@ -136,9 +146,7 @@ impl BLECharacteristic {
 
     match ctxt.op as _ {
       esp_idf_sys::BLE_GATT_ACCESS_OP_READ_CHR => {
-        let mut desc = esp_idf_sys::ble_gap_conn_desc::default();
-        let rc = unsafe { esp_idf_sys::ble_gap_conn_find(conn_handle, &mut desc) };
-        assert_eq!(rc, 0);
+        let desc = super::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
           if (*(ctxt.om)).om_pkthdr_len > 8
@@ -146,7 +154,7 @@ impl BLECharacteristic {
           {
             let characteristic = UnsafeCell::new(&mut characteristic);
             if let Some(callback) = &mut (*characteristic.get()).on_read {
-              callback(&mut (*characteristic.get()).value);
+              callback(&mut (*characteristic.get()).value, &desc);
             }
           }
         }
@@ -161,7 +169,26 @@ impl BLECharacteristic {
           esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES as _
         }
       }
-      esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_CHR => 0,
+      esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_CHR => {
+        characteristic.value.clear();
+        let mut om = ctxt.om;
+        while !om.is_null() {
+          let slice = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };
+          characteristic.value.extend(slice);
+          om = unsafe { (*om).om_next.sle_next };
+        }
+
+        let desc = super::ble_gap_conn_find(conn_handle).unwrap();
+
+        unsafe {
+          let characteristic = UnsafeCell::new(&mut characteristic);
+          if let Some(callback) = &mut (*characteristic.get()).on_write {
+            callback((*characteristic.get()).value.value(), &desc);
+          }
+        }
+
+        0
+      }
       _ => esp_idf_sys::BLE_ATT_ERR_UNLIKELY as _,
     }
   }

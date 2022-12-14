@@ -19,9 +19,9 @@
       - [x] Static (by stack)
       - [x] Dynamic (by application, with callback)
       - [ ] Long
-    - [ ] Write
-      - [ ] With response
-      - [ ] Without response
+    - [x] Write
+      - [x] With response
+      - [x] Without response
       - [ ] Long
     - [x] Notify
     - [x] Indicate

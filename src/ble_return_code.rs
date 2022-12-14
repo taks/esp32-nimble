@@ -40,6 +40,7 @@ pub(crate) fn return_code_to_string(rc: u32) -> Option<&'static str> {
   if rc < 0x200 {
     match rc {
       esp_idf_sys::BLE_HS_EINVAL => Some("One or more arguments are invalid."),
+      esp_idf_sys::BLE_HS_EMSGSIZE => Some("The provided buffer is too small."),
       esp_idf_sys::BLE_HS_ENOTCONN => Some("No open connection with the specified handle."),
       esp_idf_sys::BLE_HS_ETIMEOUT => Some("Operation timed out."),
       esp_idf_sys::BLE_HS_EDONE => Some("Operation completed successfully."),

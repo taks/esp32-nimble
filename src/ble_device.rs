@@ -3,14 +3,16 @@ use core::ffi::c_void;
 use esp_idf_sys::esp_nofail;
 use once_cell::sync::Lazy;
 
-use crate::{ble_scan::BLEScan, ble, BLEReturnCode};
+use crate::{ble, client::BLEScan, BLEAdvertising, BLEReturnCode, BLEServer};
 
 static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   BLEDevice::init();
   BLEDevice {}
 });
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
-// static mut CONNECTED_CLIENTS: Lazy<Vec<&mut BLEClient>> = Lazy::new(Vec::new);
+pub(crate) static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
+static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new);
+
 pub(crate) static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;
 static mut SYNCED: bool = false;
 
@@ -54,6 +56,14 @@ impl BLEDevice {
 
   pub fn get_scan(&self) -> &'static mut BLEScan {
     unsafe { Lazy::force_mut(&mut BLE_SCAN) }
+  }
+
+  pub fn get_server(&self) -> &'static mut BLEServer {
+    unsafe { Lazy::force_mut(&mut BLE_SERVER) }
+  }
+
+  pub fn get_advertising(&self) -> &'static mut BLEAdvertising {
+    unsafe { Lazy::force_mut(&mut BLE_ADVERTISING) }
   }
 
   #[allow(temporary_cstring_as_ptr)]

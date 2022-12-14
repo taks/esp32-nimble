@@ -4,6 +4,32 @@
 ![crates.io](https://img.shields.io/crates/l/esp32-nimble)
 
 ## Features
+
+- [x] GATT server
+  - [x] Advertisement
+    - [x] Custom name
+    - [ ] Custom appearance
+  - [x] Services
+    - [ ] Declaration
+    - [ ] Advertisement
+  - [x] Characteristics
+    - [ ] Declaration
+    - [ ] Broadcast
+    - [x] Read
+      - [x] Static (by stack)
+      - [x] Dynamic (by application, with callback)
+      - [ ] Long
+    - [x] Write
+      - [x] With response
+      - [x] Without response
+      - [ ] Long
+    - [x] Notify
+    - [x] Indicate
+  - [x] Descriptors
+    - [ ] Declaration
+    - [x] Read
+    - [x] Write
+  - [ ] Encryption
 - [x] GATT client
   - [x] Scan
   - [x] Services

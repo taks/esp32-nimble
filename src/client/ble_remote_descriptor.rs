@@ -1,8 +1,9 @@
 use alloc::vec::Vec;
 
+use super::ble_remote_characteristic::BLERemoteCharacteristicState;
+use super::{BLEReader, BLEWriter};
 use crate::{
-  ble_remote_characteristic::BLERemoteCharacteristicState,
-  utilities::{BLEReader, BLEWriter, BleUuid, WeakUnsafeCell},
+  utilities::{BleUuid, WeakUnsafeCell},
   BLEReturnCode,
 };
 

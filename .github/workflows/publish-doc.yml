@@ -1,10 +1,10 @@
-name: Publish
+name: Publish Document
 
 on:
   workflow_dispatch
 
 env:
-  rust_toolchain: nightly
+  CARGO_TERM_COLOR: always
 
 jobs:
   publish:
@@ -23,7 +23,6 @@ jobs:
       - name: Build Documentation
         run: cargo doc --no-deps --target xtensa-esp32-espidf
       - name: Deploy Documentation
-        if: ${{ github.ref == 'refs/heads/master' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

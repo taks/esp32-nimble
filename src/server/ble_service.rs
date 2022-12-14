@@ -49,7 +49,7 @@ impl BLEService {
               uuid: unsafe { &chr.uuid.u },
               access_cb: Some(BLECharacteristic::handle_gap_event),
               arg: arg as _,
-              descriptors: core::ptr::null_mut(),
+              descriptors: chr.construct_svc_def_descriptors(),
               flags: chr.properties.bits(),
               min_key_size: 0,
               val_handle: &mut chr.handle,

@@ -25,10 +25,10 @@
       - [ ] Long
     - [x] Notify
     - [x] Indicate
-  - [ ] Descriptors
+  - [x] Descriptors
     - [ ] Declaration
-    - [ ] Read
-    - [ ] Write
+    - [x] Read
+    - [x] Write
   - [ ] Encryption
 - [x] GATT client
   - [x] Scan

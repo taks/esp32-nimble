@@ -1,15 +1,15 @@
 use core::{cell::UnsafeCell, ffi::c_void};
 
-use alloc::{boxed::Box, vec::Vec};
+use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp, os_mbuf_append};
 
 use crate::{
-  utilities::{ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid},
-  BLEDevice,
+  utilities::{
+    as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid,
+  },
+  AttValue, BLEDescriptor, BLEDevice,
 };
-
-use super::att_value::AttValue;
 
 const NULL_HANDLE: u16 = 0xFFFF;
 
@@ -47,6 +47,8 @@ pub struct BLECharacteristic {
   value: AttValue,
   on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
   on_write: Option<Box<dyn FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
+  svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
 }
 
@@ -59,6 +61,8 @@ impl BLECharacteristic {
       value: AttValue::new(),
       on_read: None,
       on_write: None,
+      descriptors: Vec::new(),
+      svc_def_descriptors: Vec::new(),
       subscribed_list: Vec::new(),
     }
   }
@@ -82,6 +86,41 @@ impl BLECharacteristic {
   ) -> &mut Self {
     self.on_write = Some(Box::new(callback));
     self
+  }
+
+  pub fn create_descriptor(
+    &mut self,
+    uuid: BleUuid,
+    properties: NimbleProperties,
+  ) -> Arc<Mutex<BLEDescriptor>> {
+    let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(uuid, properties)));
+    self.descriptors.push(descriptor.clone());
+    descriptor
+  }
+
+  pub(crate) fn construct_svc_def_descriptors(&mut self) -> *mut esp_idf_sys::ble_gatt_dsc_def {
+    if self.descriptors.is_empty() {
+      return core::ptr::null_mut();
+    }
+    self.svc_def_descriptors.clear();
+
+    for dsc in &self.descriptors {
+      let arg = unsafe { as_mut_ptr(Arc::into_raw(dsc.clone())) };
+      let dsc = dsc.lock();
+      self
+        .svc_def_descriptors
+        .push(esp_idf_sys::ble_gatt_dsc_def {
+          uuid: unsafe { &dsc.uuid.u },
+          att_flags: dsc.properties.bits() as _,
+          min_key_size: 0,
+          access_cb: Some(BLEDescriptor::handle_gap_event),
+          arg: arg as _,
+        });
+    }
+    self
+      .svc_def_descriptors
+      .push(esp_idf_sys::ble_gatt_dsc_def::default());
+    self.svc_def_descriptors.as_mut_ptr()
   }
 
   pub fn notify(&self) {

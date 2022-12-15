@@ -1,6 +1,6 @@
 use crate::{ble, BLEReturnCode, Signal};
 
-pub(crate) struct BLEWriter {
+pub struct BLEWriter {
   conn_handle: u16,
   handle: u16,
   signal: Signal<u32>,

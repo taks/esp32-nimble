@@ -24,7 +24,7 @@ bitflags! {
 }
 
 #[allow(clippy::type_complexity)]
-pub(crate) struct BLERemoteCharacteristicState {
+pub struct BLERemoteCharacteristicState {
   service: WeakUnsafeCell<BLERemoteServiceState>,
   uuid: BleUuid,
   pub handle: u16,

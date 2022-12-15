@@ -36,7 +36,7 @@ impl core::fmt::Debug for BLEReturnCode {
   }
 }
 
-pub(crate) fn return_code_to_string(rc: u32) -> Option<&'static str> {
+pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
   if rc < 0x200 {
     match rc {
       esp_idf_sys::BLE_HS_EINVAL => Some("One or more arguments are invalid."),

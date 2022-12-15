@@ -7,7 +7,7 @@ use crate::{
 use alloc::vec::Vec;
 use core::ffi::c_void;
 
-pub(crate) struct BLERemoteServiceState {
+pub struct BLERemoteServiceState {
   client: WeakUnsafeCell<BLEClientState>,
   uuid: BleUuid,
   start_handle: u16,

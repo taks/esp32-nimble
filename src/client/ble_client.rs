@@ -9,7 +9,7 @@ use alloc::{string::ToString, vec::Vec};
 use core::ffi::c_void;
 use esp_idf_sys::*;
 
-pub(crate) struct BLEClientState {
+pub struct BLEClientState {
   address: Option<BLEAddress>,
   conn_handle: u16,
   services: Option<Vec<BLERemoteService>>,

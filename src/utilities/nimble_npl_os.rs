@@ -2,7 +2,7 @@ use esp_idf_sys::*;
 
 #[inline]
 #[allow(unused)]
-pub(crate) fn ble_npl_hw_enter_critical() {
+pub fn ble_npl_hw_enter_critical() {
   #[cfg(esp32c3)]
   unsafe {
     vPortEnterCritical();
@@ -16,7 +16,7 @@ pub(crate) fn ble_npl_hw_enter_critical() {
 
 #[inline]
 #[allow(unused)]
-pub(crate) fn ble_npl_hw_exit_critical() {
+pub fn ble_npl_hw_exit_critical() {
   #[cfg(esp32c3)]
   unsafe {
     vPortExitCritical();

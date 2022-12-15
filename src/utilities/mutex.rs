@@ -50,15 +50,15 @@ impl embedded_svc::utils::mutex::RawMutex for RawMutex {
   const INIT: Self = RawMutex::new();
 
   fn new() -> Self {
-    RawMutex::new()
+    Self::new()
   }
 
   unsafe fn lock(&self) {
-    RawMutex::lock(self);
+    Self::lock(self);
   }
 
   unsafe fn unlock(&self) {
-    RawMutex::unlock(self);
+    Self::unlock(self);
   }
 }
 
@@ -127,22 +127,22 @@ impl embedded_svc::utils::mutex::RawCondvar for RawCondvar {
   type RawMutex = RawMutex;
 
   fn new() -> Self {
-    RawCondvar::new()
+    Self::new()
   }
 
   unsafe fn wait(&self, mutex: &Self::RawMutex) {
-    RawCondvar::wait(self, mutex);
+    Self::wait(self, mutex);
   }
 
   unsafe fn wait_timeout(&self, mutex: &Self::RawMutex, duration: Duration) -> bool {
-    RawCondvar::wait_timeout(self, mutex, duration)
+    Self::wait_timeout(self, mutex, duration)
   }
 
   fn notify_one(&self) {
-    RawCondvar::notify_one(self);
+    Self::notify_one(self);
   }
 
   fn notify_all(&self) {
-    RawCondvar::notify_all(self);
+    Self::notify_all(self);
   }
 }

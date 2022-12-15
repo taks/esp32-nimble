@@ -4,19 +4,19 @@ use core::{
   ops::{Deref, DerefMut},
 };
 
-pub(crate) struct ArcUnsafeCell<T: ?Sized> {
+pub struct ArcUnsafeCell<T: ?Sized> {
   value: Arc<UnsafeCell<T>>,
 }
 
 impl<T> ArcUnsafeCell<T> {
   #[inline(always)]
-  pub(crate) fn new(value: T) -> ArcUnsafeCell<T> {
+  pub(crate) fn new(value: T) -> Self {
     Self {
       value: Arc::new(UnsafeCell::new(value)),
     }
   }
 
-  pub fn downgrade(this: &ArcUnsafeCell<T>) -> WeakUnsafeCell<T> {
+  pub fn downgrade(this: &Self) -> WeakUnsafeCell<T> {
     WeakUnsafeCell {
       value: Arc::downgrade(&this.value),
     }
@@ -25,8 +25,8 @@ impl<T> ArcUnsafeCell<T> {
 
 impl<T: ?Sized> Clone for ArcUnsafeCell<T> {
   #[inline]
-  fn clone(&self) -> ArcUnsafeCell<T> {
-    ArcUnsafeCell {
+  fn clone(&self) -> Self {
+    Self {
       value: self.value.clone(),
     }
   }
@@ -48,7 +48,7 @@ impl<T: ?Sized> DerefMut for ArcUnsafeCell<T> {
   }
 }
 
-pub(crate) struct WeakUnsafeCell<T: ?Sized> {
+pub struct WeakUnsafeCell<T: ?Sized> {
   pub value: Weak<UnsafeCell<T>>,
 }
 
@@ -60,8 +60,8 @@ impl<T> WeakUnsafeCell<T> {
 
 impl<T: ?Sized> Clone for WeakUnsafeCell<T> {
   #[inline]
-  fn clone(&self) -> WeakUnsafeCell<T> {
-    WeakUnsafeCell {
+  fn clone(&self) -> Self {
+    Self {
       value: self.value.clone(),
     }
   }

@@ -10,10 +10,10 @@ static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   BLEDevice {}
 });
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
-pub(crate) static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
+pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
 static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new);
 
-pub(crate) static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;
+pub static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;
 static mut SYNCED: bool = false;
 
 pub struct BLEDevice {}

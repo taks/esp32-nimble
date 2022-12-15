@@ -37,4 +37,4 @@ jobs:
         run: cargo fmt --check
         continue-on-error: true
       - name: Clippy check
-        run: cargo clippy --all-features -- -D warnings
+        run: cargo clippy --all-features -- -D clippy::all -W clippy::nursery

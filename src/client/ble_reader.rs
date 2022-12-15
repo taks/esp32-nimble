@@ -3,7 +3,7 @@ use core::ffi::c_void;
 
 use crate::{ble, BLEReturnCode, Signal};
 
-pub(crate) struct BLEReader {
+pub struct BLEReader {
   conn_handle: u16,
   handle: u16,
   signal: Signal<u32>,

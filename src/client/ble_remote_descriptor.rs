@@ -7,6 +7,7 @@ use crate::{
   BLEReturnCode,
 };
 
+#[derive(Clone)]
 pub struct BLERemoteDescriptor {
   characteristic: WeakUnsafeCell<BLERemoteCharacteristicState>,
   uuid: BleUuid,

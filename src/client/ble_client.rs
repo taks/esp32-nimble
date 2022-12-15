@@ -12,7 +12,7 @@ use esp_idf_sys::*;
 pub(crate) struct BLEClientState {
   address: Option<BLEAddress>,
   conn_handle: u16,
-  services: Option<Vec<ArcUnsafeCell<BLERemoteService>>>,
+  services: Option<Vec<BLERemoteService>>,
   signal: Signal<u32>,
   connect_timeout_ms: u32,
   ble_gap_conn_params: ble_gap_conn_params,
@@ -95,7 +95,7 @@ impl BLEClient {
 
   pub async fn get_services(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, ArcUnsafeCell<BLERemoteService>>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteService>, BLEReturnCode> {
     if self.state.services.is_none() {
       self.state.services = Some(Vec::new());
       unsafe {
@@ -114,7 +114,7 @@ impl BLEClient {
   pub async fn get_service(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut ArcUnsafeCell<BLERemoteService>, BLEReturnCode> {
+  ) -> Result<&mut BLERemoteService, BLEReturnCode> {
     let mut iter = self.get_services().await?;
     iter
       .find(|x| x.uuid() == uuid)
@@ -197,10 +197,7 @@ impl BLEClient {
 
     if error.status == 0 {
       // Found a service - add it to the vector
-      let service = ArcUnsafeCell::new(BLERemoteService::new(
-        ArcUnsafeCell::downgrade(&client.state),
-        service,
-      ));
+      let service = BLERemoteService::new(ArcUnsafeCell::downgrade(&client.state), service);
       client.state.services.as_mut().unwrap().push(service);
       return 0;
     }

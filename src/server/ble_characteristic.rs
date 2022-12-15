@@ -93,6 +93,10 @@ impl BLECharacteristic {
     uuid: BleUuid,
     properties: NimbleProperties,
   ) -> Arc<Mutex<BLEDescriptor>> {
+    if uuid == BleUuid::Uuid16(esp_idf_sys::BLE_GATT_DSC_CLT_CFG_UUID16 as _) {
+      panic!("0x2902 descriptors cannot be manually created");
+    }
+
     let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(uuid, properties)));
     self.descriptors.push(descriptor.clone());
     descriptor

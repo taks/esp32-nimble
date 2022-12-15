@@ -30,7 +30,7 @@ pub(crate) struct BLERemoteCharacteristicState {
   pub handle: u16,
   end_handle: u16,
   properties: GattCharacteristicProperties,
-  descriptors: Option<Vec<ArcUnsafeCell<BLERemoteDescriptor>>>,
+  descriptors: Option<Vec<BLERemoteDescriptor>>,
   signal: Signal<u32>,
   on_notify: Option<Box<dyn FnMut(&[u8]) + Send + Sync>>,
 }
@@ -44,6 +44,7 @@ impl BLERemoteCharacteristicState {
   }
 }
 
+#[derive(Clone)]
 pub struct BLERemoteCharacteristic {
   state: ArcUnsafeCell<BLERemoteCharacteristicState>,
 }
@@ -81,7 +82,7 @@ impl BLERemoteCharacteristic {
 
   pub async fn get_descriptors(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, ArcUnsafeCell<BLERemoteDescriptor>>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteDescriptor>, BLEReturnCode> {
     if self.state.descriptors.is_none() {
       self.state.descriptors = Some(Vec::new());
 
@@ -117,7 +118,7 @@ impl BLERemoteCharacteristic {
   pub async fn get_descriptor(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut ArcUnsafeCell<BLERemoteDescriptor>, BLEReturnCode> {
+  ) -> Result<&mut BLERemoteDescriptor, BLEReturnCode> {
     let mut iter = self.get_descriptors().await?;
     iter
       .find(|x| x.uuid() == uuid)
@@ -162,10 +163,8 @@ impl BLERemoteCharacteristic {
     let dsc = unsafe { &*dsc };
 
     if error.status == 0 {
-      let descriptor = ArcUnsafeCell::new(BLERemoteDescriptor::new(
-        ArcUnsafeCell::downgrade(&characteristic.state),
-        dsc,
-      ));
+      let descriptor =
+        BLERemoteDescriptor::new(ArcUnsafeCell::downgrade(&characteristic.state), dsc);
       characteristic
         .state
         .descriptors

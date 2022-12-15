@@ -1,10 +1,10 @@
-use core::{ffi::c_void, cell::UnsafeCell};
+use core::{cell::UnsafeCell, ffi::c_void};
 
 use alloc::boxed::Box;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp, os_mbuf_append};
 
 use crate::{
-  utilities::{mutex::Mutex, BleUuid, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical},
+  utilities::{ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid},
   AttValue, NimbleProperties,
 };
 

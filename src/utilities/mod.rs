@@ -4,7 +4,7 @@ pub use ble_uuid::BleUuid;
 pub mod mutex;
 
 mod arc_unsafe_cell;
-pub use arc_unsafe_cell::*;
+pub(crate) use arc_unsafe_cell::*;
 
 mod nimble_npl_os;
 pub(crate) use nimble_npl_os::*;

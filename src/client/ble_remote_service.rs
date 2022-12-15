@@ -12,7 +12,7 @@ pub(crate) struct BLERemoteServiceState {
   uuid: BleUuid,
   start_handle: u16,
   pub(crate) end_handle: u16,
-  pub(crate) characteristics: Option<Vec<ArcUnsafeCell<BLERemoteCharacteristic>>>,
+  pub(crate) characteristics: Option<Vec<BLERemoteCharacteristic>>,
   signal: Signal<u32>,
 }
 
@@ -25,6 +25,7 @@ impl BLERemoteServiceState {
   }
 }
 
+#[derive(Clone)]
 pub struct BLERemoteService {
   pub(crate) state: ArcUnsafeCell<BLERemoteServiceState>,
 }
@@ -52,7 +53,7 @@ impl BLERemoteService {
 
   pub async fn get_characteristics(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, ArcUnsafeCell<BLERemoteCharacteristic>>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteCharacteristic>, BLEReturnCode> {
     if self.state.characteristics.is_none() {
       self.state.characteristics = Some(Vec::new());
       unsafe {
@@ -73,7 +74,7 @@ impl BLERemoteService {
   pub async fn get_characteristic(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut ArcUnsafeCell<BLERemoteCharacteristic>, BLEReturnCode> {
+  ) -> Result<&mut BLERemoteCharacteristic, BLEReturnCode> {
     let mut iter = self.get_characteristics().await?;
     iter
       .find(|x| x.uuid() == uuid)
@@ -94,10 +95,7 @@ impl BLERemoteService {
     let chr = unsafe { &*chr };
 
     if error.status == 0 {
-      let chr = ArcUnsafeCell::new(BLERemoteCharacteristic::new(
-        ArcUnsafeCell::downgrade(&service.state),
-        chr,
-      ));
+      let chr = BLERemoteCharacteristic::new(ArcUnsafeCell::downgrade(&service.state), chr);
       service.state.characteristics.as_mut().unwrap().push(chr);
       return 0;
     }

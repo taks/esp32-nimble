@@ -209,6 +209,10 @@ impl BLEAdvertising {
     Ok(())
   }
 
+  pub fn stop() -> Result<(), BLEReturnCode> {
+    unsafe { ble!(esp_idf_sys::ble_gap_adv_stop()) }
+  }
+
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let _event = unsafe { &*event };
     let _adv = unsafe { &mut *(arg as *mut Self) };

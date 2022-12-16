@@ -17,6 +17,6 @@ pub(crate) unsafe fn extend_lifetime_mut<'a, 'b: 'a, T: ?Sized>(r: &'a mut T) ->
 
 #[inline]
 #[allow(unused)]
-pub(crate) unsafe fn as_mut_ptr<T>(ptr: *const T) -> *mut T {
+pub(crate) const unsafe fn as_mut_ptr<T>(ptr: *const T) -> *mut T {
   ptr as *mut T
 }

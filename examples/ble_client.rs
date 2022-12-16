@@ -56,13 +56,11 @@ fn main() {
         client.connect(device.addr()).await.unwrap();
 
         let service = client
-          .get_service(BleUuid::from_uuid128_string(
-            "fafafafa-fafa-fafa-fafa-fafafafafafa",
-          ))
+          .get_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"))
           .await
           .unwrap();
 
-        let uuid = BleUuid::from_uuid128_string("d4e0e0d0-1a2b-11e9-ab14-d663bd873d93");
+        let uuid = uuid128!("d4e0e0d0-1a2b-11e9-ab14-d663bd873d93");
         let characteristic = service.get_characteristic(uuid).await.unwrap();
         let value = characteristic.read_value().await.unwrap();
         ::log::info!(
@@ -71,7 +69,7 @@ fn main() {
           core::str::from_utf8(&value).unwrap()
         );
 
-        let uuid = BleUuid::from_uuid128_string("a3c87500-8ed3-4bdf-8a39-a01bebede295");
+        let uuid = uuid128!("a3c87500-8ed3-4bdf-8a39-a01bebede295");
         let characteristic = service.get_characteristic(uuid).await.unwrap();
         ::log::info!("subscribe {:?}", uuid);
         characteristic

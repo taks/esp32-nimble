@@ -63,9 +63,9 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
   }
 }
 
-#[macro_export]
 macro_rules! ble {
   ($err:expr) => {{
     $crate::BLEReturnCode::convert($err as _)
   }};
 }
+pub(crate) use ble;

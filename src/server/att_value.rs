@@ -5,7 +5,7 @@ pub struct AttValue {
 }
 
 impl AttValue {
-  pub(super) fn new() -> Self {
+  pub(super) const fn new() -> Self {
     Self { value: Vec::new() }
   }
 

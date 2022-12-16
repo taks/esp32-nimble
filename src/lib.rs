@@ -14,6 +14,7 @@ pub use self::ble_device::BLEDevice;
 
 mod ble_return_code;
 pub use self::ble_return_code::BLEReturnCode;
+pub(crate) use self::ble_return_code::ble;
 
 mod client;
 pub use self::client::*;

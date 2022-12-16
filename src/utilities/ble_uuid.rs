@@ -35,23 +35,15 @@ impl BleUuid {
   /// # Panics
   ///
   /// Panics if the string contains invalid characters.
-  pub fn from_uuid128_string<S: AsRef<str>>(uuid: S) -> Self {
+  pub const fn from_uuid128_string(uuid: &str) -> Result<Self, uuid::Error> {
     // Accepts the following formats:
     // "00000000-0000-0000-0000-000000000000"
     // "00000000000000000000000000000000"
 
-    let uuid = uuid.as_ref();
-
-    let mut uuid_bytes = [0u8; 16];
-    // Remove the dashes.
-    let uuid = uuid.replace('-', "");
-
-    for (i, byte) in uuid.as_bytes().chunks(2).enumerate() {
-      uuid_bytes[i] = u8::from_str_radix(core::str::from_utf8(byte).unwrap(), 16).unwrap();
+    match uuid::Uuid::try_parse(uuid) {
+      Ok(uuid) => Ok(Self::Uuid128(uuid.as_u128().to_le_bytes())),
+      Err(err) => Err(err),
     }
-
-    uuid_bytes.reverse();
-    Self::Uuid128(uuid_bytes)
   }
 
   #[must_use]
@@ -158,4 +150,11 @@ impl core::fmt::Debug for BleUuid {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     write!(f, "{self}")
   }
+}
+
+#[macro_export]
+macro_rules! uuid128 {
+  ($uuid:expr) => {{
+    esp32_nimble::utilities::BleUuid::Uuid128(uuid::uuid!($uuid).as_u128().to_le_bytes())
+  }};
 }

@@ -36,6 +36,22 @@ impl BLEServer {
     }
   }
 
+  pub fn on_connect(
+    &mut self,
+    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_connect = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_disconnect(
+    &mut self,
+    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_disconnect = Some(Box::new(callback));
+    self
+  }
+
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {
     if self.started {
       return Ok(());

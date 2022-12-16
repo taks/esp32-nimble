@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use alloc::format;
-use esp32_nimble::{utilities::BleUuid, BLEDevice, NimbleProperties};
+use esp32_nimble::{utilities::BleUuid, uuid128, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
 
 #[no_mangle]
@@ -22,13 +22,11 @@ fn main() {
   let ble_device = BLEDevice::take();
 
   let server = ble_device.get_server();
-  let service = server.create_service(BleUuid::from_uuid128_string(
-    "fafafafa-fafa-fafa-fafa-fafafafafafa",
-  ));
+  let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 
   // A static characteristic.
   let static_characteristic = service.lock().create_characteristic(
-    BleUuid::from_uuid128_string("d4e0e0d0-1a2b-11e9-ab14-d663bd873d93"),
+    uuid128!("d4e0e0d0-1a2b-11e9-ab14-d663bd873d93"),
     NimbleProperties::Read,
   );
   static_characteristic
@@ -37,14 +35,14 @@ fn main() {
 
   // A characteristic that notifies every second.
   let notifying_characteristic = service.lock().create_characteristic(
-    BleUuid::from_uuid128_string("a3c87500-8ed3-4bdf-8a39-a01bebede295"),
+    uuid128!("a3c87500-8ed3-4bdf-8a39-a01bebede295"),
     NimbleProperties::Read | NimbleProperties::Notify,
   );
   notifying_characteristic.lock().set_value(b"Initial value.");
 
   // A writable characteristic.
   let writable_characteristic = service.lock().create_characteristic(
-    BleUuid::from_uuid128_string("3c9a3f00-8ed3-4bdf-8a39-a01bebede295"),
+    uuid128!("3c9a3f00-8ed3-4bdf-8a39-a01bebede295"),
     NimbleProperties::Read | NimbleProperties::Write,
   );
   writable_characteristic
@@ -59,9 +57,7 @@ fn main() {
   let ble_advertising = ble_device.get_advertising();
   ble_advertising
     .name("ESP32-GATT-Server")
-    .add_service_uuid(BleUuid::from_uuid128_string(
-      "fafafafa-fafa-fafa-fafa-fafafafafafa",
-    ));
+    .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 
   ble_advertising.start().unwrap();
 

@@ -35,6 +35,5 @@ jobs:
         run: cargo build --target ${{ matrix.target }} --verbose --examples
       - name: Fmt check
         run: cargo fmt --check
-        continue-on-error: true
       - name: Clippy check
         run: cargo clippy --all-features -- -D clippy::all -W clippy::nursery

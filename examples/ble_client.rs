@@ -5,7 +5,7 @@ extern crate alloc;
 
 use alloc::sync::Arc;
 use embassy_time::{Duration, Timer};
-use esp32_nimble::{utilities::mutex::Mutex, utilities::BleUuid, *};
+use esp32_nimble::{utilities::mutex::Mutex, uuid128, BLEClient, BLEDevice};
 use esp_idf_hal::task::executor::{EspExecutor, Local};
 use esp_idf_sys as _;
 use log::*;

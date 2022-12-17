@@ -13,6 +13,9 @@ pub struct BLEAdvertising {
   service_uuids_16: Vec<esp_idf_sys::ble_uuid16_t>,
   service_uuids_32: Vec<esp_idf_sys::ble_uuid32_t>,
   service_uuids_128: Vec<esp_idf_sys::ble_uuid128_t>,
+  service_data16: Vec<u8>,
+  service_data32: Vec<u8>,
+  service_data128: Vec<u8>,
   adv_data_set: bool,
   name: Option<CString>,
   scan_response: bool,
@@ -27,6 +30,9 @@ impl BLEAdvertising {
       service_uuids_16: Vec::new(),
       service_uuids_32: Vec::new(),
       service_uuids_128: Vec::new(),
+      service_data16: Vec::new(),
+      service_data32: Vec::new(),
+      service_data128: Vec::new(),
       adv_data_set: false,
       name: None,
       scan_response: true,
@@ -40,7 +46,7 @@ impl BLEAdvertising {
     ret
   }
 
-  pub fn add_service_uuid(&mut self, uuid: BleUuid) {
+  pub fn add_service_uuid(&mut self, uuid: BleUuid) -> &mut Self {
     let x = esp_idf_sys::ble_uuid_any_t::from(uuid);
     match uuid {
       BleUuid::Uuid16(_) => {
@@ -54,6 +60,46 @@ impl BLEAdvertising {
       }
     }
     self.adv_data_set = false;
+
+    self
+  }
+
+  pub fn service_data(&mut self, uuid: BleUuid, data: &[u8]) {
+    match uuid {
+      BleUuid::Uuid16(uuid) => {
+        self.service_data16.clear();
+        self.service_data16.extend_from_slice(&uuid.to_ne_bytes());
+        self.service_data16.extend_from_slice(data);
+        self.adv_data.svc_data_uuid16 = self.service_data16.as_ptr();
+        self.adv_data.svc_data_uuid16_len = if data.is_empty() {
+          0
+        } else {
+          self.service_data16.len() as _
+        }
+      }
+      BleUuid::Uuid32(uuid) => {
+        self.service_data32.clear();
+        self.service_data32.extend_from_slice(&uuid.to_ne_bytes());
+        self.service_data32.extend_from_slice(data);
+        self.adv_data.svc_data_uuid32 = self.service_data32.as_ptr();
+        self.adv_data.svc_data_uuid32_len = if data.is_empty() {
+          0
+        } else {
+          self.service_data32.len() as _
+        }
+      }
+      BleUuid::Uuid128(uuid) => {
+        self.service_data128.clear();
+        self.service_data128.extend_from_slice(&uuid);
+        self.service_data128.extend_from_slice(data);
+        self.adv_data.svc_data_uuid128 = self.service_data128.as_ptr();
+        self.adv_data.svc_data_uuid128_len = if data.is_empty() {
+          0
+        } else {
+          self.service_data128.len() as _
+        }
+      }
+    }
   }
 
   pub fn name(&mut self, name: &str) -> &mut Self {

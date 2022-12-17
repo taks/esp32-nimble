@@ -16,6 +16,11 @@ mod ble_return_code;
 pub(crate) use self::ble_return_code::ble;
 pub use self::ble_return_code::BLEReturnCode;
 
+mod ble_security;
+pub use self::ble_security::BLESecurity;
+
+pub mod enums;
+
 mod client;
 pub use self::client::*;
 

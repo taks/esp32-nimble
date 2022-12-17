@@ -3,11 +3,13 @@ use core::ffi::c_void;
 use esp_idf_sys::esp_nofail;
 use once_cell::sync::Lazy;
 
-use crate::{ble, client::BLEScan, BLEAdvertising, BLEReturnCode, BLEServer};
+use crate::{ble, client::BLEScan, BLEAdvertising, BLEReturnCode, BLESecurity, BLEServer};
 
 static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   BLEDevice::init();
-  BLEDevice {}
+  BLEDevice {
+    security: BLESecurity::new(),
+  }
 });
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
 pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
@@ -16,7 +18,9 @@ static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new
 pub static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;
 static mut SYNCED: bool = false;
 
-pub struct BLEDevice {}
+pub struct BLEDevice {
+  security: BLESecurity,
+}
 
 impl BLEDevice {
   fn init() {
@@ -50,8 +54,8 @@ impl BLEDevice {
     }
   }
 
-  pub fn take() -> &'static Self {
-    unsafe { Lazy::force(&BLE_DEVICE) }
+  pub fn take() -> &'static mut Self {
+    unsafe { Lazy::force_mut(&mut BLE_DEVICE) }
   }
 
   pub fn get_scan(&self) -> &'static mut BLEScan {
@@ -64,6 +68,10 @@ impl BLEDevice {
 
   pub fn get_advertising(&self) -> &'static mut BLEAdvertising {
     unsafe { Lazy::force_mut(&mut BLE_ADVERTISING) }
+  }
+
+  pub fn security(&mut self) -> &mut BLESecurity {
+    &mut self.security
   }
 
   #[allow(temporary_cstring_as_ptr)]

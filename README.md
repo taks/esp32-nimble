@@ -17,7 +17,7 @@
   - [x] Descriptors
     - [x] Read
     - [x] Write
-  - [ ] Encryption
+  - [x] Encryption
 - [x] GATT client
   - [x] Scan
   - [x] Services

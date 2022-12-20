@@ -6,6 +6,9 @@ pub mod mutex;
 mod arc_unsafe_cell;
 pub(crate) use arc_unsafe_cell::*;
 
+mod ble_functions;
+pub(crate) use ble_functions::*;
+
 mod nimble_npl_os;
 pub(crate) use nimble_npl_os::*;
 

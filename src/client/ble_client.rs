@@ -5,23 +5,18 @@ use crate::{
   utilities::{ArcUnsafeCell, BleUuid},
   BLEAddress, BLERemoteService, BLEReturnCode, Signal,
 };
-use alloc::{string::ToString, vec::Vec};
+use alloc::{boxed::Box, string::ToString, vec::Vec};
 use core::ffi::c_void;
 use esp_idf_sys::*;
 
-pub struct BLEClientState {
+pub(crate) struct BLEClientState {
   address: Option<BLEAddress>,
   conn_handle: u16,
   services: Option<Vec<BLERemoteService>>,
   signal: Signal<u32>,
   connect_timeout_ms: u32,
   ble_gap_conn_params: ble_gap_conn_params,
-}
-
-impl BLEClientState {
-  pub fn conn_handle(&self) -> u16 {
-    self.conn_handle
-  }
+  on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
 }
 
 pub struct BLEClient {
@@ -47,8 +42,25 @@ impl BLEClient {
           max_ce_len: BLE_GAP_INITIAL_CONN_MAX_CE_LEN as _,
         },
         signal: Signal::new(),
+        on_passkey_request: None,
       }),
     }
+  }
+
+  pub(crate) fn from_state(state: ArcUnsafeCell<BLEClientState>) -> Self {
+    Self { state }
+  }
+
+  pub(crate) fn conn_handle(&self) -> u16 {
+    self.state.conn_handle
+  }
+
+  pub fn on_passkey_request(
+    &mut self,
+    callback: impl Fn() -> u32 + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.state.on_passkey_request = Some(Box::new(callback));
+    self
   }
 
   pub async fn connect(&mut self, addr: &BLEAddress) -> Result<(), BLEReturnCode> {
@@ -70,6 +82,19 @@ impl BLEClient {
 
     ble!(self.state.signal.wait().await)?;
     self.state.address = Some(*addr);
+
+    Ok(())
+  }
+
+  pub async fn secure_connection(&mut self) -> Result<(), BLEReturnCode> {
+    unsafe {
+      ble!(esp_idf_sys::ble_gap_security_initiate(
+        self.state.conn_handle
+      ))?;
+    }
+    ble!(self.state.signal.wait().await)?;
+
+    ::log::info!("secure_connection: success");
 
     Ok(())
   }
@@ -131,7 +156,13 @@ impl BLEClient {
 
         if connect.status == 0 {
           client.state.conn_handle = connect.conn_handle;
-          client.state.signal.signal(0);
+
+          let rc =
+            unsafe { ble_gattc_exchange_mtu(connect.conn_handle, None, core::ptr::null_mut()) };
+
+          if rc != 0 {
+            client.state.signal.signal(rc as _);
+          }
         } else {
           ::log::info!("connect_status {}", connect.status);
           client.state.conn_handle = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
@@ -150,6 +181,33 @@ impl BLEClient {
           return_code_to_string(disconnect.reason as _)
             .map_or_else(|| disconnect.reason.to_string(), |x| x.to_string())
         );
+      }
+      BLE_GAP_EVENT_ENC_CHANGE => {
+        let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };
+        if client.state.conn_handle != enc_change.conn_handle {
+          return 0;
+        }
+
+        if enc_change.status
+          == ((BLE_HS_ERR_HCI_BASE + ble_error_codes_BLE_ERR_PINKEY_MISSING) as _)
+        {
+          let desc = crate::utilities::ble_gap_conn_find(enc_change.conn_handle).unwrap();
+          unsafe { esp_idf_sys::ble_store_util_delete_peer(&desc.peer_id_addr) };
+        }
+
+        client.state.signal.signal(enc_change.status as _);
+      }
+      BLE_GAP_EVENT_MTU => {
+        let mtu = unsafe { &event.__bindgen_anon_1.mtu };
+        if client.state.conn_handle != mtu.conn_handle {
+          return 0;
+        }
+        ::log::info!(
+          "mtu update event; conn_handle={} mtu={}",
+          mtu.conn_handle,
+          mtu.value
+        );
+        client.state.signal.signal(0);
       }
       BLE_GAP_EVENT_NOTIFY_RX => {
         let notify_rx = unsafe { &event.__bindgen_anon_1.notify_rx };
@@ -176,7 +234,34 @@ impl BLEClient {
           }
         }
       }
-      _ => {}
+      BLE_GAP_EVENT_PASSKEY_ACTION => {
+        let passkey = unsafe { &event.__bindgen_anon_1.passkey };
+        if client.state.conn_handle != passkey.conn_handle {
+          return 0;
+        }
+        let mut pkey = esp_idf_sys::ble_sm_io {
+          action: passkey.params.action,
+          ..Default::default()
+        };
+        match passkey.params.action as _ {
+          esp_idf_sys::BLE_SM_IOACT_INPUT => {
+            if let Some(callback) = &client.state.on_passkey_request {
+              pkey.__bindgen_anon_1.passkey = callback();
+            } else {
+              ::log::warn!("on_passkey_request is not setted");
+            }
+            let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
+            ::log::info!("BLE_SM_IOACT_INPUT; ble_sm_inject_io result: {}", rc);
+            client.state.signal.signal(rc as _);
+          }
+          action => {
+            todo!("implementation required: {}", action);
+          }
+        }
+      }
+      _ => {
+        ::log::warn!("unhandled event: {}", event.type_);
+      }
     }
     0
   }

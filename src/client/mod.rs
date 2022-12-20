@@ -1,11 +1,14 @@
 mod ble_advertised_device;
 pub use self::ble_advertised_device::BLEAdvertisedDevice;
 
+mod ble_attribute;
+pub(crate) use self::ble_attribute::*;
+
 mod ble_client;
 pub use self::ble_client::BLEClient;
 
 mod ble_remote_characteristic;
-pub use self::ble_remote_characteristic::BLERemoteCharacteristic;
+pub use self::ble_remote_characteristic::*;
 
 mod ble_remote_descriptor;
 pub use self::ble_remote_descriptor::BLERemoteDescriptor;

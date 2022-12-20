@@ -76,7 +76,7 @@ fn main() {
           .on_notify(|data| {
             ::log::info!("{}", core::str::from_utf8(&data).unwrap());
           })
-          .subscribe(true, false)
+          .subscribe_notify(false)
           .await
           .unwrap();
 

@@ -5,8 +5,10 @@
 extern crate alloc;
 
 pub type BLEAddress = esp_idf_sys::ble_addr_t;
-pub type Signal<T> = embassy_sync::signal::Signal<esp_idf_hal::task::embassy_sync::EspRawMutex, T>;
-pub type Channel<T, const N: usize> =
+pub(crate) type Signal<T> =
+  embassy_sync::signal::Signal<esp_idf_hal::task::embassy_sync::EspRawMutex, T>;
+#[allow(dead_code)]
+pub(crate) type Channel<T, const N: usize> =
   embassy_sync::channel::Channel<esp_idf_hal::task::embassy_sync::EspRawMutex, T, N>;
 
 mod ble_device;

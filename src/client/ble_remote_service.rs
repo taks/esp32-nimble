@@ -2,7 +2,7 @@ use super::ble_client::BLEClientState;
 use crate::{
   ble,
   utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell},
-  BLERemoteCharacteristic, BLEReturnCode, Signal,
+  BLEAttribute, BLEClient, BLERemoteCharacteristic, BLEReturnCode, Signal,
 };
 use alloc::vec::Vec;
 use core::ffi::c_void;
@@ -16,12 +16,9 @@ pub struct BLERemoteServiceState {
   signal: Signal<u32>,
 }
 
-impl BLERemoteServiceState {
-  pub(crate) fn conn_handle(&self) -> u16 {
-    match self.client.upgrade() {
-      Some(x) => x.conn_handle(),
-      None => esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _,
-    }
+impl BLEAttribute for BLERemoteServiceState {
+  fn get_client(&self) -> Option<BLEClient> {
+    self.client.upgrade().map(BLEClient::from_state)
   }
 }
 

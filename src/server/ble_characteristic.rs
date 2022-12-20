@@ -14,28 +14,28 @@ use crate::{
 const NULL_HANDLE: u16 = 0xFFFF;
 
 bitflags! {
-  #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+  #[repr(transparent)]
   pub struct NimbleProperties: u16 {
-    const Read = esp_idf_sys::BLE_GATT_CHR_F_READ as _;
-    const ReadEnc = esp_idf_sys::BLE_GATT_CHR_F_READ_ENC as _;
-    const ReadAuthen = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHEN as _;
-    const ReadAuthor = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHOR as _;
-    const Write = esp_idf_sys::BLE_GATT_CHR_F_WRITE as _;
-    const WriteNoRsp = esp_idf_sys::BLE_GATT_CHR_F_WRITE_NO_RSP as _;
-    const WriteEnc = esp_idf_sys::BLE_GATT_CHR_F_WRITE_ENC as _;
-    const WriteAuthen = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHEN as _;
-    const WriteAuthor = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHOR as _;
-    const Broadcast = esp_idf_sys::BLE_GATT_CHR_F_BROADCAST as _;
-    const Notify = esp_idf_sys::BLE_GATT_CHR_F_NOTIFY as _;
-    const Indicate = esp_idf_sys::BLE_GATT_CHR_F_INDICATE as _;
+    const READ = esp_idf_sys::BLE_GATT_CHR_F_READ as _;
+    const READ_ENC = esp_idf_sys::BLE_GATT_CHR_F_READ_ENC as _;
+    const READ_AUTHEN = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHEN as _;
+    const READ_AUTHOR = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHOR as _;
+    const WRITE = esp_idf_sys::BLE_GATT_CHR_F_WRITE as _;
+    const WRITE_NO_RSP = esp_idf_sys::BLE_GATT_CHR_F_WRITE_NO_RSP as _;
+    const WRITE_ENC = esp_idf_sys::BLE_GATT_CHR_F_WRITE_ENC as _;
+    const WRITE_AUTHEN = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHEN as _;
+    const WRITE_AUTHOR = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHOR as _;
+    const BROADCAST = esp_idf_sys::BLE_GATT_CHR_F_BROADCAST as _;
+    const NOTIFY = esp_idf_sys::BLE_GATT_CHR_F_NOTIFY as _;
+    const INDICATE = esp_idf_sys::BLE_GATT_CHR_F_INDICATE as _;
   }
 }
 
 bitflags! {
-  #[derive(Debug, PartialEq, PartialOrd)]
+  #[repr(transparent)]
   struct NimbleSub: u16 {
-    const Notify = 0x0001;
-    const Indicate = 0x0002;
+    const NOTIFY = 0x0001;
+    const INDICATE = 0x0002;
   }
 }
 
@@ -140,7 +140,7 @@ impl BLECharacteristic {
         continue;
       }
 
-      if it.1.contains(NimbleSub::Indicate) && self.properties.contains(NimbleProperties::Indicate)
+      if it.1.contains(NimbleSub::INDICATE) && self.properties.contains(NimbleProperties::INDICATE)
       {
         if !server.set_indicate_wait(it.0) {
           ::log::error!("prior Indication in progress");
@@ -158,8 +158,8 @@ impl BLECharacteristic {
         if rc != 0 {
           server.clear_indicate_wait(it.0);
         }
-      } else if it.1.contains(NimbleSub::Notify)
-        && self.properties.contains(NimbleProperties::Notify)
+      } else if it.1.contains(NimbleSub::NOTIFY)
+        && self.properties.contains(NimbleProperties::NOTIFY)
       {
         let om = unsafe {
           esp_idf_sys::ble_hs_mbuf_from_flat(
@@ -189,7 +189,7 @@ impl BLECharacteristic {
 
     match ctxt.op as _ {
       esp_idf_sys::BLE_GATT_ACCESS_OP_READ_CHR => {
-        let desc = super::ble_gap_conn_find(conn_handle).unwrap();
+        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
           if (*(ctxt.om)).om_pkthdr_len > 8
@@ -221,7 +221,7 @@ impl BLECharacteristic {
           om = unsafe { (*om).om_next.sle_next };
         }
 
-        let desc = super::ble_gap_conn_find(conn_handle).unwrap();
+        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
           let characteristic = UnsafeCell::new(&mut characteristic);
@@ -246,11 +246,11 @@ impl BLECharacteristic {
     }
 
     let mut sub_val = NimbleSub::empty();
-    if subscribe.cur_notify() > 0 && (self.properties.contains(NimbleProperties::Notify)) {
-      sub_val.insert(NimbleSub::Notify);
+    if subscribe.cur_notify() > 0 && (self.properties.contains(NimbleProperties::NOTIFY)) {
+      sub_val.insert(NimbleSub::NOTIFY);
     }
-    if subscribe.cur_indicate() > 0 && (self.properties.contains(NimbleProperties::Indicate)) {
-      sub_val.insert(NimbleSub::Indicate);
+    if subscribe.cur_indicate() > 0 && (self.properties.contains(NimbleProperties::INDICATE)) {
+      sub_val.insert(NimbleSub::INDICATE);
     }
 
     if let Some(idx) = self

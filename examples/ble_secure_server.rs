@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use esp32_nimble::{enums::*, utilities::BleUuid, uuid128, BLEDevice, NimbleProperties};
+use esp32_nimble::{enums::*, utilities::BleUuid, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
 
 #[no_mangle]
@@ -26,27 +26,27 @@ fn main() {
     .set_io_cap(SecurityIOCap::DisplayOnly);
 
   let server = device.get_server();
-  let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
+  let service = server.create_service(BleUuid::Uuid16(0xABCD));
 
   let non_secure_characteristic = service
     .lock()
-    .create_characteristic(BleUuid::Uuid16(0x1234), NimbleProperties::Read);
+    .create_characteristic(BleUuid::Uuid16(0x1234), NimbleProperties::READ);
   non_secure_characteristic
     .lock()
     .set_value("non_secure_characteristic".as_bytes());
 
   let secure_characteristic = service.lock().create_characteristic(
     BleUuid::Uuid16(0x1235),
-    NimbleProperties::Read | NimbleProperties::ReadEnc | NimbleProperties::ReadAuthen,
+    NimbleProperties::READ | NimbleProperties::READ_ENC | NimbleProperties::READ_AUTHEN,
   );
   secure_characteristic
     .lock()
-    .set_value("non_secure_characteristic".as_bytes());
+    .set_value("secure_characteristic".as_bytes());
 
   let ble_advertising = device.get_advertising();
   ble_advertising
     .name("ESP32-GATT-Server")
-    .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"))
+    .add_service_uuid(BleUuid::Uuid16(0xABCD))
     .start()
     .unwrap();
 

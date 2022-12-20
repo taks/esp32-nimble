@@ -66,6 +66,10 @@ impl BLEAdvertisedDevice {
     self.service_uuids.iter()
   }
 
+  pub fn is_advertising_service(&self, uuid: &BleUuid) -> bool {
+    self.get_service_uuids().any(|x| x == uuid)
+  }
+
   pub fn get_service_data_list(&self) -> core::slice::Iter<'_, BLEServiceData> {
     self.service_data_list.iter()
   }

@@ -5,21 +5,22 @@ use crate::{
   utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLERemoteDescriptor, BLEReturnCode, Signal,
 };
+use crate::{BLEAttribute, BLEClient};
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use core::ffi::c_void;
 
 bitflags! {
-  #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+  #[repr(transparent)]
   pub struct GattCharacteristicProperties: u8 {
-    const Broadcast = esp_idf_sys::BLE_GATT_CHR_PROP_BROADCAST as _;
-    const Read = esp_idf_sys::BLE_GATT_CHR_PROP_READ as _;
-    const WriteWithoutResponse = esp_idf_sys::BLE_GATT_CHR_PROP_WRITE_NO_RSP as _;
-    const Write = esp_idf_sys::BLE_GATT_CHR_PROP_WRITE as _;
-    const Notify = esp_idf_sys::BLE_GATT_CHR_PROP_NOTIFY as _;
-    const Indicate = esp_idf_sys::BLE_GATT_CHR_PROP_INDICATE as _;
-    const AuthenticatedSignedWrites = esp_idf_sys::BLE_GATT_CHR_PROP_AUTH_SIGN_WRITE as _;
-    const ExtendedProperties =  esp_idf_sys::BLE_GATT_CHR_PROP_EXTENDED as _;
+    const BROADCAST = esp_idf_sys::BLE_GATT_CHR_PROP_BROADCAST as _;
+    const READ = esp_idf_sys::BLE_GATT_CHR_PROP_READ as _;
+    const WRITE_NO_RSP = esp_idf_sys::BLE_GATT_CHR_PROP_WRITE_NO_RSP as _;
+    const WRITE = esp_idf_sys::BLE_GATT_CHR_PROP_WRITE as _;
+    const NOTIFY = esp_idf_sys::BLE_GATT_CHR_PROP_NOTIFY as _;
+    const INDICATE = esp_idf_sys::BLE_GATT_CHR_PROP_INDICATE as _;
+    const AUTH_SIGN_WRITE = esp_idf_sys::BLE_GATT_CHR_PROP_AUTH_SIGN_WRITE as _;
+    const EXTENDED =  esp_idf_sys::BLE_GATT_CHR_PROP_EXTENDED as _;
   }
 }
 
@@ -33,6 +34,15 @@ pub struct BLERemoteCharacteristicState {
   descriptors: Option<Vec<BLERemoteDescriptor>>,
   signal: Signal<u32>,
   on_notify: Option<Box<dyn FnMut(&[u8]) + Send + Sync>>,
+}
+
+impl BLEAttribute for BLERemoteCharacteristicState {
+  fn get_client(&self) -> Option<BLEClient> {
+    match self.service.upgrade() {
+      Some(x) => x.get_client(),
+      None => None,
+    }
+  }
 }
 
 impl BLERemoteCharacteristicState {
@@ -188,16 +198,12 @@ impl BLERemoteCharacteristic {
     writer.write_value(data, response).await
   }
 
-  pub async fn subscribe(
-    &mut self,
-    notifications: bool,
-    response: bool,
-  ) -> Result<(), BLEReturnCode> {
-    if notifications {
-      self.set_notify(0x01, response).await
-    } else {
-      self.set_notify(0x02, response).await
-    }
+  pub async fn subscribe_notify(&mut self, response: bool) -> Result<(), BLEReturnCode> {
+    self.set_notify(0x01, response).await
+  }
+
+  pub async fn subscribe_indicate(&mut self, response: bool) -> Result<(), BLEReturnCode> {
+    self.set_notify(0x02, response).await
   }
 
   pub async fn unsubscribe(&mut self, response: bool) -> Result<(), BLEReturnCode> {

@@ -1,7 +1,6 @@
-use super::ble_gap_conn_find;
 use crate::{
   ble,
-  utilities::{mutex::Mutex, BleUuid},
+  utilities::{ble_gap_conn_find, mutex::Mutex, BleUuid},
   BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
@@ -87,7 +86,7 @@ impl BLEServer {
           let mut chr = chr.lock();
           if chr
             .properties
-            .intersects(NimbleProperties::Indicate | NimbleProperties::Notify)
+            .intersects(NimbleProperties::INDICATE | NimbleProperties::NOTIFY)
           {
             let chr = &mut *chr;
             self
@@ -181,10 +180,12 @@ impl BLEServer {
       }
       esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {
         let passkey = unsafe { &event.__bindgen_anon_1.passkey };
-        let mut pkey = esp_idf_sys::ble_sm_io::default();
+        let mut pkey = esp_idf_sys::ble_sm_io {
+          action: passkey.params.action,
+          ..Default::default()
+        };
         match passkey.params.action as _ {
           esp_idf_sys::BLE_SM_IOACT_DISP => {
-            pkey.action = passkey.params.action;
             pkey.__bindgen_anon_1.passkey = if let Some(callback) = &server.on_passkey_request {
               callback()
             } else {
@@ -195,7 +196,6 @@ impl BLEServer {
             ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {}", rc);
           }
           esp_idf_sys::BLE_SM_IOACT_NUMCMP => {
-            pkey.action = passkey.params.action;
             if let Some(callback) = &server.on_confirm_pin {
               pkey.__bindgen_anon_1.numcmp_accept = callback(passkey.params.numcmp) as _;
             } else {
@@ -205,7 +205,6 @@ impl BLEServer {
             ::log::debug!("BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: {}", rc);
           }
           esp_idf_sys::BLE_SM_IOACT_INPUT => {
-            pkey.action = passkey.params.action;
             if let Some(callback) = &server.on_passkey_request {
               pkey.__bindgen_anon_1.passkey = callback();
             } else {

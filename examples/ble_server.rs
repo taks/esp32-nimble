@@ -27,7 +27,7 @@ fn main() {
   // A static characteristic.
   let static_characteristic = service.lock().create_characteristic(
     uuid128!("d4e0e0d0-1a2b-11e9-ab14-d663bd873d93"),
-    NimbleProperties::Read,
+    NimbleProperties::READ,
   );
   static_characteristic
     .lock()
@@ -36,14 +36,14 @@ fn main() {
   // A characteristic that notifies every second.
   let notifying_characteristic = service.lock().create_characteristic(
     uuid128!("a3c87500-8ed3-4bdf-8a39-a01bebede295"),
-    NimbleProperties::Read | NimbleProperties::Notify,
+    NimbleProperties::READ | NimbleProperties::NOTIFY,
   );
   notifying_characteristic.lock().set_value(b"Initial value.");
 
   // A writable characteristic.
   let writable_characteristic = service.lock().create_characteristic(
     uuid128!("3c9a3f00-8ed3-4bdf-8a39-a01bebede295"),
-    NimbleProperties::Read | NimbleProperties::Write,
+    NimbleProperties::READ | NimbleProperties::WRITE,
   );
   writable_characteristic
     .lock()

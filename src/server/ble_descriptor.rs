@@ -67,7 +67,7 @@ impl BLEDescriptor {
 
     match ctxt.op as _ {
       esp_idf_sys::BLE_GATT_ACCESS_OP_READ_CHR => {
-        let desc = super::ble_gap_conn_find(conn_handle).unwrap();
+        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
           if (*(ctxt.om)).om_pkthdr_len > 8
@@ -99,7 +99,7 @@ impl BLEDescriptor {
           om = unsafe { (*om).om_next.sle_next };
         }
 
-        let desc = super::ble_gap_conn_find(conn_handle).unwrap();
+        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
           let descriptor = UnsafeCell::new(&mut descriptor);

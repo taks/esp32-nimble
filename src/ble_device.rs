@@ -7,10 +7,6 @@ use crate::{
   ble, client::BLEScan, enums::*, BLEAdvertising, BLEReturnCode, BLESecurity, BLEServer,
 };
 
-extern "C" {
-  fn ble_store_config_init();
-}
-
 static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   BLEDevice::init();
   BLEDevice {
@@ -60,8 +56,6 @@ impl BLEDevice {
       esp_idf_sys::ble_hs_cfg.sm_our_key_dist = 1;
       esp_idf_sys::ble_hs_cfg.sm_their_key_dist = 3;
       esp_idf_sys::ble_hs_cfg.store_status_cb = Some(esp_idf_sys::ble_store_util_status_rr);
-
-      ble_store_config_init();
 
       esp_idf_sys::nimble_port_freertos_init(Some(Self::blecent_host_task));
 

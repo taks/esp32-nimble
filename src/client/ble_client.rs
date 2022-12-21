@@ -252,7 +252,6 @@ impl BLEClient {
             }
             let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
             ::log::info!("BLE_SM_IOACT_INPUT; ble_sm_inject_io result: {}", rc);
-            client.state.signal.signal(rc as _);
           }
           action => {
             todo!("implementation required: {}", action);

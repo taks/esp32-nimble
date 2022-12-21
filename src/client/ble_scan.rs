@@ -44,16 +44,20 @@ impl BLEScan {
     self
   }
 
+  /// Set whether or not the BLE controller only report scan results
+  /// from devices advertising in limited discovery mode, i.e. directed advertising.
   pub fn limited(&mut self, val: bool) -> &mut Self {
     self.scan_params.set_limited(val as _);
     self
   }
 
+  /// Set the interval to scan.
   pub fn interval(&mut self, interval_msecs: u16) -> &mut Self {
     self.scan_params.itvl = ((interval_msecs as f32) / 0.625) as u16;
     self
   }
 
+  /// Set the window to actively scan.
   pub fn window(&mut self, window_msecs: u16) -> &mut Self {
     self.scan_params.window = ((window_msecs as f32) / 0.625) as u16;
     self

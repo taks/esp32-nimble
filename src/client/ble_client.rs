@@ -256,7 +256,6 @@ impl BLEClient {
         match passkey.params.action as _ {
           esp_idf_sys::BLE_SM_IOACT_DISP => {
             pkey.__bindgen_anon_1.passkey = BLEDevice::take().security().get_passkey();
-
             let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
             ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {}", rc);
           }

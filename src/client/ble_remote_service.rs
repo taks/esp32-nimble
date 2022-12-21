@@ -44,6 +44,7 @@ impl BLERemoteService {
     }
   }
 
+  /// Get the service UUID.
   pub fn uuid(&self) -> BleUuid {
     self.state.uuid
   }
@@ -68,6 +69,7 @@ impl BLERemoteService {
     Ok(self.state.characteristics.as_mut().unwrap().iter_mut())
   }
 
+  /// Get the characteristic object for the UUID.
   pub async fn get_characteristic(
     &mut self,
     uuid: BleUuid,

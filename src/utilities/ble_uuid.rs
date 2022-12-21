@@ -1,3 +1,5 @@
+// Originally: https://github.com/pulse-loop/bluedroid/blob/develop/src/utilities/ble_uuid.rs
+
 use alloc::string::String;
 
 /// A Bluetooth UUID.
@@ -153,6 +155,7 @@ impl core::fmt::Debug for BleUuid {
 }
 
 #[macro_export]
+/// Parse Uuid128 from string literals at compile time.
 macro_rules! uuid128 {
   ($uuid:expr) => {{
     esp32_nimble::utilities::BleUuid::Uuid128(uuid::uuid!($uuid).as_u128().to_le_bytes())

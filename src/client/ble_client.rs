@@ -3,7 +3,7 @@ use crate::{
   ble_device::OWN_ADDR_TYPE,
   ble_return_code::return_code_to_string,
   utilities::{ArcUnsafeCell, BleUuid},
-  BLEAddress, BLERemoteService, BLEReturnCode, Signal,
+  BLEAddress, BLEDevice, BLERemoteService, BLEReturnCode, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
 use core::ffi::c_void;
@@ -17,6 +17,7 @@ pub(crate) struct BLEClientState {
   connect_timeout_ms: u32,
   ble_gap_conn_params: ble_gap_conn_params,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
+  on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
 }
 
 pub struct BLEClient {
@@ -43,6 +44,7 @@ impl BLEClient {
         },
         signal: Signal::new(),
         on_passkey_request: None,
+        on_confirm_pin: None,
       }),
     }
   }
@@ -60,6 +62,14 @@ impl BLEClient {
     callback: impl Fn() -> u32 + Send + Sync + 'static,
   ) -> &mut Self {
     self.state.on_passkey_request = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_confirm_pin(
+    &mut self,
+    callback: impl Fn(u32) -> bool + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.state.on_confirm_pin = Some(Box::new(callback));
     self
   }
 
@@ -244,6 +254,21 @@ impl BLEClient {
           ..Default::default()
         };
         match passkey.params.action as _ {
+          esp_idf_sys::BLE_SM_IOACT_DISP => {
+            pkey.__bindgen_anon_1.passkey = BLEDevice::take().security().get_passkey();
+
+            let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
+            ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {}", rc);
+          }
+          esp_idf_sys::BLE_SM_IOACT_NUMCMP => {
+            if let Some(callback) = &client.state.on_confirm_pin {
+              pkey.__bindgen_anon_1.numcmp_accept = callback(passkey.params.numcmp) as _;
+            } else {
+              ::log::warn!("on_passkey_request is not setted");
+            }
+            let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
+            ::log::debug!("BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: {}", rc);
+          }
           esp_idf_sys::BLE_SM_IOACT_INPUT => {
             if let Some(callback) = &client.state.on_passkey_request {
               pkey.__bindgen_anon_1.passkey = callback();
@@ -251,7 +276,10 @@ impl BLEClient {
               ::log::warn!("on_passkey_request is not setted");
             }
             let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
-            ::log::info!("BLE_SM_IOACT_INPUT; ble_sm_inject_io result: {}", rc);
+            ::log::debug!("BLE_SM_IOACT_INPUT; ble_sm_inject_io result: {}", rc);
+          }
+          esp_idf_sys::BLE_SM_IOACT_NONE => {
+            ::log::debug!("BLE_SM_IOACT_NONE; No passkey action required");
           }
           action => {
             todo!("implementation required: {}", action);

@@ -63,6 +63,14 @@ impl BLEServer {
     self
   }
 
+  pub fn on_confirm_pin(
+    &mut self,
+    callback: impl Fn(u32) -> bool + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_confirm_pin = Some(Box::new(callback));
+    self
+  }
+
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {
     if self.started {
       return Ok(());

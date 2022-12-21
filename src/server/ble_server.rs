@@ -1,6 +1,6 @@
 use crate::{
   ble,
-  utilities::{ble_gap_conn_find, mutex::Mutex, BleUuid, extend_lifetime_mut},
+  utilities::{ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex, BleUuid},
   BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
@@ -97,9 +97,7 @@ impl BLEServer {
             .intersects(NimbleProperties::INDICATE | NimbleProperties::NOTIFY)
           {
             let chr = &mut *chr;
-            self
-              .notify_characteristic
-              .push(extend_lifetime_mut(chr));
+            self.notify_characteristic.push(extend_lifetime_mut(chr));
           }
         }
       }

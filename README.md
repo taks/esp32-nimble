@@ -29,4 +29,4 @@
   - [x] Descriptors
     - [x] Read
     - [x] Write
-  - [ ] Encryption
+  - [x] Encryption

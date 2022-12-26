@@ -1,6 +1,7 @@
 #![no_std]
 #![allow(clippy::new_without_default)]
 #![allow(clippy::single_match)]
+#![feature(decl_macro)]
 
 extern crate alloc;
 

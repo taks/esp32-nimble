@@ -64,6 +64,14 @@ impl BLEAdvertising {
     self
   }
 
+  pub fn appearance(&mut self, appearance: u16) -> &mut Self {
+    self.adv_data.appearance = appearance;
+    self.adv_data.set_appearance_is_present(1);
+    self.adv_data_set = false;
+
+    self
+  }
+
   pub fn service_data(&mut self, uuid: BleUuid, data: &[u8]) {
     match uuid {
       BleUuid::Uuid16(uuid) => {
@@ -113,9 +121,11 @@ impl BLEAdvertising {
     self
   }
 
-  pub fn scan_response(&mut self, value: bool) {
+  pub fn scan_response(&mut self, value: bool) -> &mut Self {
     self.scan_response = value;
     self.adv_data_set = false;
+
+    self
   }
 
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {

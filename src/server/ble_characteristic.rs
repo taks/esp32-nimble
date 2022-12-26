@@ -72,6 +72,10 @@ impl BLECharacteristic {
     self
   }
 
+  pub fn value_mut(&mut self) -> &mut AttValue {
+    &mut self.value
+  }
+
   pub fn on_read(
     &mut self,
     callback: impl FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,

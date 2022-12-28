@@ -8,7 +8,7 @@ use crate::{
   utilities::{
     as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid,
   },
-  AttValue, BLEDescriptor, BLEDevice,
+  AttValue, BLEDescriptor, BLEDevice, BLE2904,
 };
 
 const NULL_HANDLE: u16 = 0xFFFF;
@@ -72,6 +72,11 @@ impl BLECharacteristic {
     self
   }
 
+  pub fn set_from<T: Sized>(&mut self, value: &T) -> &mut Self {
+    self.value.set_from(value);
+    self
+  }
+
   pub fn value_mut(&mut self) -> &mut AttValue {
     &mut self.value
   }
@@ -104,6 +109,15 @@ impl BLECharacteristic {
     let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(uuid, properties)));
     self.descriptors.push(descriptor.clone());
     descriptor
+  }
+
+  pub fn create_2904_descriptor(&mut self) -> BLE2904 {
+    let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(
+      BleUuid::Uuid16(0x2904),
+      NimbleProperties::READ,
+    )));
+    self.descriptors.push(descriptor.clone());
+    BLE2904::new(descriptor)
   }
 
   pub(crate) fn construct_svc_def_descriptors(&mut self) -> *mut esp_idf_sys::ble_gatt_dsc_def {

@@ -2,18 +2,28 @@ use alloc::sync::Arc;
 
 use crate::{
   utilities::{mutex::Mutex, BleUuid},
-  BLECharacteristic, BLEServer, BLEService, NimbleProperties,
+  BLE2904Format, BLECharacteristic, BLEServer, BLEService, NimbleProperties, BLE2904,
 };
+
+const BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME: BleUuid = BleUuid::from_uuid16(0x2A29);
+const BLE_SVC_BAS_UUID16: BleUuid = BleUuid::from_uuid16(0x180F);
+const BLE_SVC_BAS_CHR_UUID16_BATTERY_LEVEL: BleUuid = BleUuid::from_uuid16(0x2A19);
 
 #[allow(dead_code)]
 pub struct BLEHIDDevice {
   device_info_service: Arc<Mutex<BLEService>>,
   pnp_characteristic: Arc<Mutex<BLECharacteristic>>,
+  manufacturer_characteristic: Option<Arc<Mutex<BLECharacteristic>>>,
+
   hid_service: Arc<Mutex<BLEService>>,
   hid_info_characteristic: Arc<Mutex<BLECharacteristic>>,
   report_map_characteristic: Arc<Mutex<BLECharacteristic>>,
   hid_control_characteristic: Arc<Mutex<BLECharacteristic>>,
   protocol_mode_characteristic: Arc<Mutex<BLECharacteristic>>,
+
+  battery_service: Arc<Mutex<BLEService>>,
+  battery_level_characteristic: Arc<Mutex<BLECharacteristic>>,
+  battery_level_descriptor: BLE2904,
 }
 
 impl BLEHIDDevice {
@@ -40,20 +50,45 @@ impl BLEHIDDevice {
       NimbleProperties::WRITE_NO_RSP | NimbleProperties::READ,
     );
 
+    let battery_service = server.create_service(BLE_SVC_BAS_UUID16);
+    let battery_level_characteristic = battery_service.lock().create_characteristic(
+      BLE_SVC_BAS_CHR_UUID16_BATTERY_LEVEL,
+      NimbleProperties::READ | NimbleProperties::NOTIFY,
+    );
+    let mut battery_level_descriptor = battery_level_characteristic.lock().create_2904_descriptor();
+    battery_level_descriptor
+      .format(BLE2904Format::UINT8)
+      .namespace(1)
+      .unit(0x27ad);
+
     Self {
       device_info_service,
       pnp_characteristic,
+      manufacturer_characteristic: None,
       hid_service,
       hid_info_characteristic,
       report_map_characteristic,
       hid_control_characteristic,
       protocol_mode_characteristic,
+      battery_service,
+      battery_level_characteristic,
+      battery_level_descriptor,
     }
   }
 
   /// Sets the Plug n Play characteristic value.
   pub fn report_map(&mut self, map: &[u8]) {
     self.report_map_characteristic.lock().set_value(map);
+  }
+
+  pub fn manufacturer(&mut self, name: &str) {
+    let chr = self.manufacturer_characteristic.get_or_insert_with(|| {
+      self.device_info_service.lock().create_characteristic(
+        BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME,
+        NimbleProperties::READ,
+      )
+    });
+    chr.lock().set_value(name.as_bytes());
   }
 
   pub fn pnp(&mut self, sig: u8, vid: u16, pid: u16, version: u16) {
@@ -158,6 +193,11 @@ impl BLEHIDDevice {
   /// Returns the protocol mode characteristic.
   pub fn protocol_mode(&self) -> &Arc<Mutex<BLECharacteristic>> {
     &self.protocol_mode_characteristic
+  }
+
+  /// Set the battery level characteristic value.
+  pub fn set_battery_level(&mut self, level: u8) {
+    self.battery_level_characteristic.lock().set_value(&[level]);
   }
 
   /// Returns a pointer to the HID service.

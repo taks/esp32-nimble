@@ -34,6 +34,15 @@ impl BLEDescriptor {
     self
   }
 
+  pub fn set_from<T: Sized>(&mut self, value: &T) -> &mut Self {
+    self.value.set_from(value);
+    self
+  }
+
+  pub fn value_mut(&mut self) -> &mut AttValue {
+    &mut self.value
+  }
+
   pub fn on_read(
     &mut self,
     callback: impl FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,

@@ -14,7 +14,12 @@ static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   }
 });
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
-pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
+pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(|| unsafe {
+  esp_idf_sys::ble_gatts_reset();
+  esp_idf_sys::ble_svc_gap_init();
+  esp_idf_sys::ble_svc_gatt_init();
+  BLEServer::new()
+});
 static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new);
 
 pub static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;

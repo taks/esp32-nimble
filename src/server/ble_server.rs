@@ -83,6 +83,9 @@ impl BLEServer {
     unsafe {
       ble!(esp_idf_sys::ble_gatts_start())?;
 
+      #[cfg(debug_assertions)]
+      esp_idf_sys::ble_gatts_show_local();
+
       for svc in &self.services {
         let mut svc = svc.lock();
         ble!(esp_idf_sys::ble_gatts_find_svc(
@@ -165,8 +168,31 @@ impl BLEServer {
           .iter_mut()
           .find(|x| x.handle == subscribe.attr_handle)
         {
+          if chr.properties.intersects(
+            NimbleProperties::READ_AUTHEN
+              | NimbleProperties::READ_AUTHOR
+              | NimbleProperties::READ_ENC,
+          ) {
+            if let Ok(desc) = ble_gap_conn_find(subscribe.conn_handle) {
+              if desc.sec_state.encrypted() == 0 {
+                let rc = unsafe { esp_idf_sys::ble_gap_security_initiate(subscribe.conn_handle) };
+                if rc != 0 {
+                  ::log::error!("ble_gap_security_initiate: rc={}", rc);
+                }
+              }
+            }
+          }
+
           chr.subscribe(subscribe);
         }
+      }
+      esp_idf_sys::BLE_GAP_EVENT_MTU => {
+        let mtu = unsafe { &event.__bindgen_anon_1.mtu };
+        ::log::info!(
+          "mtu update event; conn_handle={} mtu={}",
+          mtu.conn_handle,
+          mtu.value
+        );
       }
       esp_idf_sys::BLE_GAP_EVENT_NOTIFY_TX => {
         let notify_tx = unsafe { &event.__bindgen_anon_1.notify_tx };
@@ -183,6 +209,14 @@ impl BLEServer {
             }
           }
         }
+      }
+      esp_idf_sys::BLE_GAP_EVENT_CONN_UPDATE => {
+        ::log::debug!("Connection parameters updated.");
+      }
+      esp_idf_sys::BLE_GAP_EVENT_CONN_UPDATE_REQ => {}
+      esp_idf_sys::BLE_GAP_EVENT_ENC_CHANGE => {
+        // let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };
+        ::log::info!("AuthenticationComplete");
       }
       esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {
         let passkey = unsafe { &event.__bindgen_anon_1.passkey };
@@ -227,7 +261,9 @@ impl BLEServer {
           }
         }
       }
-      _ => {}
+      _ => {
+        ::log::warn!("unhandled event: {}", event.type_);
+      }
     }
 
     0

@@ -249,9 +249,12 @@ impl Keyboard {
 
     hid.report_map(&HID_REPORT_DISCRIPTOR);
 
+    hid.set_battery_level(100);
+
     let ble_advertising = device.get_advertising();
     ble_advertising
       .name("ESP32 Keyboard")
+      .appearance(0x03C1)
       .add_service_uuid(hid.hid_service().lock().uuid())
       .scan_response(false);
     ble_advertising.start().unwrap();

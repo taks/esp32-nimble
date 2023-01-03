@@ -8,7 +8,7 @@ use crate::{
   utilities::{
     as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid,
   },
-  AttValue, BLEDescriptor, BLEDevice, BLE2904,
+  AttValue, BLEDescriptor, BLEDevice, DescriptorProperties, BLE2904,
 };
 
 const NULL_HANDLE: u16 = 0xFFFF;
@@ -100,7 +100,7 @@ impl BLECharacteristic {
   pub fn create_descriptor(
     &mut self,
     uuid: BleUuid,
-    properties: NimbleProperties,
+    properties: DescriptorProperties,
   ) -> Arc<Mutex<BLEDescriptor>> {
     if uuid == BleUuid::Uuid16(esp_idf_sys::BLE_GATT_DSC_CLT_CFG_UUID16 as _) {
       panic!("0x2902 descriptors cannot be manually created");
@@ -114,7 +114,7 @@ impl BLECharacteristic {
   pub fn create_2904_descriptor(&mut self) -> BLE2904 {
     let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(
       BleUuid::Uuid16(0x2904),
-      NimbleProperties::READ,
+      DescriptorProperties::READ,
     )));
     self.descriptors.push(descriptor.clone());
     BLE2904::new(descriptor)
@@ -133,7 +133,7 @@ impl BLECharacteristic {
         .svc_def_descriptors
         .push(esp_idf_sys::ble_gatt_dsc_def {
           uuid: unsafe { &dsc.uuid.u },
-          att_flags: dsc.properties.bits() as _,
+          att_flags: dsc.properties.bits(),
           min_key_size: 0,
           access_cb: Some(BLEDescriptor::handle_gap_event),
           arg: arg as _,
@@ -284,5 +284,14 @@ impl BLECharacteristic {
     } else if !sub_val.is_empty() {
       self.subscribed_list.push((subscribe.conn_handle, sub_val));
     }
+  }
+}
+
+impl core::fmt::Debug for BLECharacteristic {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.debug_struct("BLECharacteristic")
+      .field("uuid", &BleUuid::from(self.uuid))
+      .field("properties", &self.properties)
+      .finish()
   }
 }

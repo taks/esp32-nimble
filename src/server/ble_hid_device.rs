@@ -2,7 +2,8 @@ use alloc::sync::Arc;
 
 use crate::{
   utilities::{mutex::Mutex, BleUuid},
-  BLE2904Format, BLECharacteristic, BLEServer, BLEService, NimbleProperties, BLE2904,
+  BLE2904Format, BLECharacteristic, BLEServer, BLEService, DescriptorProperties, NimbleProperties,
+  BLE2904,
 };
 
 const BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME: BleUuid = BleUuid::from_uuid16(0x2A29);
@@ -115,7 +116,7 @@ impl BLEHIDDevice {
     );
     let input_report_descriptor = input_report_characteristic.lock().create_descriptor(
       BleUuid::Uuid16(0x2908),
-      NimbleProperties::READ | NimbleProperties::READ_ENC,
+      DescriptorProperties::READ | DescriptorProperties::READ_ENC,
     );
 
     let desc1_val = [report_id, 0x01];
@@ -135,10 +136,10 @@ impl BLEHIDDevice {
     );
     let output_report_descriptor = output_report_characteristic.lock().create_descriptor(
       BleUuid::Uuid16(0x2908),
-      NimbleProperties::READ
-        | NimbleProperties::WRITE
-        | NimbleProperties::READ_ENC
-        | NimbleProperties::WRITE_ENC,
+      DescriptorProperties::READ
+        | DescriptorProperties::WRITE
+        | DescriptorProperties::READ_ENC
+        | DescriptorProperties::WRITE_ENC,
     );
 
     let desc1_val = [report_id, 0x02];
@@ -157,10 +158,10 @@ impl BLEHIDDevice {
     );
     let feature_report_descriptor = feature_report_characteristic.lock().create_descriptor(
       BleUuid::Uuid16(0x2908),
-      NimbleProperties::READ
-        | NimbleProperties::WRITE
-        | NimbleProperties::READ_ENC
-        | NimbleProperties::WRITE_ENC,
+      DescriptorProperties::READ
+        | DescriptorProperties::WRITE
+        | DescriptorProperties::READ_ENC
+        | DescriptorProperties::WRITE_ENC,
     );
 
     let desc1_val = [report_id, 0x03];

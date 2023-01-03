@@ -13,6 +13,7 @@ pub use self::ble_characteristic::NimbleProperties;
 
 mod ble_descriptor;
 pub use self::ble_descriptor::BLEDescriptor;
+pub use self::ble_descriptor::DescriptorProperties;
 
 mod ble_hid_device;
 pub use self::ble_hid_device::BLEHIDDevice;

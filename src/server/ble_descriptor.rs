@@ -1,25 +1,39 @@
 use core::{cell::UnsafeCell, ffi::c_void};
 
 use alloc::boxed::Box;
+use bitflags::bitflags;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp, os_mbuf_append};
 
 use crate::{
   utilities::{ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid},
-  AttValue, NimbleProperties,
+  AttValue,
 };
 
-#[allow(clippy::type_complexity)]
+bitflags! {
+  #[repr(transparent)]
+  pub struct DescriptorProperties: u8 {
+    const READ = esp_idf_sys::BLE_ATT_F_READ as _;
+    const READ_ENC = esp_idf_sys::BLE_ATT_F_READ_ENC as _;
+    const READ_AUTHEN = esp_idf_sys::BLE_ATT_F_READ_AUTHEN as _;
+    const READ_AUTHOR = esp_idf_sys::BLE_ATT_F_READ_AUTHOR  as _;
+    const WRITE = esp_idf_sys::BLE_ATT_F_WRITE  as _;
+    const WRITE_ENC = esp_idf_sys::BLE_ATT_F_WRITE_ENC as _;
+    const WRITE_AUTHEN = esp_idf_sys::BLE_ATT_F_WRITE_AUTHEN  as _;
+    const WRITE_AUTHOR = esp_idf_sys::BLE_ATT_F_WRITE_AUTHOR  as _;
+  }
+}
 
+#[allow(clippy::type_complexity)]
 pub struct BLEDescriptor {
   pub(crate) uuid: ble_uuid_any_t,
-  pub(crate) properties: NimbleProperties,
+  pub(crate) properties: DescriptorProperties,
   value: AttValue,
   on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
   on_write: Option<Box<dyn FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
 }
 
 impl BLEDescriptor {
-  pub(super) fn new(uuid: BleUuid, properties: NimbleProperties) -> Self {
+  pub(super) fn new(uuid: BleUuid, properties: DescriptorProperties) -> Self {
     Self {
       uuid: ble_uuid_any_t::from(uuid),
       properties,
@@ -75,7 +89,7 @@ impl BLEDescriptor {
     }
 
     match ctxt.op as _ {
-      esp_idf_sys::BLE_GATT_ACCESS_OP_READ_CHR => {
+      esp_idf_sys::BLE_GATT_ACCESS_OP_READ_DSC => {
         let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
@@ -99,7 +113,7 @@ impl BLEDescriptor {
           esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES as _
         }
       }
-      esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_CHR => {
+      esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_DSC => {
         descriptor.value.clear();
         let mut om = ctxt.om;
         while !om.is_null() {

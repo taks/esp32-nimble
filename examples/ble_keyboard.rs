@@ -1,5 +1,4 @@
 // originally: https://github.com/T-vK/ESP32-BLE-Keyboard
-// TODO： work in progress
 
 #![no_std]
 #![no_main]
@@ -284,13 +283,18 @@ impl Keyboard {
   }
 
   fn press(&mut self, char: u8) {
-    let key = ASCII_MAP[char as usize];
+    let mut key = ASCII_MAP[char as usize];
+    if (key & SHIFT) > 0 {
+      self.key_report.modifiers |= 0x02;
+      key &= (!SHIFT);
+    }
     self.key_report.keys[0] = key;
     self.send_report(&self.key_report);
   }
 
   fn release(&mut self) {
-    self.key_report.keys = [0; 6];
+    self.key_report.modifiers = 0;
+    self.key_report.keys.fill(0);
     self.send_report(&self.key_report);
   }
 
@@ -317,7 +321,7 @@ fn main() {
   loop {
     if keyboard.connected() {
       ::log::info!("Sending 'Hello world'...");
-      keyboard.write("hello world");
+      keyboard.write("Hello world\n");
     }
     esp_idf_hal::delay::Ets::delay_ms(5000);
   }

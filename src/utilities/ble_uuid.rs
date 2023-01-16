@@ -158,6 +158,6 @@ impl core::fmt::Debug for BleUuid {
 /// Parse Uuid128 from string literals at compile time.
 macro_rules! uuid128 {
   ($uuid:expr) => {{
-    esp32_nimble::utilities::BleUuid::Uuid128(uuid::uuid!($uuid).as_u128().to_le_bytes())
+    $crate::utilities::BleUuid::Uuid128($crate::uuid_macro!($uuid).as_u128().to_le_bytes())
   }};
 }

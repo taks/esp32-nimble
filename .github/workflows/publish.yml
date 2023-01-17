@@ -4,6 +4,7 @@ on: workflow_dispatch
 
 env:
   rust_toolchain: nightly
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   publish:
@@ -15,7 +16,7 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v2
       - name: Install Rust for Xtensa
-        uses: esp-rs/xtensa-toolchain@v1.4
+        uses: esp-rs/xtensa-toolchain@v1.5
         with:
           default: true
           ldproxy: true

@@ -286,7 +286,7 @@ impl Keyboard {
     let mut key = ASCII_MAP[char as usize];
     if (key & SHIFT) > 0 {
       self.key_report.modifiers |= 0x02;
-      key &= (!SHIFT);
+      key &= !SHIFT;
     }
     self.key_report.keys[0] = key;
     self.send_report(&self.key_report);

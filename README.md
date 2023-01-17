@@ -7,8 +7,16 @@
 This is a Rust wrapper for the NimBLE Bluetooth stack for ESP32.
 Inspired by [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
 
-## Features
+## Usage
+Add below settings to your project's `sdkconfig.defaults`.
+```
+CONFIG_BT_ENABLED=y
+CONFIG_BT_BLE_ENABLED=y
+CONFIG_BT_BLUEDROID_ENABLED=n
+CONFIG_BT_NIMBLE_ENABLED=y
+```
 
+## Features
 - [x] GATT server
   - [x] Advertisement
   - [x] Services

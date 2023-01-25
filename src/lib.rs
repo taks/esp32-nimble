@@ -8,7 +8,9 @@ extern crate alloc;
 #[doc(hidden)]
 pub use uuid::uuid as uuid_macro;
 
-pub type BLEAddress = esp_idf_sys::ble_addr_t;
+mod ble_address;
+pub use self::ble_address::BLEAddress;
+
 pub(crate) type Signal<T> =
   embassy_sync::signal::Signal<esp_idf_hal::task::embassy_sync::EspRawMutex, T>;
 #[allow(dead_code)]

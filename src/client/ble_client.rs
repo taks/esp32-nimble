@@ -75,14 +75,14 @@ impl BLEClient {
 
   pub async fn connect(&mut self, addr: &BLEAddress) -> Result<(), BLEReturnCode> {
     unsafe {
-      if esp_idf_sys::ble_gap_conn_find_by_addr(addr, core::ptr::null_mut()) == 0 {
-        ::log::warn!("A connection to {:X?} already exists", addr.val);
+      if esp_idf_sys::ble_gap_conn_find_by_addr(&addr.value, core::ptr::null_mut()) == 0 {
+        ::log::warn!("A connection to {:?} already exists", addr);
         return BLEReturnCode::fail();
       }
 
       ble!(esp_idf_sys::ble_gap_connect(
         OWN_ADDR_TYPE,
-        addr,
+        &addr.value,
         self.state.connect_timeout_ms as _,
         &self.state.ble_gap_conn_params,
         Some(Self::handle_gap_event),

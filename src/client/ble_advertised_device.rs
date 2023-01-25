@@ -37,7 +37,7 @@ pub struct BLEAdvertisedDevice {
 impl BLEAdvertisedDevice {
   pub(crate) fn new(param: &esp_idf_sys::ble_gap_disc_desc) -> Self {
     Self {
-      addr: param.addr,
+      addr: param.addr.into(),
       adv_type: param.event_type,
       ad_flag: None,
       appearance: None,

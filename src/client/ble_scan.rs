@@ -126,7 +126,7 @@ impl BLEScan {
         let mut advertised_device = scan
           .scan_results
           .iter_mut()
-          .find(|x| x.addr().val == disc.addr.val);
+          .find(|x| x.addr().value.val == disc.addr.val);
 
         if advertised_device.is_none() {
           if disc.event_type != esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {

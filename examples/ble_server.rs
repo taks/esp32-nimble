@@ -22,6 +22,11 @@ fn main() {
   let ble_device = BLEDevice::take();
 
   let server = ble_device.get_server();
+  server.on_connect(|_| {
+    ::log::info!("Client connected");
+    ::log::info!("Multi-connect support: start advertising");
+    ble_device.get_advertising().start();
+  });
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 
   // A static characteristic.

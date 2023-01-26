@@ -1,6 +1,6 @@
 [package]
 name = "esp32-nimble"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["taks <857tn859@gmail.com>"]
 edition = "2021"
 resolver = "2"

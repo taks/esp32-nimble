@@ -31,6 +31,45 @@ bitflags! {
   }
 }
 
+#[derive(PartialEq, Debug)]
+pub enum NotifyTxStatus {
+  SuccessIndicate,
+  SuccessNotify,
+  ErrorIndicateDisabled,
+  ErrorNotifyDisabled,
+  ErrorGatt,
+  ErrorNoClient,
+  ErrorIndicateTimeout,
+  ErrorIndicateFailure,
+}
+
+pub struct NotifyTx<'a> {
+  pub(crate) notify_tx: &'a esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_11,
+}
+
+impl NotifyTx<'_> {
+  pub fn status(&self) -> NotifyTxStatus {
+    if self.notify_tx.indication() > 0 {
+      match self.notify_tx.status as _ {
+        esp_idf_sys::BLE_HS_EDONE => NotifyTxStatus::SuccessIndicate,
+        esp_idf_sys::BLE_HS_ETIMEOUT => NotifyTxStatus::ErrorIndicateTimeout,
+        _ => NotifyTxStatus::ErrorIndicateFailure,
+      }
+    } else {
+      #[allow(clippy::collapsible_else_if)]
+      if self.notify_tx.status == 0 {
+        NotifyTxStatus::SuccessNotify
+      } else {
+        NotifyTxStatus::ErrorGatt
+      }
+    }
+  }
+
+  pub fn desc(&self) -> Result<esp_idf_sys::ble_gap_conn_desc, crate::BLEReturnCode> {
+    crate::utilities::ble_gap_conn_find(self.notify_tx.conn_handle)
+  }
+}
+
 bitflags! {
   #[repr(transparent)]
   struct NimbleSub: u16 {
@@ -47,6 +86,7 @@ pub struct BLECharacteristic {
   value: AttValue,
   on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
   on_write: Option<Box<dyn FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  pub(crate) on_notify_tx: Option<Box<dyn FnMut(NotifyTx) + Send + Sync>>,
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
@@ -61,6 +101,7 @@ impl BLECharacteristic {
       value: AttValue::new(),
       on_read: None,
       on_write: None,
+      on_notify_tx: None,
       descriptors: Vec::new(),
       svc_def_descriptors: Vec::new(),
       subscribed_list: Vec::new(),
@@ -94,6 +135,14 @@ impl BLECharacteristic {
     callback: impl FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_write = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_notify_tx(
+    &mut self,
+    callback: impl FnMut(NotifyTx) + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_notify_tx = Some(Box::new(callback));
     self
   }
 

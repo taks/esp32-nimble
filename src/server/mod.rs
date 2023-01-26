@@ -8,8 +8,7 @@ mod ble_advertising;
 pub use self::ble_advertising::BLEAdvertising;
 
 mod ble_characteristic;
-pub use self::ble_characteristic::BLECharacteristic;
-pub use self::ble_characteristic::NimbleProperties;
+pub use self::ble_characteristic::*;
 
 mod ble_descriptor;
 pub use self::ble_descriptor::BLEDescriptor;

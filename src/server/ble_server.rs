@@ -1,7 +1,7 @@
 use crate::{
   ble,
   utilities::{ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex, BleUuid},
-  BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties,
+  BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::ffi::c_void;
@@ -196,17 +196,23 @@ impl BLEServer {
       }
       esp_idf_sys::BLE_GAP_EVENT_NOTIFY_TX => {
         let notify_tx = unsafe { &event.__bindgen_anon_1.notify_tx };
-        #[allow(unused_variables)]
         if let Some(chr) = server
           .notify_characteristic
-          .iter()
+          .iter_mut()
           .find(|x| x.handle == notify_tx.attr_handle)
         {
-          #[allow(clippy::collapsible_if)]
           if notify_tx.indication() > 0 {
-            if notify_tx.status != 0 {
-              server.clear_indicate_wait(notify_tx.conn_handle);
+            if notify_tx.status == 0 {
+              return 0;
             }
+
+            BLEDevice::take()
+              .get_server()
+              .clear_indicate_wait(notify_tx.conn_handle);
+          }
+
+          if let Some(callback) = &mut chr.on_notify_tx {
+            callback(NotifyTx { notify_tx });
           }
         }
       }

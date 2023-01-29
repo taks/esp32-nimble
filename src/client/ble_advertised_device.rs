@@ -79,7 +79,7 @@ impl BLEAdvertisedDevice {
   }
   
   pub fn get_manufacture_data(&self) -> &Option<Vec<u8>> {
-    self.manufacture_data
+    &self.manufacture_data
   }
 
   pub(crate) fn adv_type(&self) -> u8 {

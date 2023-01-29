@@ -28,7 +28,7 @@ impl BLEReturnCode {
 impl core::fmt::Debug for BLEReturnCode {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match return_code_to_string(self.0) {
-      Some(text) => write!(f, "{}", text)?,
+      Some(text) => write!(f, "{text}")?,
       None => write!(f, "{}", self.0)?,
     };
 

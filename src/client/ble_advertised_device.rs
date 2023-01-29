@@ -77,6 +77,10 @@ impl BLEAdvertisedDevice {
   pub fn get_service_data(&self, uuid: BleUuid) -> Option<&BLEServiceData> {
     self.get_service_data_list().find(|x| x.uuid == uuid)
   }
+  
+  pub fn get_manufacture_data(&self) -> Option<Vec<u8>> {
+    self.manufacture_data
+  }
 
   pub(crate) fn adv_type(&self) -> u8 {
     self.adv_type

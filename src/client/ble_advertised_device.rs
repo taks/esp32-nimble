@@ -78,7 +78,7 @@ impl BLEAdvertisedDevice {
     self.get_service_data_list().find(|x| x.uuid == uuid)
   }
   
-  pub fn get_manufacture_data(&self) -> Option<Vec<u8>> {
+  pub fn get_manufacture_data(&self) -> &Option<Vec<u8>> {
     self.manufacture_data
   }
 

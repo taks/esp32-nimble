@@ -1,6 +1,7 @@
 use esp_idf_sys::*;
 
 #[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum SecurityIOCap {
   /// DisplayOnly IO capability
   DisplayOnly = BLE_HS_IO_DISPLAY_ONLY as _,
@@ -15,6 +16,7 @@ pub enum SecurityIOCap {
 }
 
 #[repr(u32)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum PowerLevel {
   /// Corresponding to -12dbm
   N12 = esp_power_level_t_ESP_PWR_LVL_N12 as _,
@@ -34,7 +36,23 @@ pub enum PowerLevel {
   P9 = esp_power_level_t_ESP_PWR_LVL_P9 as _,
 }
 
+impl PowerLevel {
+  pub fn to_dbm(&self) -> i8 {
+    match self {
+      PowerLevel::N12 => -12,
+      PowerLevel::N9 => -9,
+      PowerLevel::N6 => -6,
+      PowerLevel::N3 => -3,
+      PowerLevel::N0 => 0,
+      PowerLevel::P3 => 3,
+      PowerLevel::P6 => 6,
+      PowerLevel::P9 => 9,
+    }
+  }
+}
+
 #[repr(u32)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum PowerType {
   /// For connection handle 0
   ConnHdl0 = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_CONN_HDL0 as _,

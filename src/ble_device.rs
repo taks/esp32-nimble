@@ -99,6 +99,10 @@ impl BLEDevice {
     }
   }
 
+  pub fn get_power(&self, power_type: PowerType) -> PowerLevel {
+    unsafe { core::mem::transmute(esp_idf_sys::esp_ble_tx_power_get(power_type as _)) }
+  }
+
   pub fn security(&mut self) -> &mut BLESecurity {
     &mut self.security
   }

@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{ble, utilities::BleUuid, BLEReturnCode, BLEServer};
+use crate::{ble, enums::PowerType, utilities::BleUuid, BLEDevice, BLEReturnCode, BLEServer};
 use alloc::{ffi::CString, vec::Vec};
 use once_cell::sync::Lazy;
 
@@ -18,6 +18,7 @@ pub struct BLEAdvertising {
   service_data128: Vec<u8>,
   adv_data_set: bool,
   name: Option<CString>,
+  mfg_data: Vec<u8>,
   scan_response: bool,
 }
 
@@ -35,15 +36,41 @@ impl BLEAdvertising {
       service_data128: Vec::new(),
       adv_data_set: false,
       name: None,
+      mfg_data: Vec::new(),
       scan_response: true,
     };
 
-    ret.adv_data.flags =
-      (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _;
-    ret.adv_params.conn_mode = esp_idf_sys::BLE_GAP_CONN_MODE_UND as _;
-    ret.adv_params.disc_mode = esp_idf_sys::BLE_GAP_DISC_MODE_GEN as _;
-
+    ret.reset().unwrap();
     ret
+  }
+
+  pub fn reset(&mut self) -> Result<(), BLEReturnCode> {
+    if self.is_advertising() {
+      self.stop()?;
+    }
+
+    self.adv_data = esp_idf_sys::ble_hs_adv_fields::default();
+    self.scan_data = esp_idf_sys::ble_hs_adv_fields::default();
+    self.adv_params = esp_idf_sys::ble_gap_adv_params::default();
+    self.service_uuids_16.clear();
+    self.service_uuids_32.clear();
+    self.service_uuids_128.clear();
+    self.service_data16.clear();
+    self.service_data32.clear();
+    self.service_data128.clear();
+
+    let ble_device = BLEDevice::take();
+    self.adv_data.tx_pwr_lvl = ble_device.get_power(PowerType::Advertising).to_dbm();
+
+    self.adv_data.flags =
+      (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _;
+    self.adv_params.conn_mode = esp_idf_sys::BLE_GAP_CONN_MODE_UND as _;
+    self.adv_params.disc_mode = esp_idf_sys::BLE_GAP_DISC_MODE_GEN as _;
+    self.scan_response = true;
+
+    self.adv_data_set = false;
+
+    Ok(())
   }
 
   pub fn add_service_uuid(&mut self, uuid: BleUuid) -> &mut Self {
@@ -64,9 +91,40 @@ impl BLEAdvertising {
     self
   }
 
+  /// Set the device appearance in the advertising data.
   pub fn appearance(&mut self, appearance: u16) -> &mut Self {
     self.adv_data.appearance = appearance;
     self.adv_data.set_appearance_is_present(1);
+    self.adv_data_set = false;
+
+    self
+  }
+
+  /// Add the transmission power level to the advertisement packet.
+  pub fn add_tx_power(&mut self) -> &mut Self {
+    self.adv_data.set_tx_pwr_lvl_is_present(1);
+    self.adv_data_set = false;
+
+    self
+  }
+
+  /// Set the advertised name of the device.
+  pub fn name(&mut self, name: &str) -> &mut Self {
+    self.adv_data.name_len = name.len() as _;
+
+    self.name = Some(CString::new(name).unwrap());
+    self.adv_data.name = self.name.as_mut().unwrap().as_ptr().cast();
+    self.adv_data.set_name_is_complete(1);
+    self.adv_data_set = false;
+
+    self
+  }
+
+  pub fn manufacturer_data(&mut self, data: &[u8]) -> &mut Self {
+    self.mfg_data.clear();
+    self.mfg_data.extend_from_slice(data);
+    self.adv_data.mfg_data = self.mfg_data.as_ptr();
+    self.adv_data.mfg_data_len = data.len() as _;
     self.adv_data_set = false;
 
     self
@@ -108,17 +166,6 @@ impl BLEAdvertising {
         }
       }
     }
-  }
-
-  pub fn name(&mut self, name: &str) -> &mut Self {
-    self.adv_data.name_len = name.len() as _;
-
-    self.name = Some(CString::new(name).unwrap());
-    self.adv_data.name = self.name.as_mut().unwrap().as_ptr().cast();
-    self.adv_data.set_name_is_complete(1);
-    self.adv_data_set = false;
-
-    self
   }
 
   pub fn scan_response(&mut self, value: bool) -> &mut Self {
@@ -265,8 +312,12 @@ impl BLEAdvertising {
     Ok(())
   }
 
-  pub fn stop() -> Result<(), BLEReturnCode> {
+  pub fn stop(&self) -> Result<(), BLEReturnCode> {
     unsafe { ble!(esp_idf_sys::ble_gap_adv_stop()) }
+  }
+
+  pub fn is_advertising(&self) -> bool {
+    unsafe { esp_idf_sys::ble_gap_adv_active() != 0 }
   }
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {

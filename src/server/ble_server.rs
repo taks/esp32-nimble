@@ -121,6 +121,12 @@ impl BLEServer {
     service
   }
 
+  /// Set the server to automatically start advertising when a client disconnects.
+  pub fn advertise_on_disconnect(&mut self, value: bool) -> &mut Self {
+    self.advertise_on_disconnect = value;
+    self
+  }
+
   pub(crate) extern "C" fn handle_gap_event(
     event: *mut esp_idf_sys::ble_gap_event,
     _arg: *mut c_void,

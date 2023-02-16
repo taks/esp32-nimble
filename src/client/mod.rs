@@ -1,5 +1,6 @@
 mod ble_advertised_device;
 pub use self::ble_advertised_device::BLEAdvertisedDevice;
+pub use self::ble_advertised_device::BLEServiceData;
 
 mod ble_attribute;
 pub(crate) use self::ble_attribute::*;

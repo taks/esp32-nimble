@@ -323,7 +323,7 @@ fn main() {
       ::log::info!("Sending 'Hello world'...");
       keyboard.write("Hello world\n");
     }
-    esp_idf_hal::delay::Ets::delay_ms(5000);
+    esp_idf_hal::delay::FreeRtos::delay_ms(5000);
   }
 }
 

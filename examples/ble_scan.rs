@@ -18,13 +18,6 @@ fn main() {
   esp_idf_svc::log::EspLogger::initialize_default();
   log::set_max_level(log::LevelFilter::Debug);
 
-  // WDT OFF
-  unsafe {
-    esp_idf_sys::esp_task_wdt_delete(esp_idf_sys::xTaskGetIdleTaskHandleForCPU(
-      esp_idf_hal::cpu::core() as u32,
-    ));
-  };
-
   let executor = EspExecutor::<16, Local>::new();
   let _task = executor
     .spawn_local(async {

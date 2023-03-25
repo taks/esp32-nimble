@@ -21,13 +21,6 @@ fn main() {
 
   esp_idf_svc::log::EspLogger::initialize_default();
 
-  // WDT OFF
-  unsafe {
-    esp_idf_sys::esp_task_wdt_delete(esp_idf_sys::xTaskGetIdleTaskHandleForCPU(
-      esp_idf_hal::cpu::core() as u32,
-    ));
-  };
-
   esp_idf_svc::timer::embassy_time::driver::link();
 
   let executor = EspExecutor::<16, Local>::new();

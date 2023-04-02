@@ -18,6 +18,8 @@ pub(crate) struct BLEClientState {
   ble_gap_conn_params: ble_gap_conn_params,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
+  on_connect: Option<Box<dyn Fn() + Send + Sync>>,
+  on_disconnect: Option<Box<dyn Fn(i32) + Send + Sync>>,
 }
 
 pub struct BLEClient {
@@ -45,6 +47,8 @@ impl BLEClient {
         signal: Signal::new(),
         on_passkey_request: None,
         on_confirm_pin: None,
+        on_disconnect: None,
+        on_connect: None,
       }),
     }
   }
@@ -70,6 +74,16 @@ impl BLEClient {
     callback: impl Fn(u32) -> bool + Send + Sync + 'static,
   ) -> &mut Self {
     self.state.on_confirm_pin = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_connect(&mut self, callback: impl Fn() + Send + Sync + 'static) -> &mut Self {
+    self.state.on_connect = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_disconnect(&mut self, callback: impl Fn(i32) + Send + Sync + 'static) -> &mut Self {
+    self.state.on_disconnect = Some(Box::new(callback));
     self
   }
 
@@ -173,6 +187,10 @@ impl BLEClient {
           if rc != 0 {
             client.state.signal.signal(rc as _);
           }
+
+          if let Some(callback) = &client.state.on_connect {
+            callback();
+          }
         } else {
           ::log::info!("connect_status {}", connect.status);
           client.state.conn_handle = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
@@ -191,6 +209,10 @@ impl BLEClient {
           return_code_to_string(disconnect.reason as _)
             .map_or_else(|| disconnect.reason.to_string(), |x| x.to_string())
         );
+
+        if let Some(callback) = &client.state.on_disconnect {
+          callback(disconnect.reason);
+        }
       }
       BLE_GAP_EVENT_ENC_CHANGE => {
         let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };

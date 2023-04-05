@@ -107,6 +107,10 @@ impl BLEClient {
     ble!(self.state.signal.wait().await)?;
     self.state.address = Some(*addr);
 
+    if let Some(callback) = &self.state.on_connect {
+      callback();
+    }
+
     Ok(())
   }
 
@@ -186,10 +190,6 @@ impl BLEClient {
 
           if rc != 0 {
             client.state.signal.signal(rc as _);
-          }
-
-          if let Some(callback) = &client.state.on_connect {
-            callback();
           }
         } else {
           ::log::info!("connect_status {}", connect.status);

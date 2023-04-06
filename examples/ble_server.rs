@@ -18,7 +18,7 @@ fn main() {
   server.on_connect(|_| {
     ::log::info!("Client connected");
     ::log::info!("Multi-connect support: start advertising");
-    ble_device.get_advertising().start();
+    ble_device.get_advertising().start().unwrap();
   });
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 

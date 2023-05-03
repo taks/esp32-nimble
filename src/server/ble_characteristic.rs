@@ -72,7 +72,7 @@ impl NotifyTx<'_> {
 
 bitflags! {
   #[repr(transparent)]
-  struct NimbleSub: u16 {
+  pub struct NimbleSub: u16 {
     const NOTIFY = 0x0001;
     const INDICATE = 0x0002;
   }
@@ -90,6 +90,7 @@ pub struct BLECharacteristic {
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
+  on_subscribe: Option<Box<dyn FnMut(NimbleSub) + Send + Sync>>,
 }
 
 impl BLECharacteristic {
@@ -105,6 +106,7 @@ impl BLECharacteristic {
       descriptors: Vec::new(),
       svc_def_descriptors: Vec::new(),
       subscribed_list: Vec::new(),
+      on_subscribe: None,
     }
   }
 
@@ -333,6 +335,22 @@ impl BLECharacteristic {
     } else if !sub_val.is_empty() {
       self.subscribed_list.push((subscribe.conn_handle, sub_val));
     }
+
+    if let Some(callback) = &mut self.on_subscribe {
+      callback(sub_val);
+    }
+  }
+
+  pub fn on_subscribe(
+    &mut self,
+    callback: impl FnMut(NimbleSub) + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_subscribe = Some(Box::new(callback));
+    self
+  }
+
+  pub fn subscribed_count(&self) -> usize {
+    self.subscribed_list.len()
   }
 }
 

@@ -90,7 +90,7 @@ pub struct BLECharacteristic {
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
-  on_subscribe: Option<Box<dyn FnMut(NimbleSub) + Send + Sync>>,
+  on_subscribe: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc, NimbleSub) + Send + Sync>>,
 }
 
 impl BLECharacteristic {
@@ -309,10 +309,9 @@ impl BLECharacteristic {
     &mut self,
     subscribe: &esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12,
   ) {
-    let mut desc = esp_idf_sys::ble_gap_conn_desc::default();
-    if unsafe { esp_idf_sys::ble_gap_conn_find(subscribe.conn_handle, &mut desc) != 0 } {
+    let Ok(desc) = crate::utilities::ble_gap_conn_find(subscribe.conn_handle) else {
       return;
-    }
+    };
 
     let mut sub_val = NimbleSub::empty();
     if subscribe.cur_notify() > 0 && (self.properties.contains(NimbleProperties::NOTIFY)) {
@@ -337,13 +336,13 @@ impl BLECharacteristic {
     }
 
     if let Some(callback) = &mut self.on_subscribe {
-      callback(sub_val);
+      callback(&desc, sub_val);
     }
   }
 
   pub fn on_subscribe(
     &mut self,
-    callback: impl FnMut(NimbleSub) + Send + Sync + 'static,
+    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc, NimbleSub) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_subscribe = Some(Box::new(callback));
     self

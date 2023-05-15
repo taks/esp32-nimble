@@ -46,6 +46,7 @@ impl BLEDevice {
         esp_idf_sys::esp_bt_mode_t_ESP_BT_MODE_CLASSIC_BT
       ));
 
+      #[cfg(esp_idf_version_major = "4")]
       esp_nofail!(esp_idf_sys::esp_nimble_hci_and_controller_init());
 
       esp_idf_sys::nimble_port_init();

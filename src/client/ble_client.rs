@@ -37,8 +37,8 @@ impl BLEClient {
         ble_gap_conn_params: ble_gap_conn_params {
           scan_itvl: 16,
           scan_window: 16,
-          itvl_min: BLE_GAP_INITIAL_CONN_ITVL_MIN as _,
-          itvl_max: BLE_GAP_INITIAL_CONN_ITVL_MAX as _,
+          itvl_min: (30 * 1000 / BLE_HCI_CONN_ITVL) as _,
+          itvl_max: (50 * 1000 / BLE_HCI_CONN_ITVL) as _,
           latency: BLE_GAP_INITIAL_CONN_LATENCY as _,
           supervision_timeout: BLE_GAP_INITIAL_SUPERVISION_TIMEOUT as _,
           min_ce_len: BLE_GAP_INITIAL_CONN_MIN_CE_LEN as _,

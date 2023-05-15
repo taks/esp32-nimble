@@ -36,7 +36,6 @@ jobs:
         with:
           default: true
           ldproxy: true
-      - uses: Swatinem/rust-cache@v2
       - name: Build
         env:
           ESP_IDF_VERSION: ${{ matrix.idf-version }}

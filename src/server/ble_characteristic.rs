@@ -361,3 +361,5 @@ impl core::fmt::Debug for BLECharacteristic {
       .finish()
   }
 }
+
+unsafe impl Send for BLECharacteristic {}

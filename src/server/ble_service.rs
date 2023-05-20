@@ -86,3 +86,5 @@ impl BLEService {
     characteristic
   }
 }
+
+unsafe impl Send for BLEService {}

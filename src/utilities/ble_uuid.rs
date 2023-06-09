@@ -156,7 +156,9 @@ impl core::fmt::Debug for BleUuid {
 
 impl From<uuid::Uuid> for BleUuid {
   fn from(uuid: uuid::Uuid) -> Self {
-    Self::Uuid128(uuid.into_bytes())
+    let mut bytes = uuid.as_bytes().clone();
+    bytes.reverse();
+    Self::Uuid128(bytes)
   }
 }
 

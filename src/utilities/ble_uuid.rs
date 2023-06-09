@@ -154,6 +154,12 @@ impl core::fmt::Debug for BleUuid {
   }
 }
 
+impl From<uuid::Uuid> for BleUuid {
+  fn from(uuid: uuid::Uuid) -> Self {
+    Self::Uuid128(uuid.into_bytes())
+  }
+}
+
 #[macro_export]
 /// Parse Uuid128 from string literals at compile time.
 macro_rules! uuid128 {

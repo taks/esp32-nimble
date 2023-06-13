@@ -47,4 +47,4 @@ jobs:
         env:
           ESP_IDF_VERSION: ${{ matrix.idf-version }}
           RUSTFLAGS: "${{ matrix.rustflags }}"
-        run: cargo clippy --target ${{ matrix.target }} --all-features -- -D clippy::all -W clippy::nursery
+        run: cargo clippy --target ${{ matrix.target }} --all-features -- -D clippy::all

@@ -226,6 +226,21 @@ impl BLEServer {
         ::log::debug!("Connection parameters updated.");
       }
       esp_idf_sys::BLE_GAP_EVENT_CONN_UPDATE_REQ => {}
+      esp_idf_sys::BLE_GAP_EVENT_REPEAT_PAIRING => {
+        let repeat_pairing = unsafe { &event.__bindgen_anon_1.repeat_pairing };
+
+        // Delete the old bond
+        let Ok(desc) = crate::utilities::ble_gap_conn_find(repeat_pairing.conn_handle) else {
+          return esp_idf_sys::BLE_GAP_REPEAT_PAIRING_IGNORE as _;
+        };
+        unsafe {
+          esp_idf_sys::ble_store_util_delete_peer(&desc.peer_id_addr);
+        }
+
+        // Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should
+        // continue with the pairing operation.
+        return esp_idf_sys::BLE_GAP_REPEAT_PAIRING_RETRY as _;
+      }
       esp_idf_sys::BLE_GAP_EVENT_ENC_CHANGE => {
         // let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };
         ::log::info!("AuthenticationComplete");

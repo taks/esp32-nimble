@@ -7,7 +7,7 @@ use crate::{
   ble, client::BLEScan, enums::*, BLEAdvertising, BLEReturnCode, BLESecurity, BLEServer,
 };
 
-extern "C"  {
+extern "C" {
   fn ble_store_config_init();
 }
 

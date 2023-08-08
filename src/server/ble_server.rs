@@ -127,6 +127,34 @@ impl BLEServer {
     self
   }
 
+  /// Request an Update the connection parameters:
+  /// Can only be used after a connection has been established.
+  ///
+  /// * `conn_handle`: The connection handle of the peer to send the request to.
+  /// * `min_interval`: The minimum connection interval in 1.25ms units.
+  /// * `max_interval`: The maximum connection interval in 1.25ms units.
+  /// * `latency`: The number of packets allowed to skip (extends max interval).
+  /// * `timeout`: The timeout time in 10ms units before disconnecting.
+  pub fn update_conn_params(
+    &mut self,
+    conn_handle: u16,
+    min_interval: u16,
+    max_interval: u16,
+    latency: u16,
+    timeout: u16,
+  ) -> Result<(), BLEReturnCode> {
+    let params = esp_idf_sys::ble_gap_upd_params {
+      itvl_min: min_interval,
+      itvl_max: max_interval,
+      latency,
+      supervision_timeout: timeout,
+      min_ce_len: esp_idf_sys::BLE_GAP_INITIAL_CONN_MIN_CE_LEN as _,
+      max_ce_len: esp_idf_sys::BLE_GAP_INITIAL_CONN_MAX_CE_LEN as _,
+    };
+
+    unsafe { ble!(esp_idf_sys::ble_gap_update_params(conn_handle, &params)) }
+  }
+
   pub(crate) extern "C" fn handle_gap_event(
     event: *mut esp_idf_sys::ble_gap_event,
     _arg: *mut c_void,

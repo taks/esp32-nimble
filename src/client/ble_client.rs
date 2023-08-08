@@ -146,6 +146,62 @@ impl BLEClient {
     self.state.conn_handle != (esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _)
   }
 
+  /// Set the connection parameters to use when connecting to a server.
+  ///
+  /// * `min_interval`: The minimum connection interval in 1.25ms units.
+  /// * `max_interval`: The maximum connection interval in 1.25ms units.
+  /// * `latency`: The number of packets allowed to skip (extends max interval).
+  /// * `timeout`: The timeout time in 10ms units before disconnecting.
+  /// * `scan_interval`: The scan interval to use when attempting to connect in 0.625ms units.
+  /// * `scan_window`: The scan window to use when attempting to connect in 0.625ms units.
+  pub fn set_connection_params(
+    &mut self,
+    min_interval: u16,
+    max_interval: u16,
+    latency: u16,
+    timeout: u16,
+    scan_interval: u16,
+    scan_window: u16,
+  ) {
+    self.state.ble_gap_conn_params.scan_itvl = scan_interval;
+    self.state.ble_gap_conn_params.scan_window = scan_window;
+    self.state.ble_gap_conn_params.itvl_min = min_interval;
+    self.state.ble_gap_conn_params.itvl_max = max_interval;
+    self.state.ble_gap_conn_params.latency = latency;
+    self.state.ble_gap_conn_params.supervision_timeout = timeout;
+  }
+
+  /// Request an Update the connection parameters:
+  /// Can only be used after a connection has been established.
+  ///
+  /// * `min_interval`: The minimum connection interval in 1.25ms units.
+  /// * `max_interval`: The maximum connection interval in 1.25ms units.
+  /// * `latency`: The number of packets allowed to skip (extends max interval).
+  /// * `timeout`: The timeout time in 10ms units before disconnecting.
+  pub fn update_conn_params(
+    &mut self,
+    min_interval: u16,
+    max_interval: u16,
+    latency: u16,
+    timeout: u16,
+  ) -> Result<(), BLEReturnCode> {
+    let params = esp_idf_sys::ble_gap_upd_params {
+      itvl_min: min_interval,
+      itvl_max: max_interval,
+      latency,
+      supervision_timeout: timeout,
+      min_ce_len: esp_idf_sys::BLE_GAP_INITIAL_CONN_MIN_CE_LEN as _,
+      max_ce_len: esp_idf_sys::BLE_GAP_INITIAL_CONN_MAX_CE_LEN as _,
+    };
+
+    unsafe {
+      ble!(esp_idf_sys::ble_gap_update_params(
+        self.state.conn_handle,
+        &params
+      ))
+    }
+  }
+
   pub async fn get_services(
     &mut self,
   ) -> Result<core::slice::IterMut<'_, BLERemoteService>, BLEReturnCode> {

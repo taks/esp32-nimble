@@ -15,8 +15,13 @@ fn main() {
   let ble_device = BLEDevice::take();
 
   let server = ble_device.get_server();
-  server.on_connect(|_| {
+  server.on_connect(|server, desc| {
     ::log::info!("Client connected");
+
+    server
+      .update_conn_params(desc.conn_handle, 24, 48, 0, 60)
+      .unwrap();
+
     ::log::info!("Multi-connect support: start advertising");
     ble_device.get_advertising().start().unwrap();
   });

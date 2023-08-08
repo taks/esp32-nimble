@@ -4,7 +4,7 @@ use crate::{
   BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use core::ffi::c_void;
+use core::{cell::UnsafeCell, ffi::c_void};
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 
@@ -17,7 +17,7 @@ pub struct BLEServer {
   connections: Vec<u16>,
   indicate_wait: [u16; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
 
-  on_connect: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_connect: Option<Box<dyn FnMut(&mut Self, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
   on_disconnect: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
@@ -41,7 +41,7 @@ impl BLEServer {
 
   pub fn on_connect(
     &mut self,
-    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut Self, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_connect = Some(Box::new(callback));
     self
@@ -169,8 +169,11 @@ impl BLEServer {
           server.connections.push(connect.conn_handle);
 
           if let Ok(desc) = ble_gap_conn_find(connect.conn_handle) {
-            if let Some(callback) = server.on_connect.as_mut() {
-              callback(&desc);
+            let server = UnsafeCell::new(server);
+            unsafe {
+              if let Some(callback) = (*server.get()).on_connect.as_mut() {
+                callback(*server.get(), &desc);
+              }
             }
           }
         }

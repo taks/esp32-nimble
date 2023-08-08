@@ -46,6 +46,9 @@ fn main() {
         info!("Advertised Device: {:?}", device);
 
         let mut client = BLEClient::new();
+        client.on_connect(|client| {
+          client.update_conn_params(120, 120, 0, 60).unwrap();
+        });
         client.connect(device.addr()).await.unwrap();
 
         let service = client

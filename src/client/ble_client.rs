@@ -6,9 +6,10 @@ use crate::{
   BLEAddress, BLEDevice, BLERemoteService, BLEReturnCode, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
-use core::ffi::c_void;
+use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_sys::*;
 
+#[allow(clippy::type_complexity)]
 pub(crate) struct BLEClientState {
   address: Option<BLEAddress>,
   conn_handle: u16,
@@ -18,7 +19,7 @@ pub(crate) struct BLEClientState {
   ble_gap_conn_params: ble_gap_conn_params,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-  on_connect: Option<Box<dyn Fn() + Send + Sync>>,
+  on_connect: Option<Box<dyn Fn(&mut BLEClient) + Send + Sync>>,
   on_disconnect: Option<Box<dyn Fn(i32) + Send + Sync>>,
 }
 
@@ -77,7 +78,7 @@ impl BLEClient {
     self
   }
 
-  pub fn on_connect(&mut self, callback: impl Fn() + Send + Sync + 'static) -> &mut Self {
+  pub fn on_connect(&mut self, callback: impl Fn(&mut Self) + Send + Sync + 'static) -> &mut Self {
     self.state.on_connect = Some(Box::new(callback));
     self
   }
@@ -107,8 +108,11 @@ impl BLEClient {
     ble!(self.state.signal.wait().await)?;
     self.state.address = Some(*addr);
 
-    if let Some(callback) = &self.state.on_connect {
-      callback();
+    let client = UnsafeCell::new(self);
+    unsafe {
+      if let Some(callback) = &(*client.get()).state.on_connect {
+        callback(*client.get());
+      }
     }
 
     Ok(())

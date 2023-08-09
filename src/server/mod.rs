@@ -24,3 +24,6 @@ mod ble_service;
 pub use self::ble_service::BLEService;
 
 pub mod hid;
+
+mod on_write_args;
+pub use self::on_write_args::OnWriteArgs;

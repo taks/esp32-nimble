@@ -53,8 +53,8 @@ fn main() {
     .on_read(move |_, _| {
       ::log::info!("Read from writable characteristic.");
     })
-    .on_write(move |value, _param| {
-      ::log::info!("Wrote to writable characteristic: {:?}", value);
+    .on_write(move |args| {
+      ::log::info!("Wrote to writable characteristic: {:?}", args.recv_data);
     });
 
   let ble_advertising = ble_device.get_advertising();

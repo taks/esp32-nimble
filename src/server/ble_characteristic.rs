@@ -8,7 +8,7 @@ use crate::{
   utilities::{
     as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid,
   },
-  AttValue, BLEDescriptor, BLEDevice, DescriptorProperties, BLE2904,
+  AttValue, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
 };
 
 const NULL_HANDLE: u16 = 0xFFFF;
@@ -85,7 +85,7 @@ pub struct BLECharacteristic {
   pub(crate) properties: NimbleProperties,
   value: AttValue,
   on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
-  on_write: Option<Box<dyn FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
   pub(crate) on_notify_tx: Option<Box<dyn FnMut(NotifyTx) + Send + Sync>>,
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
@@ -134,7 +134,7 @@ impl BLECharacteristic {
 
   pub fn on_write(
     &mut self,
-    callback: impl FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut OnWriteArgs) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_write = Some(Box::new(callback));
     self
@@ -282,22 +282,28 @@ impl BLECharacteristic {
         }
       }
       esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_CHR => {
-        characteristic.value.clear();
+        let mut buf = Vec::with_capacity(esp_idf_sys::BLE_ATT_ATTR_MAX_LEN as _);
         let mut om = ctxt.om;
         while !om.is_null() {
           let slice = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };
-          characteristic.value.extend(slice);
+          buf.extend_from_slice(slice);
           om = unsafe { (*om).om_next.sle_next };
         }
 
-        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+        if let Some(callback) = &mut characteristic.on_write {
+          let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+          let mut arg = OnWriteArgs {
+            recv_data: &buf,
+            desc: &desc,
+            reject: false,
+          };
+          callback(&mut arg);
 
-        unsafe {
-          let characteristic = UnsafeCell::new(&mut characteristic);
-          if let Some(callback) = &mut (*characteristic.get()).on_write {
-            callback((*characteristic.get()).value.value(), &desc);
+          if arg.reject {
+            return 0;
           }
         }
+        characteristic.set_value(&buf);
 
         0
       }

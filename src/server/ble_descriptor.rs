@@ -1,12 +1,12 @@
 use core::{cell::UnsafeCell, ffi::c_void};
 
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp, os_mbuf_append};
 
 use crate::{
   utilities::{ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid},
-  AttValue,
+  AttValue, OnWriteArgs,
 };
 
 bitflags! {
@@ -29,7 +29,7 @@ pub struct BLEDescriptor {
   pub(crate) properties: DescriptorProperties,
   value: AttValue,
   on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
-  on_write: Option<Box<dyn FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
 }
 
 impl BLEDescriptor {
@@ -67,7 +67,7 @@ impl BLEDescriptor {
 
   pub fn on_write(
     &mut self,
-    callback: impl FnMut(&[u8], &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut OnWriteArgs) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_write = Some(Box::new(callback));
     self
@@ -114,22 +114,29 @@ impl BLEDescriptor {
         }
       }
       esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_DSC => {
-        descriptor.value.clear();
+        let mut buf = Vec::with_capacity(esp_idf_sys::BLE_ATT_ATTR_MAX_LEN as _);
         let mut om = ctxt.om;
         while !om.is_null() {
           let slice = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };
-          descriptor.value.extend(slice);
+          buf.extend_from_slice(slice);
           om = unsafe { (*om).om_next.sle_next };
         }
 
-        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+        if let Some(callback) = &mut descriptor.on_write {
+          let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+          let mut arg = OnWriteArgs {
+            recv_data: &buf,
+            desc: &desc,
+            reject: false,
+          };
+          callback(&mut arg);
 
-        unsafe {
-          let descriptor = UnsafeCell::new(&mut descriptor);
-          if let Some(callback) = &mut (*descriptor.get()).on_write {
-            callback((*descriptor.get()).value.value(), &desc);
+          if arg.reject {
+            return 0;
           }
         }
+        descriptor.set_value(&buf);
+
         0
       }
       _ => esp_idf_sys::BLE_ATT_ERR_UNLIKELY as _,

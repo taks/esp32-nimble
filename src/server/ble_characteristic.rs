@@ -296,11 +296,12 @@ impl BLECharacteristic {
             recv_data: &buf,
             desc: &desc,
             reject: false,
+            error_code: 0,
           };
           callback(&mut arg);
 
           if arg.reject {
-            return 0;
+            return arg.error_code as _;
           }
         }
         characteristic.set_value(&buf);

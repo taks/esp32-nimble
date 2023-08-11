@@ -326,6 +326,22 @@ impl BLEClient {
           }
         }
       }
+      BLE_GAP_EVENT_CONN_UPDATE | BLE_GAP_EVENT_L2CAP_UPDATE_REQ => {
+        let conn_update_req = unsafe { &event.__bindgen_anon_1.conn_update_req };
+        if client.state.conn_handle != conn_update_req.conn_handle {
+          return 0;
+        }
+        unsafe {
+          ::log::debug!("Peer requesting to update connection parameters");
+          ::log::debug!(
+            "MinInterval: {}, MaxInterval: {}, Latency: {}, Timeout: {}",
+            (*conn_update_req.peer_params).itvl_min,
+            (*conn_update_req.peer_params).itvl_max,
+            (*conn_update_req.peer_params).latency,
+            (*conn_update_req.peer_params).supervision_timeout
+          );
+        }
+      }
       BLE_GAP_EVENT_PASSKEY_ACTION => {
         let passkey = unsafe { &event.__bindgen_anon_1.passkey };
         if client.state.conn_handle != passkey.conn_handle {

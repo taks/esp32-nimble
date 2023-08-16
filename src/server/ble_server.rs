@@ -156,10 +156,10 @@ impl BLEServer {
   }
 
   pub(crate) extern "C" fn handle_gap_event(
-    event: *mut esp_idf_sys::ble_gap_event,
+    _event: *mut esp_idf_sys::ble_gap_event,
     _arg: *mut c_void,
   ) -> i32 {
-    let event = unsafe { &*event };
+    let event = unsafe { &*_event };
     let server = BLEDevice::take().get_server();
 
     match event.type_ as _ {
@@ -192,6 +192,7 @@ impl BLEServer {
           callback(&disconnect.conn);
         }
 
+        #[cfg(not(esp_idf_bt_nimble_ext_adv))]
         if server.advertise_on_disconnect {
           if let Err(err) = BLEDevice::take().get_advertising().start() {
             ::log::warn!("can't start advertising: {:?}", err);
@@ -252,6 +253,12 @@ impl BLEServer {
             callback(NotifyTx { notify_tx });
           }
         }
+      }
+      #[cfg(not(esp_idf_bt_nimble_ext_adv))]
+      esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE => {}
+      #[cfg(esp_idf_bt_nimble_ext_adv)]
+      esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE | esp_idf_sys::BLE_GAP_EVENT_SCAN_REQ_RCVD => {
+        return crate::BLEExtAdvertising::handle_gap_event(_event, _arg);
       }
       esp_idf_sys::BLE_GAP_EVENT_CONN_UPDATE => {
         ::log::debug!("Connection parameters updated.");

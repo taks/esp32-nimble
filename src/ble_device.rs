@@ -3,9 +3,12 @@ use core::ffi::c_void;
 use esp_idf_sys::esp_nofail;
 use once_cell::sync::Lazy;
 
-use crate::{
-  ble, client::BLEScan, enums::*, BLEAdvertising, BLEReturnCode, BLESecurity, BLEServer,
-};
+use crate::{ble, client::BLEScan, enums::*, BLEReturnCode, BLESecurity, BLEServer};
+
+#[cfg(not(esp_idf_bt_nimble_ext_adv))]
+type BLEAdvertising = crate::BLEAdvertising;
+#[cfg(esp_idf_bt_nimble_ext_adv)]
+type BLEAdvertising = crate::BLEExtAdvertising;
 
 extern "C" {
   fn ble_store_config_init();

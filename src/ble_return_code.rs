@@ -103,6 +103,9 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
     match rc_ {
       esp_idf_sys::ble_error_codes_BLE_ERR_UNKNOWN_HCI_CMD => Some("Unknown HCI Command"),
       esp_idf_sys::ble_error_codes_BLE_ERR_UNK_CONN_ID => Some("Unknown Connection Identifier"),
+      esp_idf_sys::ble_error_codes_BLE_ERR_INV_HCI_CMD_PARMS => {
+        Some("Invalid HCI Command Parameters")
+      }
       esp_idf_sys::ble_error_codes_BLE_ERR_CONN_TERM_LOCAL => {
         Some("Connection Terminated By Local Host")
       }

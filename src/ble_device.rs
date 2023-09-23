@@ -86,12 +86,15 @@ impl BLEDevice {
       let ret = esp_idf_sys::nimble_port_stop();
       if ret == 0 {
         esp_idf_sys::nimble_port_deinit();
-        let ret = esp_idf_sys::esp_nimble_hci_and_controller_deinit();
-        if ret != esp_idf_sys::ESP_OK {
-          ::log::warn!(
-            "esp_nimble_hci_and_controller_deinit() failed with error: {}",
-            ret
-          );
+        #[cfg(esp_idf_version_major = "4")]
+        {
+          let ret = esp_idf_sys::esp_nimble_hci_and_controller_deinit();
+          if ret != esp_idf_sys::ESP_OK {
+            ::log::warn!(
+              "esp_nimble_hci_and_controller_deinit() failed with error: {}",
+              ret
+            );
+          }
         }
       }
     };

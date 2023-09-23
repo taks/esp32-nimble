@@ -96,6 +96,7 @@ impl BLEDevice {
             );
           }
         }
+        SYNCED = false;
       }
     };
   }

@@ -81,6 +81,22 @@ impl BLEDevice {
     unsafe { Lazy::force_mut(&mut BLE_DEVICE) }
   }
 
+  pub fn deinit() {
+    unsafe {
+      let ret = esp_idf_sys::nimble_port_stop();
+      if ret == 0 {
+        esp_idf_sys::nimble_port_deinit();
+        let ret = esp_idf_sys::esp_nimble_hci_and_controller_deinit();
+        if ret != esp_idf_sys::ESP_OK {
+          ::log::warn!(
+            "esp_nimble_hci_and_controller_deinit() failed with error: {}",
+            ret
+          );
+        }
+      }
+    };
+  }
+
   pub fn get_scan(&self) -> &'static mut BLEScan {
     unsafe { Lazy::force_mut(&mut BLE_SCAN) }
   }

@@ -70,7 +70,7 @@ fn main() {
         ::log::info!("subscribe {:?}", uuid);
         characteristic
           .on_notify(|data| {
-            ::log::info!("{}", core::str::from_utf8(&data).unwrap());
+            ::log::info!("{}", core::str::from_utf8(data).unwrap());
           })
           .subscribe_notify(false)
           .await

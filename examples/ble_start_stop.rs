@@ -91,6 +91,7 @@ fn main() {
       } else {
         ::log::info!("start BLE");
         BLEDevice::init();
+        ble_advertising.start().unwrap();
       }
       initialized = !initialized;
     }

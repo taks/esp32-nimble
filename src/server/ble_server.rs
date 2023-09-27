@@ -76,6 +76,12 @@ impl BLEServer {
       return Ok(());
     }
 
+    unsafe {
+      esp_idf_sys::ble_gatts_reset();
+      esp_idf_sys::ble_svc_gap_init();
+      esp_idf_sys::ble_svc_gatt_init();
+    }
+
     for svc in &mut self.services {
       svc.lock().start()?;
     }

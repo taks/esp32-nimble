@@ -27,6 +27,7 @@ pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(|| unsafe {
 static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new);
 
 pub static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;
+static mut INITIALIZED: bool = false;
 static mut SYNCED: bool = false;
 
 pub struct BLEDevice {
@@ -34,46 +35,50 @@ pub struct BLEDevice {
 }
 
 impl BLEDevice {
-  fn init() {
+  pub fn init() {
     // NVS initialisation.
     unsafe {
-      let result = esp_idf_sys::nvs_flash_init();
-      if result == esp_idf_sys::ESP_ERR_NVS_NO_FREE_PAGES
-        || result == esp_idf_sys::ESP_ERR_NVS_NEW_VERSION_FOUND
-      {
-        ::log::warn!("NVS initialisation failed. Erasing NVS.");
-        esp_nofail!(esp_idf_sys::nvs_flash_erase());
-        esp_nofail!(esp_idf_sys::nvs_flash_init());
+      if !INITIALIZED {
+        let result = esp_idf_sys::nvs_flash_init();
+        if result == esp_idf_sys::ESP_ERR_NVS_NO_FREE_PAGES
+          || result == esp_idf_sys::ESP_ERR_NVS_NEW_VERSION_FOUND
+        {
+          ::log::warn!("NVS initialisation failed. Erasing NVS.");
+          esp_nofail!(esp_idf_sys::nvs_flash_erase());
+          esp_nofail!(esp_idf_sys::nvs_flash_init());
+        }
+
+        esp_nofail!(esp_idf_sys::esp_bt_controller_mem_release(
+          esp_idf_sys::esp_bt_mode_t_ESP_BT_MODE_CLASSIC_BT
+        ));
+
+        #[cfg(esp_idf_version_major = "4")]
+        esp_nofail!(esp_idf_sys::esp_nimble_hci_and_controller_init());
+
+        esp_idf_sys::nimble_port_init();
+
+        esp_idf_sys::ble_hs_cfg.sync_cb = Some(Self::on_sync);
+        esp_idf_sys::ble_hs_cfg.reset_cb = Some(Self::on_reset);
+
+        // Set initial security capabilities
+        esp_idf_sys::ble_hs_cfg.sm_io_cap = esp_idf_sys::BLE_HS_IO_NO_INPUT_OUTPUT as _;
+        esp_idf_sys::ble_hs_cfg.set_sm_bonding(0);
+        esp_idf_sys::ble_hs_cfg.set_sm_mitm(0);
+        esp_idf_sys::ble_hs_cfg.set_sm_sc(1);
+        esp_idf_sys::ble_hs_cfg.sm_our_key_dist = 1;
+        esp_idf_sys::ble_hs_cfg.sm_their_key_dist = 3;
+        esp_idf_sys::ble_hs_cfg.store_status_cb = Some(esp_idf_sys::ble_store_util_status_rr);
+
+        ble_store_config_init();
+
+        esp_idf_sys::nimble_port_freertos_init(Some(Self::blecent_host_task));
       }
-
-      esp_nofail!(esp_idf_sys::esp_bt_controller_mem_release(
-        esp_idf_sys::esp_bt_mode_t_ESP_BT_MODE_CLASSIC_BT
-      ));
-
-      #[cfg(esp_idf_version_major = "4")]
-      esp_nofail!(esp_idf_sys::esp_nimble_hci_and_controller_init());
-
-      esp_idf_sys::nimble_port_init();
-
-      esp_idf_sys::ble_hs_cfg.sync_cb = Some(Self::on_sync);
-      esp_idf_sys::ble_hs_cfg.reset_cb = Some(Self::on_reset);
-
-      // Set initial security capabilities
-      esp_idf_sys::ble_hs_cfg.sm_io_cap = esp_idf_sys::BLE_HS_IO_NO_INPUT_OUTPUT as _;
-      esp_idf_sys::ble_hs_cfg.set_sm_bonding(0);
-      esp_idf_sys::ble_hs_cfg.set_sm_mitm(0);
-      esp_idf_sys::ble_hs_cfg.set_sm_sc(1);
-      esp_idf_sys::ble_hs_cfg.sm_our_key_dist = 1;
-      esp_idf_sys::ble_hs_cfg.sm_their_key_dist = 3;
-      esp_idf_sys::ble_hs_cfg.store_status_cb = Some(esp_idf_sys::ble_store_util_status_rr);
-
-      ble_store_config_init();
-
-      esp_idf_sys::nimble_port_freertos_init(Some(Self::blecent_host_task));
 
       while !SYNCED {
         esp_idf_sys::vPortYield();
       }
+
+      INITIALIZED = true;
     }
   }
 
@@ -96,6 +101,7 @@ impl BLEDevice {
             );
           }
         }
+        INITIALIZED = false;
         SYNCED = false;
       }
     };

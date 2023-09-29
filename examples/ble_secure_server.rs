@@ -43,6 +43,8 @@ fn main() {
     .start()
     .unwrap();
 
+  ::log::info!("bonded_addresses: {:?}", device.bonded_addresses().unwrap());
+
   loop {
     esp_idf_hal::delay::FreeRtos::delay_ms(1000);
   }

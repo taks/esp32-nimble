@@ -1,10 +1,10 @@
-use alloc::ffi::CString;
+use alloc::{ffi::CString, vec::Vec};
 use core::ffi::c_void;
 use esp_idf_sys::esp_nofail;
 use once_cell::sync::Lazy;
 
 use crate::{
-  ble, client::BLEScan, enums::*, BLEAdvertising, BLEReturnCode, BLESecurity, BLEServer,
+  ble, client::BLEScan, enums::*, BLEAddress, BLEAdvertising, BLEReturnCode, BLESecurity, BLEServer,
 };
 
 extern "C" {
@@ -81,6 +81,7 @@ impl BLEDevice {
     unsafe { Lazy::force_mut(&mut BLE_DEVICE) }
   }
 
+  /// Shutdown the NimBLE stack/controller
   pub fn deinit() {
     unsafe {
       let ret = esp_idf_sys::nimble_port_stop();
@@ -133,6 +134,50 @@ impl BLEDevice {
 
   pub fn get_power(&self, power_type: PowerType) -> PowerLevel {
     unsafe { core::mem::transmute(esp_idf_sys::esp_ble_tx_power_get(power_type as _)) }
+  }
+
+  /// Get the addresses of all bonded peer device.
+  pub fn bonded_addresses(&self) -> Option<Vec<BLEAddress>> {
+    let mut peer_id_addrs =
+      [esp_idf_sys::ble_addr_t::default(); esp_idf_sys::MYNEWT_VAL_BLE_STORE_MAX_BONDS as _];
+    let mut num_peers: core::ffi::c_int = 0;
+
+    let rc = unsafe {
+      esp_idf_sys::ble_store_util_bonded_peers(
+        peer_id_addrs.as_mut_ptr(),
+        &mut num_peers,
+        esp_idf_sys::MYNEWT_VAL_BLE_STORE_MAX_BONDS as _,
+      )
+    };
+    if rc != 0 {
+      return None;
+    }
+
+    let mut result = Vec::with_capacity(esp_idf_sys::MYNEWT_VAL_BLE_STORE_MAX_BONDS as _);
+    for addr in peer_id_addrs.iter().take(num_peers as _) {
+      result.push(BLEAddress::from(*addr));
+    }
+
+    Some(result)
+  }
+
+  /// Deletes all bonding information.
+  pub fn delete_all_bonds(&self) {
+    unsafe {
+      esp_idf_sys::ble_store_clear();
+    }
+  }
+
+  /// Deletes a peer bond.
+  ///
+  /// * `address`: The address of the peer with which to delete bond info.
+  pub fn delete_bond(&self, address: &BLEAddress) -> bool {
+    let rc = unsafe { esp_idf_sys::ble_gap_unpair(&address.value) };
+    if rc != 0 {
+      return false;
+    }
+
+    true
   }
 
   pub fn security(&mut self) -> &mut BLESecurity {

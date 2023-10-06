@@ -24,7 +24,7 @@ jobs:
             idf-version: release/v5.0
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
           - target: riscv32imc-esp-espidf
-            idf-version: release/v5.1
+            idf-version: v5.1.1
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
           - target: xtensa-esp32-espidf
             idf-version: release/v4.4
@@ -33,7 +33,7 @@ jobs:
             idf-version: release/v5.0
             rustflags: "--cfg espidf_time64"
           - target: xtensa-esp32-espidf
-            idf-version: release/v5.1
+            idf-version: v5.1.1
             rustflags: "--cfg espidf_time64"
 
     steps:

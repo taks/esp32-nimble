@@ -41,8 +41,7 @@ impl BLEExtAdvertisement {
   /// The ESP32C3 and ESP32S3 have a range of -27 to +18
   ///
   /// * `dbm`: the transmission power to use in dbm.
-  pub fn tx_power(&mut self, dbm: i8)
-  {
+  pub fn tx_power(&mut self, dbm: i8) {
     self.params.tx_power = dbm;
   }
 
@@ -58,20 +57,17 @@ impl BLEExtAdvertisement {
   }
 
   /// Sets The primary channels to advertise on.
-  pub fn primary_channels(&mut self, ch37: bool, ch38: bool, ch39: bool)
-  {
+  pub fn primary_channels(&mut self, ch37: bool, ch38: bool, ch39: bool) {
     self.params.channel_map = (ch37 as u8) | ((ch38 as u8) << 1) | ((ch39 as u8) << 2);
   }
 
   /// Set the minimum advertising interval
-  pub fn min_interval(&mut self, val: u32)
-  {
+  pub fn min_interval(&mut self, val: u32) {
     self.params.itvl_min = val;
   }
 
   /// Set the maximum advertising interval.
-  pub fn max_interval(&mut self, val: u32)
-  {
+  pub fn max_interval(&mut self, val: u32) {
     self.params.itvl_max = val;
   }
 
@@ -81,14 +77,12 @@ impl BLEExtAdvertisement {
   }
 
   /// Clears the data stored in this instance, does not change settings.
-  pub fn clear(&mut self)
-  {
+  pub fn clear(&mut self) {
     self.payload.clear();
   }
 
   /// Get the size of the current data.
-  pub fn size(&self) -> usize
-  {
+  pub fn size(&self) -> usize {
     self.payload.len()
   }
 

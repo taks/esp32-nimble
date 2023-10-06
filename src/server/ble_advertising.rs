@@ -17,6 +17,8 @@ pub struct BLEAdvertising {
   service_data32: Vec<u8>,
   service_data128: Vec<u8>,
   adv_data_set: bool,
+  custom_adv_data: bool,
+  custom_scan_response_data: bool,
   name: Option<CString>,
   mfg_data: Vec<u8>,
   scan_response: bool,
@@ -36,6 +38,8 @@ impl BLEAdvertising {
       service_data32: Vec::new(),
       service_data128: Vec::new(),
       adv_data_set: false,
+      custom_adv_data: false,
+      custom_scan_response_data: false,
       name: None,
       mfg_data: Vec::new(),
       scan_response: true,
@@ -70,6 +74,8 @@ impl BLEAdvertising {
     self.scan_response = true;
 
     self.adv_data_set = false;
+    self.custom_adv_data = false;
+    self.custom_scan_response_data = false;
 
     Ok(())
   }
@@ -119,6 +125,32 @@ impl BLEAdvertising {
     self.adv_data_set = false;
 
     self
+  }
+
+  pub fn custom_adv_data(&mut self, data: &[u8]) -> Result<(), BLEReturnCode> {
+    unsafe {
+      ble!(esp_idf_sys::ble_gap_adv_set_data(
+        data.as_ptr(),
+        data.len() as i32
+      ))?
+    }
+
+    self.custom_adv_data = true;
+
+    Ok(())
+  }
+
+  pub fn custom_scan_response_data(&mut self, data: &[u8]) -> Result<(), BLEReturnCode> {
+    unsafe {
+      ble!(esp_idf_sys::ble_gap_adv_rsp_set_data(
+        data.as_ptr(),
+        data.len() as i32
+      ))?
+    }
+
+    self.custom_scan_response_data = true;
+
+    Ok(())
   }
 
   pub fn manufacturer_data(&mut self, data: &[u8]) -> &mut Self {
@@ -192,7 +224,7 @@ impl BLEAdvertising {
     self.adv_data.flags =
       (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _;
 
-    if !self.adv_data_set {
+    if !self.custom_adv_data && !self.adv_data_set {
       let mut payload_len: u8 = if self.adv_data.flags > 0 { 2 + 1 } else { 0 };
 
       if self.adv_data.mfg_data_len > 0 {
@@ -261,7 +293,7 @@ impl BLEAdvertising {
       }
 
       if payload_len + 2 + self.adv_data.name_len > BLE_HS_ADV_MAX_SZ {
-        if self.scan_response {
+        if self.scan_response && !self.custom_scan_response_data {
           self.scan_data.name = self.adv_data.name;
           self.scan_data.name_len = self.adv_data.name_len;
           if self.scan_data.name_len > BLE_HS_ADV_MAX_SZ - 2 {
@@ -286,7 +318,7 @@ impl BLEAdvertising {
       }
 
       unsafe {
-        if self.scan_response {
+        if self.scan_response && !self.custom_scan_response_data {
           ble!(esp_idf_sys::ble_gap_adv_rsp_set_fields(&self.scan_data))?;
         }
 

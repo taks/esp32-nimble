@@ -34,7 +34,7 @@ impl BLEService {
     BleUuid::from(self.uuid)
   }
 
-  pub fn start(&mut self) -> Result<(), BLEReturnCode> {
+  pub(crate) fn start(&mut self) -> Result<(), BLEReturnCode> {
     let svc_def = self.svc_def.get_or_insert_with(|| {
       let mut svc = [esp_idf_sys::ble_gatt_svc_def::default(); 2];
       svc[0].type_ = esp_idf_sys::BLE_GATT_SVC_TYPE_PRIMARY as _;

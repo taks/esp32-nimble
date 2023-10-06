@@ -15,7 +15,7 @@ use esp_idf_sys as _;
 const KEYBOARD_ID: u8 = 0x01;
 const MEDIA_KEYS_ID: u8 = 0x02;
 
-const HID_REPORT_DISCRIPTOR: &'static [u8] = hid!(
+const HID_REPORT_DISCRIPTOR: &[u8] = hid!(
   (USAGE_PAGE, 0x01), // USAGE_PAGE (Generic Desktop Ctrls)
   (USAGE, 0x06),      // USAGE (Keyboard)
   (COLLECTION, 0x01), // COLLECTION (Application)
@@ -81,7 +81,7 @@ const HID_REPORT_DISCRIPTOR: &'static [u8] = hid!(
 );
 
 const SHIFT: u8 = 0x80;
-const ASCII_MAP: &'static [u8] = &[
+const ASCII_MAP: &[u8] = &[
   0x00,         // NUL
   0x00,         // SOH
   0x00,         // STX
@@ -246,7 +246,7 @@ impl Keyboard {
     hid.pnp(0x02, 0x05ac, 0x820a, 0x0210);
     hid.hid_info(0x00, 0x01);
 
-    hid.report_map(&HID_REPORT_DISCRIPTOR);
+    hid.report_map(HID_REPORT_DISCRIPTOR);
 
     hid.set_battery_level(100);
 

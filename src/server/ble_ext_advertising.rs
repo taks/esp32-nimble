@@ -35,17 +35,61 @@ impl BLEExtAdvertisement {
     self.params.set_scannable(val as _);
   }
 
+  /// Sets the transmission power level for this advertisement.
+  ///
+  /// The allowable value range depends on device hardware.
+  /// The ESP32C3 and ESP32S3 have a range of -27 to +18
+  ///
+  /// * `dbm`: the transmission power to use in dbm.
+  pub fn tx_power(&mut self, dbm: i8)
+  {
+    self.params.tx_power = dbm;
+  }
+
+  /// Sets wether this advertisement should advertise as a connectable device.
   pub fn connectable(&mut self, val: bool) {
     self.params.set_connectable(val as _);
   }
 
+  /// Set the address to use for this advertisement
   pub fn address(&mut self, addr: &BLEAddress) {
     self.adv_address = Some(*addr);
     self.params.own_addr_type = esp_idf_sys::BLE_OWN_ADDR_RANDOM as _;
   }
 
+  /// Sets The primary channels to advertise on.
+  pub fn primary_channels(&mut self, ch37: bool, ch38: bool, ch39: bool)
+  {
+    self.params.channel_map = (ch37 as u8) | ((ch38 as u8) << 1) | ((ch39 as u8) << 2);
+  }
+
+  /// Set the minimum advertising interval
+  pub fn min_interval(&mut self, val: u32)
+  {
+    self.params.itvl_min = val;
+  }
+
+  /// Set the maximum advertising interval.
+  pub fn max_interval(&mut self, val: u32)
+  {
+    self.params.itvl_max = val;
+  }
+
+  /// Sets whether the scan response request callback should be called.
   pub fn enable_scan_request_callback(&mut self, val: bool) {
     self.params.set_scan_req_notif(val as _);
+  }
+
+  /// Clears the data stored in this instance, does not change settings.
+  pub fn clear(&mut self)
+  {
+    self.payload.clear();
+  }
+
+  /// Get the size of the current data.
+  pub fn size(&self) -> usize
+  {
+    self.payload.len()
   }
 
   pub fn appearance(&mut self, appearance: u16) {
@@ -55,10 +99,17 @@ impl BLEExtAdvertisement {
     );
   }
 
+  /// Set manufacturer specific data.
+  pub fn manufacturer_data(&mut self, data: &[u8]) {
+    self.add_data(esp_idf_sys::BLE_HS_ADV_TYPE_MFG_DATA as _, data);
+  }
+
+  /// Set the complete name of this device.
   pub fn name(&mut self, name: &str) {
     self.add_data(esp_idf_sys::BLE_HS_ADV_TYPE_COMP_NAME as _, name.as_bytes());
   }
 
+  // Set a single service to advertise as a complete list of services.
   pub fn complete_service(&mut self, uuid: &BleUuid) {
     let bit_size = match uuid {
       BleUuid::Uuid16(_) => 16,
@@ -111,6 +162,7 @@ impl BLEExtAdvertisement {
     }
   }
 
+  /// Set the service data (UUID + data)
   pub fn service_data(&mut self, uuid: BleUuid, data: &[u8]) {
     match uuid {
       BleUuid::Uuid16(uuid) => {

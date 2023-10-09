@@ -25,6 +25,7 @@ pub struct BLEAdvertising {
 }
 
 impl BLEAdvertising {
+  #[allow(dead_code)]
   pub(crate) fn new() -> Self {
     let mut ret = Self {
       adv_data: esp_idf_sys::ble_hs_adv_fields::default(),
@@ -208,7 +209,7 @@ impl BLEAdvertising {
   }
 
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {
-    self.start_with_duration(i32::MAX)
+    self.start_with_duration(0)
   }
 
   fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {

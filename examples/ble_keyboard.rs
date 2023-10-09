@@ -331,7 +331,5 @@ fn main() {
 #[allow(dead_code)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
   ::log::error!("{:?}", info);
-  unsafe {
-    esp_idf_sys::abort();
-  }
+  unsafe { esp_idf_sys::abort() }
 }

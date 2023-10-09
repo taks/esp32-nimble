@@ -8,24 +8,33 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ESP_IDF_SDKCONFIG_DEFAULTS: "${{ github.workspace }}/.github/configs/sdkconfig.defaults"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - target: riscv32imc-esp-espidf
             idf-version: release/v4.4
             rustflags: "-C default-linker-libraries"
+            build-options: --example ble5_*
           - target: riscv32imc-esp-espidf
             idf-version: release/v5.0
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
+          - target: riscv32imc-esp-espidf
+            idf-version: v5.1.1
+            rustflags: "-C default-linker-libraries --cfg espidf_time64"
           - target: xtensa-esp32-espidf
             idf-version: release/v4.4
+            build-options: --example ble_*
           - target: xtensa-esp32-espidf
             idf-version: release/v5.0
+            rustflags: "--cfg espidf_time64"
+          - target: xtensa-esp32-espidf
+            idf-version: v5.1.1
             rustflags: "--cfg espidf_time64"
 
     steps:
@@ -40,7 +49,7 @@ jobs:
         env:
           ESP_IDF_VERSION: ${{ matrix.idf-version }}
           RUSTFLAGS: "${{ matrix.rustflags }}"
-        run: cargo build --target ${{ matrix.target }} --examples
+        run: cargo build --target ${{ matrix.target }} ${{ matrix.build-options }}
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check

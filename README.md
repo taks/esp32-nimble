@@ -16,28 +16,5 @@ CONFIG_BT_BLUEDROID_ENABLED=n
 CONFIG_BT_NIMBLE_ENABLED=y
 ```
 
-## Features
-- [x] GATT server
-  - [x] Advertisement
-  - [x] Services
-  - [x] Characteristics
-    - [x] Read
-    - [x] Write
-    - [x] Notify
-    - [x] Indicate
-  - [x] Descriptors
-    - [x] Read
-    - [x] Write
-  - [x] Encryption
-- [x] GATT client
-  - [x] Scan
-  - [x] Services
-  - [x] Characteristics
-    - [x] Read
-    - [x] Write
-    - [x] Notify
-    - [x] Indicate
-  - [x] Descriptors
-    - [x] Read
-    - [x] Write
-  - [x] Encryption
+- To enable Extended advertising, additionally append `CONFIG_BT_NIMBLE_EXT_ADV=y`.<br>
+  (For use with ESP32C3, ESP32S3, ESP32H2 ONLY)

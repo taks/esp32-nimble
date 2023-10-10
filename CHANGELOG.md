@@ -3,3 +3,4 @@
 - Added deinit function and support reinitialize. (#26)
 - Added bond management functions.
 - Changed BLEService.start to pub(crate). (#27)
+- Added Extended advertisement support.

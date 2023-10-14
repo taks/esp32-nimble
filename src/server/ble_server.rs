@@ -4,7 +4,10 @@ use crate::{
   BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use core::{cell::UnsafeCell, ffi::{c_void, c_int}};
+use core::{
+  cell::UnsafeCell,
+  ffi::{c_int, c_void},
+};
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 

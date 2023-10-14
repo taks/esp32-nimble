@@ -6,6 +6,9 @@ use once_cell::sync::Lazy;
 
 const BLE_HS_ADV_MAX_SZ: u8 = esp_idf_sys::BLE_HS_ADV_MAX_SZ as u8;
 
+// Copied from ble_hs.h, for some reason esp_idf_sys didn't pick this up.
+const BLE_HS_FOREVER: i32 = i32::MAX;
+
 pub struct BLEAdvertising {
   adv_data: esp_idf_sys::ble_hs_adv_fields,
   scan_data: esp_idf_sys::ble_hs_adv_fields,
@@ -209,7 +212,7 @@ impl BLEAdvertising {
   }
 
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {
-    self.start_with_duration(0)
+    self.start_with_duration(BLE_HS_FOREVER)
   }
 
   fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {

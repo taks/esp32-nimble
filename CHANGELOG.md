@@ -1,6 +1,10 @@
+## [0.2.2]
+- Fix advertising regression in v0.2.1 ([#31](https://github.com/taks/esp32-nimble/pull/31))
+- Added disconnect reason parameter to BLEServer::on_disconnect.
+
 ## [0.2.1]
-- Added methods to set custom adv_data and scan_reponse. (#25)
-- Added deinit function and support reinitialize. (#26)
+- Added methods to set custom adv_data and scan_reponse. ([#25](https://github.com/taks/esp32-nimble/pull/25))
+- Added deinit function and support reinitialize. ([#26](https://github.com/taks/esp32-nimble/pull/26))
 - Added bond management functions.
-- Changed BLEService.start to pub(crate). (#27)
+- Changed BLEService.start to pub(crate). ([#27](https://github.com/taks/esp32-nimble/pull/27))
 - Added Extended advertisement support.

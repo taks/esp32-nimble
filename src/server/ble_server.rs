@@ -4,7 +4,7 @@ use crate::{
   BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use core::{cell::UnsafeCell, ffi::c_void};
+use core::{cell::UnsafeCell, ffi::{c_void, c_int}};
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 
@@ -18,7 +18,7 @@ pub struct BLEServer {
   indicate_wait: [u16; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
 
   on_connect: Option<Box<dyn FnMut(&mut Self, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
-  on_disconnect: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_disconnect: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc, c_int) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
 }
@@ -47,9 +47,12 @@ impl BLEServer {
     self
   }
 
+  /// Handle a client disconnection.
+  /// * callback first parameter: A reference to a `esp_idf_sys::ble_gap_conn_desc` instance with information about the peer connection parameters.
+  /// * callback second parameter: The reason code for the disconnection.
   pub fn on_disconnect(
     &mut self,
-    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc, c_int) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_disconnect = Some(Box::new(callback));
     self
@@ -195,7 +198,7 @@ impl BLEServer {
         }
 
         if let Some(callback) = server.on_disconnect.as_mut() {
-          callback(&disconnect.conn);
+          callback(&disconnect.conn, disconnect.reason);
         }
 
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]

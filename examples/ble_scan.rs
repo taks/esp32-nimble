@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use esp32_nimble::BLEDevice;
-use esp_idf_hal::task::executor::{EspExecutor, Local};
+use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;
 use log::*;
 
@@ -18,24 +18,19 @@ fn main() {
   esp_idf_svc::log::EspLogger::initialize_default();
   log::set_max_level(log::LevelFilter::Debug);
 
-  let executor = EspExecutor::<16, Local>::new();
-  let _task = executor
-    .spawn_local(async {
-      let ble_device = BLEDevice::take();
-      let ble_scan = ble_device.get_scan();
-      ble_scan
-        .active_scan(true)
-        .interval(100)
-        .window(99)
-        .on_result(|param| {
-          info!("Advertised Device: {:?}", param);
-        });
-      ble_scan.start(5000).await.unwrap();
-      info!("Scan end");
-    })
-    .unwrap();
-
-  executor.run(|| true);
+  block_on(async {
+    let ble_device = BLEDevice::take();
+    let ble_scan = ble_device.get_scan();
+    ble_scan
+      .active_scan(true)
+      .interval(100)
+      .window(99)
+      .on_result(|param| {
+        info!("Advertised Device: {:?}", param);
+      });
+    ble_scan.start(5000).await.unwrap();
+    info!("Scan end");
+  });
 }
 
 #[panic_handler]

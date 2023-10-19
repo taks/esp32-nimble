@@ -4,7 +4,11 @@ use once_cell::sync::Lazy;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::{ble, utilities::BleUuid, BLEAddress, BLEReturnCode, BLEServer};
+use crate::{
+  ble,
+  utilities::{os_mbuf_append, os_msys_get_pkthdr, BleUuid},
+  BLEAddress, BLEReturnCode, BLEServer,
+};
 
 pub struct BLEExtAdvertisement {
   payload: Vec<u8>,
@@ -248,15 +252,11 @@ impl BLEExtAdvertising {
         self as *mut Self as _
       ))?;
 
-      let buf = esp_idf_sys::os_msys_get_pkthdr(adv.payload.len() as _, 0);
+      let buf = os_msys_get_pkthdr(adv.payload.len() as _, 0);
       if buf.is_null() {
         return BLEReturnCode::fail();
       }
-      ble!(esp_idf_sys::os_mbuf_append(
-        buf,
-        adv.payload.as_ptr() as _,
-        adv.payload.len() as _
-      ))?;
+      ble!(os_mbuf_append(buf, &adv.payload))?;
 
       if (adv.params.scannable() != 0) && (adv.params.legacy_pdu() == 0) {
         ble!(esp_idf_sys::ble_gap_ext_adv_rsp_set_data(inst_id, buf))?;
@@ -278,15 +278,11 @@ impl BLEExtAdvertising {
     lsr: &BLEExtAdvertisement,
   ) -> Result<(), BLEReturnCode> {
     unsafe {
-      let buf = esp_idf_sys::os_msys_get_pkthdr(lsr.payload.len() as _, 0);
+      let buf = os_msys_get_pkthdr(lsr.payload.len() as _, 0);
       if buf.is_null() {
         return BLEReturnCode::fail();
       }
-      ble!(esp_idf_sys::os_mbuf_append(
-        buf,
-        lsr.payload.as_ptr() as _,
-        lsr.payload.len() as _
-      ))?;
+      ble!(os_mbuf_append(buf, &lsr.payload))?;
 
       ble!(esp_idf_sys::ble_gap_ext_adv_rsp_set_data(inst_id, buf))
     }

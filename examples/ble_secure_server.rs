@@ -19,6 +19,13 @@ fn main() {
     .set_io_cap(SecurityIOCap::DisplayOnly);
 
   let server = device.get_server();
+  server.on_connect(|server, desc| {
+    ::log::info!("Client connected");
+  });
+  server.on_disconnect(|desc, reason| {
+    ::log::info!("Client disconnected ({:X})", reason);
+  });
+
   let service = server.create_service(BleUuid::Uuid16(0xABCD));
 
   let non_secure_characteristic = service

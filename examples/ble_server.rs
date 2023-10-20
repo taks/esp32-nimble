@@ -25,6 +25,9 @@ fn main() {
     ::log::info!("Multi-connect support: start advertising");
     ble_device.get_advertising().start().unwrap();
   });
+  server.on_disconnect(|desc, reason| {
+    ::log::info!("Client disconnected ({:X})", reason);
+  });
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 
   // A static characteristic.

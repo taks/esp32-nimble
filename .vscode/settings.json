@@ -1,7 +1,6 @@
 {
-  "rust-analyzer.cargo.target": "xtensa-esp32s3-espidf",
+  "rust-analyzer.cargo.target": "xtensa-esp32-espidf",
   "rust-analyzer.check.extraArgs": [
-    "--cfg esp_idf_bt_nimble_ext_adv"
   ],
   "rust-analyzer.checkOnSave.allTargets": false,
   "rust-analyzer.checkOnSave.command": "clippy",

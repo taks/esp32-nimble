@@ -4,7 +4,7 @@ use core::ffi::c_void;
 
 pub struct BLEScan {
   #[allow(clippy::type_complexity)]
-  on_result: Option<Box<dyn FnMut(&BLEAdvertisedDevice) + Send + Sync>>,
+  on_result: Option<Box<dyn FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync>>,
   on_completed: Option<Box<dyn FnMut() + Send + Sync>>,
   scan_params: esp_idf_sys::ble_gap_disc_params,
   stopped: bool,
@@ -63,9 +63,12 @@ impl BLEScan {
     self
   }
 
+  /// Set a callback to be called when a new scan result is detected.
+  /// * callback first parameter: The reference to `Self`
+  /// * callback second parameter: Newly found device
   pub fn on_result(
     &mut self,
-    callback: impl FnMut(&BLEAdvertisedDevice) + Send + Sync + 'static,
+    callback: impl FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_result = Some(Box::new(callback));
     self
@@ -150,7 +153,8 @@ impl BLEScan {
               && advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _)
             || disc.event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
           {
-            callback(advertised_device);
+            let scan = unsafe { &mut *(arg as *mut Self) };
+            callback(scan, advertised_device);
           }
         }
       }

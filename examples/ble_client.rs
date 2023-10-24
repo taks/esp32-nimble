@@ -29,9 +29,9 @@ fn main() {
       .active_scan(true)
       .interval(100)
       .window(99)
-      .on_result(move |device| {
+      .on_result(move |scan, device| {
         if device.name().contains("ESP32") {
-          BLEDevice::take().get_scan().stop().unwrap();
+          scan.stop().unwrap();
           (*device0.lock()) = Some(device.clone());
         }
       });

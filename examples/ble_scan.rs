@@ -25,7 +25,7 @@ fn main() {
       .active_scan(true)
       .interval(100)
       .window(99)
-      .on_result(|param| {
+      .on_result(|_scan, param| {
         info!("Advertised Device: {:?}", param);
       });
     ble_scan.start(5000).await.unwrap();

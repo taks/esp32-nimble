@@ -1,3 +1,7 @@
+## [0.3.0]
+- Upgraded to `esp-idf-hal` 0.42 and `esp-idf-svc` 0.47
+- Added Self parameter to BLEScan::on_result.
+
 ## [0.2.2]
 - Fix advertising regression in v0.2.1 ([#31](https://github.com/taks/esp32-nimble/pull/31))
 - Added disconnect reason parameter to BLEServer::on_disconnect.

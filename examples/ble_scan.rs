@@ -1,14 +1,9 @@
-#![no_std]
-#![no_main]
-
-extern crate alloc;
 
 use esp32_nimble::BLEDevice;
 use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;
 use log::*;
 
-#[no_mangle]
 fn main() {
   // Temporary. Will disappear once ESP-IDF 4.4 is released, but for now it is necessary to call this function once,
   // or else some patches to the runtime implemented by esp-idf-sys might not link properly.
@@ -31,11 +26,4 @@ fn main() {
     ble_scan.start(5000).await.unwrap();
     info!("Scan end");
   });
-}
-
-#[panic_handler]
-#[allow(dead_code)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-  ::log::error!("{:?}", info);
-  unsafe { esp_idf_sys::abort() }
 }

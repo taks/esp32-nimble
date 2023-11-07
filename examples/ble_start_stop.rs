@@ -1,7 +1,3 @@
-#![no_std]
-#![no_main]
-
-extern crate alloc;
 
 use esp32_nimble::{uuid128, BLEDevice, NimbleProperties};
 use esp_idf_hal::peripherals::Peripherals;
@@ -10,7 +6,6 @@ use esp_idf_hal::units::Hertz;
 use esp_idf_hal::{delay::*, gpio};
 use esp_idf_sys as _;
 
-#[no_mangle]
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
@@ -95,14 +90,5 @@ fn main() {
       }
       initialized = !initialized;
     }
-  }
-}
-
-#[panic_handler]
-#[allow(dead_code)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-  ::log::error!("{:?}", info);
-  unsafe {
-    esp_idf_sys::abort();
   }
 }

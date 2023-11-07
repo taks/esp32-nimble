@@ -21,8 +21,9 @@ opt-level = "z"
 
 [features]
 default = ["std"]
-no_std = ["esp-idf-hal/critical-section"]
+
 std = ["esp-idf-svc/std", "esp-idf-hal/std", "critical-section/std"]
+no_std = ["esp-idf-hal/critical-section"]
 
 [dependencies]
 log = { version = "0.4", default-features = false }

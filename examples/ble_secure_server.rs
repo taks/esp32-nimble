@@ -1,12 +1,7 @@
-#![no_std]
-#![no_main]
-
-extern crate alloc;
 
 use esp32_nimble::{enums::*, utilities::BleUuid, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
 
-#[no_mangle]
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
@@ -55,11 +50,4 @@ fn main() {
   loop {
     esp_idf_hal::delay::FreeRtos::delay_ms(1000);
   }
-}
-
-#[panic_handler]
-#[allow(dead_code)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-  ::log::error!("{:?}", info);
-  unsafe { esp_idf_sys::abort() }
 }

@@ -1,7 +1,4 @@
-#![no_std]
-#![no_main]
 
-extern crate alloc;
 use esp_idf_sys::{BLE_HCI_LE_PHY_1M, BLE_HCI_LE_PHY_CODED};
 
 use esp32_nimble::{
@@ -10,7 +7,6 @@ use esp32_nimble::{
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
 
-#[no_mangle]
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
@@ -67,11 +63,4 @@ fn main() {
   loop {
     esp_idf_hal::delay::FreeRtos::delay_ms(5000);
   }
-}
-
-#[panic_handler]
-#[allow(dead_code)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-  ::log::error!("{:?}", info);
-  unsafe { esp_idf_sys::abort() }
 }

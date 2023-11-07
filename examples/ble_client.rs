@@ -1,7 +1,3 @@
-#![no_std]
-#![no_main]
-
-extern crate alloc;
 
 use alloc::sync::Arc;
 use esp32_nimble::{utilities::mutex::Mutex, uuid128, BLEClient, BLEDevice};
@@ -11,7 +7,6 @@ use esp_idf_hal::timer::{TimerConfig, TimerDriver};
 use esp_idf_sys as _;
 use log::*;
 
-#[no_mangle]
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
@@ -79,11 +74,4 @@ fn main() {
       client.disconnect().unwrap();
     }
   });
-}
-
-#[panic_handler]
-#[allow(dead_code)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-  ::log::error!("{:?}", info);
-  unsafe { esp_idf_sys::abort() }
 }

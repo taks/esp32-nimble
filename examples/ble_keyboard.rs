@@ -1,10 +1,5 @@
 // originally: https://github.com/T-vK/ESP32-BLE-Keyboard
-
-#![no_std]
-#![no_main]
 #![allow(dead_code)]
-
-extern crate alloc;
 
 use alloc::sync::Arc;
 use esp32_nimble::{
@@ -304,7 +299,6 @@ impl Keyboard {
   }
 }
 
-#[no_mangle]
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
@@ -325,11 +319,4 @@ fn main() {
     }
     esp_idf_hal::delay::FreeRtos::delay_ms(5000);
   }
-}
-
-#[panic_handler]
-#[allow(dead_code)]
-fn panic(info: &core::panic::PanicInfo) -> ! {
-  ::log::error!("{:?}", info);
-  unsafe { esp_idf_sys::abort() }
 }

@@ -49,7 +49,7 @@ jobs:
         env:
           ESP_IDF_VERSION: ${{ matrix.idf-version }}
           RUSTFLAGS: "${{ matrix.rustflags }}"
-        run: cargo build --target ${{ matrix.target }} ${{ matrix.build-options }} --no-default-features --features "no_std"
+        run: cargo build --target ${{ matrix.target }} ${{ matrix.build-options }}
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check

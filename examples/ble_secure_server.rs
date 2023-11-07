@@ -13,10 +13,10 @@ fn main() {
     .set_io_cap(SecurityIOCap::DisplayOnly);
 
   let server = device.get_server();
-  server.on_connect(|server, desc| {
+  server.on_connect(|_server, _desc| {
     ::log::info!("Client connected");
   });
-  server.on_disconnect(|desc, reason| {
+  server.on_disconnect(|_desc, reason| {
     ::log::info!("Client disconnected ({:X})", reason);
   });
 

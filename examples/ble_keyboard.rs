@@ -1,11 +1,11 @@
 // originally: https://github.com/T-vK/ESP32-BLE-Keyboard
 #![allow(dead_code)]
 
-use alloc::sync::Arc;
 use esp32_nimble::{
   enums::*, hid::*, utilities::mutex::Mutex, BLECharacteristic, BLEDevice, BLEHIDDevice, BLEServer,
 };
 use esp_idf_sys as _;
+use std::sync::Arc;
 
 const KEYBOARD_ID: u8 = 0x01;
 const MEDIA_KEYS_ID: u8 = 0x02;

@@ -1,6 +1,6 @@
-use alloc::format;
 use esp32_nimble::{uuid128, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
+use std::format;
 
 fn main() {
   esp_idf_sys::link_patches();
@@ -19,7 +19,7 @@ fn main() {
     ::log::info!("Multi-connect support: start advertising");
     ble_device.get_advertising().start().unwrap();
   });
-  server.on_disconnect(|desc, reason| {
+  server.on_disconnect(|_desc, reason| {
     ::log::info!("Client disconnected ({:X})", reason);
   });
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));

@@ -1,4 +1,3 @@
-use alloc::sync::Arc;
 use esp32_nimble::{
   enums::*,
   utilities::{mutex::Mutex, BleUuid},
@@ -7,6 +6,7 @@ use esp32_nimble::{
 use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;
 use log::*;
+use std::sync::Arc;
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
 

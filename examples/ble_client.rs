@@ -1,10 +1,10 @@
-use alloc::sync::Arc;
 use esp32_nimble::{utilities::mutex::Mutex, uuid128, BLEClient, BLEDevice};
 use esp_idf_hal::prelude::Peripherals;
 use esp_idf_hal::task::block_on;
 use esp_idf_hal::timer::{TimerConfig, TimerDriver};
 use esp_idf_sys as _;
 use log::*;
+use std::sync::Arc;
 
 fn main() {
   esp_idf_sys::link_patches();

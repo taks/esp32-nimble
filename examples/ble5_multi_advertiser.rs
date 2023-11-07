@@ -1,4 +1,3 @@
-
 use esp_idf_sys::{BLE_HCI_LE_PHY_1M, BLE_HCI_LE_PHY_CODED};
 
 use esp32_nimble::{

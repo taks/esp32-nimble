@@ -1,4 +1,3 @@
-
 use alloc::format;
 use esp32_nimble::{uuid128, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;

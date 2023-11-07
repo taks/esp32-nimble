@@ -1,4 +1,3 @@
-
 use esp32_nimble::BLEDevice;
 use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;

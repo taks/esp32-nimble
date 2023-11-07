@@ -1,4 +1,3 @@
-
 use alloc::sync::Arc;
 use esp32_nimble::{utilities::mutex::Mutex, uuid128, BLEClient, BLEDevice};
 use esp_idf_hal::prelude::Peripherals;

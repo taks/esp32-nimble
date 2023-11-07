@@ -1,4 +1,3 @@
-
 use esp32_nimble::{enums::*, utilities::BleUuid, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
 

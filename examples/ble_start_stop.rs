@@ -1,4 +1,3 @@
-
 use esp32_nimble::{uuid128, BLEDevice, NimbleProperties};
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::uart::*;

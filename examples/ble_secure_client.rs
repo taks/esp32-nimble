@@ -1,4 +1,3 @@
-
 use alloc::sync::Arc;
 use esp32_nimble::{
   enums::*,

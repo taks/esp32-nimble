@@ -41,7 +41,7 @@ impl BLESecurity {
 
   /// Set the keys we are willing to accept during pairing.
   pub fn set_security_resp_key(&mut self, resp_key: enums::PairKeyDist) -> &mut Self {
-    unsafe { esp_idf_sys::ble_hs_cfg.sm_their_key_dist = init_key.bits() };
+    unsafe { esp_idf_sys::ble_hs_cfg.sm_their_key_dist = resp_key.bits() };
     self
   }
 }

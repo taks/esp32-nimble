@@ -1,3 +1,4 @@
+use bitflags::bitflags;
 use esp_idf_sys::*;
 
 #[repr(u8)]
@@ -78,4 +79,15 @@ pub enum PowerType {
   Scan = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_SCAN as _,
   /// For default, if not set other, it will use default value
   Default = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_DEFAULT as _,
+}
+
+bitflags! {
+  #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  pub struct PairKeyDist: u8 {
+    const ENC = BLE_SM_PAIR_KEY_DIST_ENC as _;
+    const ID = BLE_SM_PAIR_KEY_DIST_ID as _;
+    const SIGN = BLE_SM_PAIR_KEY_DIST_SIGN as _;
+    const LINK = BLE_SM_PAIR_KEY_DIST_LINK as _;
+  }
 }

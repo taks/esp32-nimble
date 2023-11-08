@@ -12,6 +12,7 @@ use core::ffi::c_void;
 
 bitflags! {
   #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct GattCharacteristicProperties: u8 {
     const BROADCAST = esp_idf_sys::BLE_GATT_CHR_PROP_BROADCAST as _;
     const READ = esp_idf_sys::BLE_GATT_CHR_PROP_READ as _;

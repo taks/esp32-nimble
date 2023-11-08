@@ -15,6 +15,7 @@ const NULL_HANDLE: u16 = 0xFFFF;
 
 bitflags! {
   #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct NimbleProperties: u16 {
     const READ = esp_idf_sys::BLE_GATT_CHR_F_READ as _;
     const READ_ENC = esp_idf_sys::BLE_GATT_CHR_F_READ_ENC as _;
@@ -72,6 +73,7 @@ impl NotifyTx<'_> {
 
 bitflags! {
   #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct NimbleSub: u16 {
     const NOTIFY = 0x0001;
     const INDICATE = 0x0002;

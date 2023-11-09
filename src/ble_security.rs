@@ -8,11 +8,11 @@ impl BLESecurity {
     Self { passkey: 0 }
   }
 
-  pub fn set_auth(&mut self, bonding: bool, mitm: bool, sc: bool) -> &mut Self {
+  pub fn set_auth(&mut self, auth_req: enums::AuthReq) -> &mut Self {
     unsafe {
-      esp_idf_sys::ble_hs_cfg.set_sm_bonding(bonding as _);
-      esp_idf_sys::ble_hs_cfg.set_sm_mitm(mitm as _);
-      esp_idf_sys::ble_hs_cfg.set_sm_sc(sc as _);
+      esp_idf_sys::ble_hs_cfg.set_sm_bonding(auth_req.contains(enums::AuthReq::Bond) as _);
+      esp_idf_sys::ble_hs_cfg.set_sm_mitm(auth_req.contains(enums::AuthReq::Mitm) as _);
+      esp_idf_sys::ble_hs_cfg.set_sm_sc(auth_req.contains(enums::AuthReq::Sc) as _);
     }
 
     self

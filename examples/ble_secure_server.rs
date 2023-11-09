@@ -8,7 +8,7 @@ fn main() {
   let device = BLEDevice::take();
   device
     .security()
-    .set_auth(true, true, true)
+    .set_auth(AuthReq::all())
     .set_passkey(123456)
     .set_io_cap(SecurityIOCap::DisplayOnly);
 

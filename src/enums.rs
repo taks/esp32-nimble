@@ -1,3 +1,4 @@
+use bitflags::bitflags;
 use esp_idf_sys::*;
 
 #[repr(u8)]
@@ -78,4 +79,16 @@ pub enum PowerType {
   Scan = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_SCAN as _,
   /// For default, if not set other, it will use default value
   Default = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_DEFAULT as _,
+}
+
+bitflags! {
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  pub struct AuthReq: u8 {
+    /// allow bounding
+    const Bond = 0b001;
+    /// man in the middle protection
+    const Mitm = 0b010;
+    /// secure connection pairing
+    const Sc = 0b100;
+  }
 }

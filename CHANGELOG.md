@@ -2,6 +2,7 @@
 - Upgraded to `esp-idf-hal` 0.42 and `esp-idf-svc` 0.47
 - Added Self parameter to BLEScan::on_result.
 - Add feature for building with std support ([#36](https://github.com/taks/esp32-nimble/pull/36))
+- Change the argument of set_auth function to bitflag.
 
 ## [0.2.2]
 - Fix advertising regression in v0.2.1 ([#31](https://github.com/taks/esp32-nimble/pull/31))

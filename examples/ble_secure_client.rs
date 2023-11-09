@@ -21,7 +21,7 @@ fn main() {
       .unwrap();
     device
       .security()
-      .set_auth(true, true, true)
+      .set_auth(AuthReq::all())
       .set_io_cap(SecurityIOCap::KeyboardOnly);
 
     let ble_scan = device.get_scan();

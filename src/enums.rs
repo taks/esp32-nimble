@@ -82,6 +82,20 @@ pub enum PowerType {
 }
 
 bitflags! {
+  #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  pub struct PairKeyDist: u8 {
+    /// Accept/Distribute the encryption key.
+    const ENC = BLE_SM_PAIR_KEY_DIST_ENC as _;
+    /// Accept/Distribute the ID key (IRK).
+    const ID = BLE_SM_PAIR_KEY_DIST_ID as _;
+    const SIGN = BLE_SM_PAIR_KEY_DIST_SIGN as _;
+    const LINK = BLE_SM_PAIR_KEY_DIST_LINK as _;
+  }
+}
+
+bitflags! {
+  #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct AuthReq: u8 {
     /// allow bounding

@@ -90,6 +90,17 @@ pub enum OwnAddrType {
   RpaRandomDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
 }
 
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum ConnMode {
+  /// non-connectable (3.C.9.3.2)
+  Non = esp_idf_sys::BLE_GAP_CONN_MODE_NON as _,
+  /// directed-connectable (3.C.9.3.3)
+  Dir = esp_idf_sys::BLE_GAP_CONN_MODE_DIR as _,
+  /// undirected-connectable (3.C.9.3.4)
+  Und = esp_idf_sys::BLE_GAP_CONN_MODE_UND as _,
+}
+
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]

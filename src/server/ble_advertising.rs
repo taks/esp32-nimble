@@ -204,6 +204,7 @@ impl BLEAdvertising {
     }
   }
 
+  /// Set if scan response is available.
   pub fn scan_response(&mut self, value: bool) -> &mut Self {
     self.scan_response = value;
     self.adv_data_set = false;
@@ -211,11 +212,14 @@ impl BLEAdvertising {
     self
   }
 
+  /// Start advertising.
+  /// Advertising not stop until it is manually stopped.
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {
     self.start_with_duration(BLE_HS_FOREVER)
   }
 
-  fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
+  /// Start advertising.
+  pub fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
     let mut server = unsafe { Lazy::get_mut(&mut crate::ble_device::BLE_SERVER) };
     if let Some(server) = server.as_mut() {
       if !server.started {

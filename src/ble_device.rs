@@ -192,14 +192,12 @@ impl BLEDevice {
   }
 
   /// Set the own address type.
-  pub fn set_own_addr_type(&mut self, own_addr_type: OwnAddrType)
-  {
+  pub fn set_own_addr_type(&mut self, own_addr_type: OwnAddrType) {
     self._set_own_addr_type(own_addr_type, false);
   }
 
   /// Set the own address type to non-resolvable random address.
-  pub fn set_own_addr_type_to_non_resolvable_random(&mut self)
-  {
+  pub fn set_own_addr_type_to_non_resolvable_random(&mut self) {
     self._set_own_addr_type(OwnAddrType::Random, true);
   }
 
@@ -229,9 +227,7 @@ impl BLEDevice {
   /// Set the own address to be used when the address type is random.
   pub fn set_rnd_addr(&mut self, mut addr: [u8; 6]) -> Result<(), BLEReturnCode> {
     addr.reverse();
-    unsafe {
-      ble!(esp_idf_sys::ble_hs_id_set_rnd(addr.as_ptr()))
-    }
+    unsafe { ble!(esp_idf_sys::ble_hs_id_set_rnd(addr.as_ptr())) }
   }
 
   #[allow(temporary_cstring_as_ptr)]

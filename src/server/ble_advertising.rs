@@ -340,7 +340,7 @@ impl BLEAdvertising {
     };
     unsafe {
       ble!(esp_idf_sys::ble_gap_adv_start(
-        crate::ble_device::OWN_ADDR_TYPE,
+        crate::ble_device::OWN_ADDR_TYPE as _,
         core::ptr::null(),
         duration_ms,
         &self.adv_params,

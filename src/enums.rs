@@ -81,6 +81,15 @@ pub enum PowerType {
   Default = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_DEFAULT as _,
 }
 
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum OwnAddrType {
+  Public = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _,
+  Random = esp_idf_sys::BLE_OWN_ADDR_RANDOM as _,
+  RpaPublicDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT as _,
+  RpaRandomDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
+}
+
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]

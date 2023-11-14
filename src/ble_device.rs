@@ -12,7 +12,11 @@ type BLEAdvertising = crate::BLEExtAdvertising;
 
 extern "C" {
   fn ble_store_config_init();
+  fn ble_hs_pvcy_rpa_config(enable: u8) -> core::ffi::c_int;
 }
+const NIMBLE_HOST_DISABLE_PRIVACY: u8 = 0x00;
+const NIMBLE_HOST_ENABLE_RPA: u8 = 0x01;
+const NIMBLE_HOST_ENABLE_NRPA: u8 = 0x02;
 
 static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
   BLEDevice::init();
@@ -24,7 +28,7 @@ static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
 pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
 static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new);
 
-pub static mut OWN_ADDR_TYPE: u8 = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _;
+pub static mut OWN_ADDR_TYPE: OwnAddrType = OwnAddrType::Public;
 static mut INITIALIZED: bool = false;
 static mut SYNCED: bool = false;
 
@@ -187,6 +191,29 @@ impl BLEDevice {
     &mut self.security
   }
 
+  pub fn set_own_addr_type(&mut self, own_addr_type: OwnAddrType, use_nrpa: bool) {
+    unsafe {
+      OWN_ADDR_TYPE = own_addr_type;
+      match own_addr_type {
+        OwnAddrType::Public => {
+          ble_hs_pvcy_rpa_config(NIMBLE_HOST_DISABLE_PRIVACY);
+        }
+        OwnAddrType::Random => {
+          self.security().resolve_rpa();
+          ble_hs_pvcy_rpa_config(if use_nrpa {
+            NIMBLE_HOST_ENABLE_NRPA
+          } else {
+            NIMBLE_HOST_ENABLE_RPA
+          });
+        }
+        OwnAddrType::RpaPublicDefault | OwnAddrType::RpaRandomDefault => {
+          self.security().resolve_rpa();
+          ble_hs_pvcy_rpa_config(NIMBLE_HOST_ENABLE_RPA);
+        }
+      }
+    }
+  }
+
   #[allow(temporary_cstring_as_ptr)]
   pub fn set_device_name(device_name: &str) -> Result<(), BLEReturnCode> {
     unsafe {
@@ -202,12 +229,12 @@ impl BLEDevice {
 
       esp_nofail!(esp_idf_sys::ble_hs_id_infer_auto(
         0,
-        &mut OWN_ADDR_TYPE as *mut _
+        core::mem::transmute::<&mut OwnAddrType, &mut u8>(&mut OWN_ADDR_TYPE) as *mut _
       ));
 
       let mut addr = [0; 6];
       esp_nofail!(esp_idf_sys::ble_hs_id_copy_addr(
-        OWN_ADDR_TYPE,
+        OWN_ADDR_TYPE as _,
         addr.as_mut_ptr(),
         core::ptr::null_mut()
       ));

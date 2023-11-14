@@ -96,7 +96,7 @@ impl BLEClient {
       }
 
       ble!(esp_idf_sys::ble_gap_connect(
-        OWN_ADDR_TYPE,
+        OWN_ADDR_TYPE as _,
         &addr.value,
         self.state.connect_timeout_ms as _,
         &self.state.ble_gap_conn_params,

@@ -83,6 +83,15 @@ pub enum PowerType {
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
+pub enum OwnAddrType {
+  Public = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _,
+  Random = esp_idf_sys::BLE_OWN_ADDR_RANDOM as _,
+  RpaPublicDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT as _,
+  RpaRandomDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum ConnMode {
   /// non-connectable (3.C.9.3.2)
   Non = esp_idf_sys::BLE_GAP_CONN_MODE_NON as _,

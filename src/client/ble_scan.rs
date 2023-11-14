@@ -82,7 +82,7 @@ impl BLEScan {
   pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
     unsafe {
       ble!(esp_idf_sys::ble_gap_disc(
-        crate::ble_device::OWN_ADDR_TYPE,
+        crate::ble_device::OWN_ADDR_TYPE as _,
         duration_ms,
         &self.scan_params,
         Some(Self::handle_gap_event),

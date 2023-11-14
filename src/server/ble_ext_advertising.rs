@@ -17,7 +17,7 @@ impl BLEExtAdvertisement {
     Self {
       payload: Vec::new(),
       params: esp_idf_sys::ble_gap_ext_adv_params {
-        own_addr_type: unsafe { crate::ble_device::OWN_ADDR_TYPE },
+        own_addr_type: unsafe { crate::ble_device::OWN_ADDR_TYPE as _ },
         primary_phy,
         secondary_phy,
         tx_power: 127,

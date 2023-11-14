@@ -93,3 +93,16 @@ bitflags! {
     const LINK = BLE_SM_PAIR_KEY_DIST_LINK as _;
   }
 }
+
+bitflags! {
+  #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  pub struct AuthReq: u8 {
+    /// allow bounding
+    const Bond = 0b001;
+    /// man in the middle protection
+    const Mitm = 0b010;
+    /// secure connection pairing
+    const Sc = 0b100;
+  }
+}

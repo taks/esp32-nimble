@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{ble, enums::PowerType, utilities::BleUuid, BLEDevice, BLEReturnCode, BLEServer};
+use crate::{ble, enums::*, utilities::BleUuid, BLEDevice, BLEReturnCode, BLEServer};
 use alloc::{ffi::CString, vec::Vec};
 use once_cell::sync::Lazy;
 
@@ -204,6 +204,12 @@ impl BLEAdvertising {
     }
   }
 
+  /// Set the type of advertisment to use.
+  pub fn advertisement_type(&mut self, adv_type: ConnMode) -> &mut Self {
+    self.adv_params.conn_mode = adv_type as _;
+    self
+  }
+
   /// Set if scan response is available.
   pub fn scan_response(&mut self, value: bool) -> &mut Self {
     self.scan_response = value;
@@ -227,9 +233,14 @@ impl BLEAdvertising {
       }
     }
 
-    self.adv_params.disc_mode = esp_idf_sys::BLE_GAP_DISC_MODE_GEN as _;
-    self.adv_data.flags =
-      (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _;
+    if self.adv_params.conn_mode == (ConnMode::Non as _) && !self.scan_response {
+      self.adv_params.disc_mode = esp_idf_sys::BLE_GAP_DISC_MODE_NON as _;
+      self.adv_data.flags = 0;
+    } else {
+      self.adv_params.disc_mode = esp_idf_sys::BLE_GAP_DISC_MODE_GEN as _;
+      self.adv_data.flags =
+        (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _;
+    }
 
     if !self.custom_adv_data && !self.adv_data_set {
       let mut payload_len: u8 = if self.adv_data.flags > 0 { 2 + 1 } else { 0 };

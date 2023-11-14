@@ -192,7 +192,18 @@ impl BLEDevice {
   }
 
   /// Set the own address type.
-  pub fn set_own_addr_type(&mut self, own_addr_type: OwnAddrType, use_nrpa: bool) {
+  pub fn set_own_addr_type(&mut self, own_addr_type: OwnAddrType)
+  {
+    self._set_own_addr_type(own_addr_type, false);
+  }
+
+  /// Set the own address type to non-resolvable random address.
+  pub fn set_own_addr_type_to_non_resolvable_random(&mut self)
+  {
+    self._set_own_addr_type(OwnAddrType::Random, true);
+  }
+
+  fn _set_own_addr_type(&mut self, own_addr_type: OwnAddrType, use_nrpa: bool) {
     unsafe {
       OWN_ADDR_TYPE = own_addr_type;
       match own_addr_type {

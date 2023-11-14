@@ -191,6 +191,7 @@ impl BLEDevice {
     &mut self.security
   }
 
+  /// Set the own address type.
   pub fn set_own_addr_type(&mut self, own_addr_type: OwnAddrType, use_nrpa: bool) {
     unsafe {
       OWN_ADDR_TYPE = own_addr_type;
@@ -211,6 +212,14 @@ impl BLEDevice {
           ble_hs_pvcy_rpa_config(NIMBLE_HOST_ENABLE_RPA);
         }
       }
+    }
+  }
+
+  /// Set the own address to be used when the address type is random.
+  pub fn set_rnd_addr(&mut self, mut addr: [u8; 6]) -> Result<(), BLEReturnCode> {
+    addr.reverse();
+    unsafe {
+      ble!(esp_idf_sys::ble_hs_id_set_rnd(addr.as_ptr()))
     }
   }
 

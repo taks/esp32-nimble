@@ -27,6 +27,11 @@ runner = "espflash --monitor"
 # For ESP-IDF 5 add `espidf_time64` and for earlier versions - remove this flag: https://github.com/esp-rs/rust/issues/110
 rustflags = ["-C", "default-linker-libraries"]
 
+[target.riscv32imac-esp-espidf]
+linker = "ldproxy"
+runner = "espflash flash --monitor"
+rustflags = ["--cfg", "espidf_time64", "-C", "default-linker-libraries"]
+
 [unstable]
 build-std = ["std", "panic_abort"]
 #build-std-features = ["panic_immediate_abort"] # Required for older ESP-IDF versions without a realpath implementation

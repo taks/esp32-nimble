@@ -2,11 +2,12 @@ use core::{cell::UnsafeCell, ffi::c_void};
 
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
-use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp, os_mbuf_append};
+use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
   utilities::{
-    as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, BleUuid,
+    as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
+    BleUuid,
   },
   AttValue, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
 };
@@ -275,7 +276,7 @@ impl BLECharacteristic {
 
         ble_npl_hw_enter_critical();
         let value = characteristic.value.value();
-        let rc = unsafe { os_mbuf_append(ctxt.om, value.as_ptr() as _, value.len() as _) };
+        let rc = os_mbuf_append(ctxt.om, value);
         ble_npl_hw_exit_critical();
         if rc == 0 {
           0

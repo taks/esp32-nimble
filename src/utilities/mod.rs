@@ -12,6 +12,9 @@ pub(crate) use ble_functions::*;
 mod nimble_npl_os;
 pub(crate) use nimble_npl_os::*;
 
+mod os_mbuf;
+pub(crate) use os_mbuf::*;
+
 #[inline]
 #[allow(unused)]
 pub(crate) unsafe fn extend_lifetime_mut<'a, 'b: 'a, T: ?Sized>(r: &'a mut T) -> &'b mut T {

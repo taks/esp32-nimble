@@ -12,6 +12,10 @@ keywords = ["bluetooth", "ble", "esp32", "embedded", "async"]
 categories = ["embedded", "hardware-support"]
 documentation = "https://taks.github.io/esp32-nimble/esp32_nimble/index.html"
 
+[patch.crates-io]
+esp-idf-sys = { git = 'https://github.com/taks/esp-idf-sys.git', branch = 'fix-compile-error-for-esp32c6-with-nimble' }
+esp-idf-hal = { git = 'https://github.com/esp-rs/esp-idf-hal.git', branch = 'master' }
+
 [profile.release]
 opt-level = "s"
 

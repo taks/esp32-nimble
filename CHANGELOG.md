@@ -1,4 +1,4 @@
-## [0.3.0]
+## [0.3.0] - 2023-11-15
 - Upgraded to `esp-idf-hal` 0.42 and `esp-idf-svc` 0.47
 - Added Self parameter to BLEScan::on_result.
 - Add feature for building with std support ([#36](https://github.com/taks/esp32-nimble/pull/36))
@@ -9,11 +9,11 @@
 - Added `BLEAdvertising::advertisement_type` ([#41](https://github.com/taks/esp32-nimble/pull/41))
 - Fix compile error for esp32c6 ([#33](https://github.com/taks/esp32-nimble/pull/33))
 
-## [0.2.2]
+## [0.2.2] - 2023-10-14
 - Fix advertising regression in v0.2.1 ([#31](https://github.com/taks/esp32-nimble/pull/31))
 - Added disconnect reason parameter to BLEServer::on_disconnect.
 
-## [0.2.1]
+## [0.2.1] - 2023-10-10
 - Added methods to set custom adv_data and scan_reponse. ([#25](https://github.com/taks/esp32-nimble/pull/25))
 - Added deinit function and support reinitialize. ([#26](https://github.com/taks/esp32-nimble/pull/26))
 - Added bond management functions.

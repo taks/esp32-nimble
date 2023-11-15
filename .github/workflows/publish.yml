@@ -19,7 +19,7 @@ jobs:
         uses: esp-rs/xtensa-toolchain@v1.5
         with:
           default: true
-          ldproxy: true
+          ldproxy: false
       - name: Login
         run: cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Build | Publish

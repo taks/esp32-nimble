@@ -10,9 +10,12 @@ type BLEAdvertising = crate::BLEAdvertising;
 #[cfg(esp_idf_bt_nimble_ext_adv)]
 type BLEAdvertising = crate::BLEExtAdvertising;
 
-#[cfg(esp32)]
 extern "C" {
   fn ble_store_config_init();
+}
+
+#[cfg(esp32)]
+extern "C" {
   fn ble_hs_pvcy_rpa_config(enable: u8) -> core::ffi::c_int;
 }
 #[cfg(esp32)]

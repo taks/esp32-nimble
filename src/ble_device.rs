@@ -10,12 +10,16 @@ type BLEAdvertising = crate::BLEAdvertising;
 #[cfg(esp_idf_bt_nimble_ext_adv)]
 type BLEAdvertising = crate::BLEExtAdvertising;
 
+#[cfg(esp32)]
 extern "C" {
   fn ble_store_config_init();
   fn ble_hs_pvcy_rpa_config(enable: u8) -> core::ffi::c_int;
 }
+#[cfg(esp32)]
 const NIMBLE_HOST_DISABLE_PRIVACY: u8 = 0x00;
+#[cfg(esp32)]
 const NIMBLE_HOST_ENABLE_RPA: u8 = 0x01;
+#[cfg(esp32)]
 const NIMBLE_HOST_ENABLE_NRPA: u8 = 0x02;
 
 static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
@@ -197,6 +201,7 @@ impl BLEDevice {
   }
 
   /// Set the own address type to non-resolvable random address.
+  #[cfg(esp32)]
   pub fn set_own_addr_type_to_non_resolvable_random(&mut self) {
     self._set_own_addr_type(OwnAddrType::Random, true);
   }
@@ -206,10 +211,12 @@ impl BLEDevice {
       OWN_ADDR_TYPE = own_addr_type;
       match own_addr_type {
         OwnAddrType::Public => {
+          #[cfg(esp32)]
           ble_hs_pvcy_rpa_config(NIMBLE_HOST_DISABLE_PRIVACY);
         }
         OwnAddrType::Random => {
           self.security().resolve_rpa();
+          #[cfg(esp32)]
           ble_hs_pvcy_rpa_config(if use_nrpa {
             NIMBLE_HOST_ENABLE_NRPA
           } else {
@@ -218,6 +225,7 @@ impl BLEDevice {
         }
         OwnAddrType::RpaPublicDefault | OwnAddrType::RpaRandomDefault => {
           self.security().resolve_rpa();
+          #[cfg(esp32)]
           ble_hs_pvcy_rpa_config(NIMBLE_HOST_ENABLE_RPA);
         }
       }

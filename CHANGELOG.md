@@ -1,3 +1,7 @@
+## [0.3.1] - 2023-11-16
+- Fix link error for esp32c3. ([#44](https://github.com/taks/esp32-nimble/pull/44))
+- Changed to accept invalid utf8 advertising name. ([#45](https://github.com/taks/esp32-nimble/pull/45))
+
 ## [0.3.0] - 2023-11-15
 - Upgraded to `esp-idf-hal` 0.42 and `esp-idf-svc` 0.47
 - Added Self parameter to BLEScan::on_result.

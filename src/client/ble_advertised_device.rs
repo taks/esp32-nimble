@@ -104,7 +104,7 @@ impl BLEAdvertisedDevice {
             self.ad_flag = Some(data[0]);
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_NAME | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_NAME => {
-            self.name = String::from_utf8(data.to_vec()).unwrap();
+            self.name = unsafe { String::from_utf8_unchecked(data.to_vec()) };
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_TX_PWR_LVL => {
             self.tx_power = Some(data[0]);

@@ -210,6 +210,14 @@ impl BLEAdvertising {
     self
   }
 
+  /// Set the duty cycle for advertisement_type.
+  ///
+  /// Valid only if advertisement_type is directed-connectable.
+  pub fn high_duty_cycle(&mut self, val: bool) -> &mut Self {
+    self.adv_params.set_high_duty_cycle(val as _);
+    self
+  }
+
   /// Set if scan response is available.
   pub fn scan_response(&mut self, value: bool) -> &mut Self {
     self.scan_response = value;

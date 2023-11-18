@@ -101,6 +101,17 @@ pub enum ConnMode {
   Und = esp_idf_sys::BLE_GAP_CONN_MODE_UND as _,
 }
 
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum DiscMode {
+  /// non-discoverable; 3.C.9.2.2
+  Non = BLE_GAP_DISC_MODE_NON as _,
+  /// limited-discoverable; 3.C.9.2.3
+  Ltd = BLE_GAP_DISC_MODE_LTD as _,
+  /// general-discoverable; 3.C.9.2.4
+  Gen = BLE_GAP_DISC_MODE_GEN as _,
+}
+
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -26,8 +26,8 @@ opt-level = "z"
 [features]
 default = ["std"]
 
-std = ["esp-idf-svc/std", "esp-idf-hal/std", "critical-section/std"]
-no_std = ["esp-idf-hal/critical-section"]
+std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std"]
+no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section"]
 
 [dependencies]
 log = { version = "0.4", default-features = false }
@@ -37,9 +37,8 @@ esp-idf-svc = { version = "0.47", default-features = false, features = ["alloc"]
 embedded-svc = { version = "0.26", default-features = false }
 
 bitflags = { version = "2.4.1" }
-critical-section = { version = "1.1.1" }
 embassy-sync = { version = "0.3.0" }
-once_cell = { version = "1.16.0", default-features = false, features = ["critical-section"] }
+once_cell = { version = "1.16.0", default-features = false }
 uuid = { version = "1.2.2", default-features = false, features = ["macro-diagnostics"] }
 
 [dev-dependencies]

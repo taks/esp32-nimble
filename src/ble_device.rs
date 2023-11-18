@@ -209,6 +209,7 @@ impl BLEDevice {
     self._set_own_addr_type(OwnAddrType::Random, true);
   }
 
+  #[allow(unused_variables)]
   fn _set_own_addr_type(&mut self, own_addr_type: OwnAddrType, use_nrpa: bool) {
     unsafe {
       OWN_ADDR_TYPE = own_addr_type;

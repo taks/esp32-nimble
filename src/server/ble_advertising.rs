@@ -210,6 +210,12 @@ impl BLEAdvertising {
     self
   }
 
+  /// Set discoverable mode.
+  pub fn disc_mode(&mut self, mode: DiscMode) -> &mut Self {
+    self.adv_params.disc_mode = mode as _;
+    self
+  }
+
   /// Set the duty cycle for advertisement_type.
   ///
   /// Valid only if advertisement_type is directed-connectable.

@@ -1,3 +1,7 @@
+## [0.3.2] - 2023-11-18
+- Fixed unresolved import error for the std environment. ([#48](https://github.com/taks/esp32-nimble/pull/48))
+- Added `BLEAdvertising::disc_mode`, `BLEAdvertising::high_duty_cycle` ([#49](https://github.com/taks/esp32-nimble/pull/49))
+
 ## [0.3.1] - 2023-11-16
 - Fix link error for esp32c3. ([#44](https://github.com/taks/esp32-nimble/pull/44))
 - Changed to accept invalid utf8 advertising name. ([#45](https://github.com/taks/esp32-nimble/pull/45))

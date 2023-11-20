@@ -224,6 +224,22 @@ impl BLEAdvertising {
     self
   }
 
+  /// Set the minimum advertising interval.
+  ///
+  /// * `interval`: advertising interval in 0.625ms units, 0 = use default.
+  pub fn min_interval(&mut self, interval: u16) -> &mut Self {
+    self.adv_params.itvl_min = interval;
+    self
+  }
+
+  /// Set the maximum advertising interval.
+  ///
+  /// * `interval`: advertising interval in 0.625ms units, 0 = use default.
+  pub fn max_interval(&mut self, interval: u16) -> &mut Self {
+    self.adv_params.itvl_max = interval;
+    self
+  }
+
   /// Set if scan response is available.
   pub fn scan_response(&mut self, value: bool) -> &mut Self {
     self.scan_response = value;

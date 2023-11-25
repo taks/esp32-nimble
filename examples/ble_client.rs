@@ -57,6 +57,11 @@ fn main() {
 
       let uuid = uuid128!("a3c87500-8ed3-4bdf-8a39-a01bebede295");
       let characteristic = service.get_characteristic(uuid).await.unwrap();
+
+      if !characteristic.can_notify() {
+        return ::log::error!("characteristic can't notify: {:?}", uuid);
+      }
+
       ::log::info!("subscribe {:?}", uuid);
       characteristic
         .on_notify(|data| {

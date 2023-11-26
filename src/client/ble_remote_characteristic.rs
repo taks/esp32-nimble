@@ -221,6 +221,42 @@ impl BLERemoteCharacteristic {
     self
   }
 
+  pub fn can_notify(&self) -> bool {
+    self
+      .properties()
+      .contains(GattCharacteristicProperties::NOTIFY)
+  }
+
+  pub fn can_indicate(&self) -> bool {
+    self
+      .properties()
+      .contains(GattCharacteristicProperties::INDICATE)
+  }
+
+  pub fn can_read(&self) -> bool {
+    self
+      .properties()
+      .contains(GattCharacteristicProperties::READ)
+  }
+
+  pub fn can_write(&self) -> bool {
+    self
+      .properties()
+      .contains(GattCharacteristicProperties::WRITE)
+  }
+
+  pub fn can_write_no_response(&self) -> bool {
+    self
+      .properties()
+      .contains(GattCharacteristicProperties::WRITE_NO_RSP)
+  }
+
+  pub fn can_broadcast(&self) -> bool {
+    self
+      .properties()
+      .contains(GattCharacteristicProperties::BROADCAST)
+  }
+
   pub(crate) unsafe fn notify(&mut self, om: *mut esp_idf_sys::os_mbuf) {
     if let Some(no_notify) = self.state.on_notify.as_mut() {
       let data = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };

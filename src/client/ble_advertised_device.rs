@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
-use alloc::string::String;
 use alloc::vec::Vec;
+use bstr::{BStr, BString};
 
 use crate::utilities::BleUuid;
 use crate::BLEAddress;
@@ -26,7 +26,7 @@ pub struct BLEAdvertisedDevice {
   adv_type: u8,
   ad_flag: Option<u8>,
   appearance: Option<u16>,
-  name: String,
+  name: BString,
   rssi: i32,
   service_uuids: Vec<BleUuid>,
   service_data_list: Vec<BLEServiceData>,
@@ -41,7 +41,7 @@ impl BLEAdvertisedDevice {
       adv_type: param.event_type,
       ad_flag: None,
       appearance: None,
-      name: String::new(),
+      name: BString::default(),
       rssi: param.rssi as _,
       service_uuids: Vec::new(),
       service_data_list: Vec::new(),
@@ -50,8 +50,8 @@ impl BLEAdvertisedDevice {
     }
   }
 
-  pub fn name(&self) -> &str {
-    &self.name
+  pub fn name(&self) -> &BStr {
+    self.name.as_ref()
   }
 
   pub fn addr(&self) -> &BLEAddress {
@@ -109,7 +109,7 @@ impl BLEAdvertisedDevice {
             self.ad_flag = Some(*ad_flag);
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_NAME | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_NAME => {
-            self.name = unsafe { String::from_utf8_unchecked(data.to_vec()) };
+            self.name = BString::new(data.to_vec());
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_TX_PWR_LVL => {
             let Some(tx_power) = data.first() else { return };

@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
-use alloc::string::String;
 use alloc::vec::Vec;
+use bstr::{BStr, BString};
 
 use crate::utilities::BleUuid;
 use crate::BLEAddress;
@@ -26,7 +26,7 @@ pub struct BLEAdvertisedDevice {
   adv_type: u8,
   ad_flag: Option<u8>,
   appearance: Option<u16>,
-  name: String,
+  name: BString,
   rssi: i32,
   service_uuids: Vec<BleUuid>,
   service_data_list: Vec<BLEServiceData>,
@@ -41,7 +41,7 @@ impl BLEAdvertisedDevice {
       adv_type: param.event_type,
       ad_flag: None,
       appearance: None,
-      name: String::new(),
+      name: BString::default(),
       rssi: param.rssi as _,
       service_uuids: Vec::new(),
       service_data_list: Vec::new(),
@@ -50,8 +50,8 @@ impl BLEAdvertisedDevice {
     }
   }
 
-  pub fn name(&self) -> &str {
-    &self.name
+  pub fn name(&self) -> &BStr {
+    self.name.as_ref()
   }
 
   pub fn addr(&self) -> &BLEAddress {
@@ -90,30 +90,36 @@ impl BLEAdvertisedDevice {
     let mut payload = payload;
 
     loop {
-      if payload.is_empty() {
+      let Some(length) = payload.first() else {
         return;
-      }
+      };
+      let length = *length as usize;
 
-      let length = payload[0] as usize;
       if length != 0 {
-        let type_ = payload[1] as u32;
-        let data = &payload[2..(length + 1)];
+        let Some(type_) = payload.get(1) else { return };
+        let type_ = *type_ as u32;
+
+        let Some(data) = payload.get(2..(length + 1)) else {
+          return;
+        };
 
         match type_ {
           esp_idf_sys::BLE_HS_ADV_TYPE_FLAGS => {
-            self.ad_flag = Some(data[0]);
+            let Some(ad_flag) = data.first() else { return };
+            self.ad_flag = Some(*ad_flag);
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_NAME | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_NAME => {
-            self.name = unsafe { String::from_utf8_unchecked(data.to_vec()) };
+            self.name = BString::new(data.to_vec());
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_TX_PWR_LVL => {
-            self.tx_power = Some(data[0]);
+            let Some(tx_power) = data.first() else { return };
+            self.tx_power = Some(*tx_power);
           }
 
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS16
           | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_UUIDS16 => {
             let mut data = data;
-            while !data.is_empty() {
+            while data.len() >= 2 {
               let (uuid, data_) = data.split_at(2);
               self.push_service_uuid(BleUuid::from_uuid16(u16::from_le_bytes(
                 uuid.try_into().unwrap(),
@@ -124,7 +130,7 @@ impl BLEAdvertisedDevice {
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS32
           | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_UUIDS32 => {
             let mut data = data;
-            while !data.is_empty() {
+            while data.len() >= 4 {
               let (uuid, data_) = data.split_at(4);
               self.push_service_uuid(BleUuid::from_uuid32(u32::from_le_bytes(
                 uuid.try_into().unwrap(),
@@ -134,7 +140,9 @@ impl BLEAdvertisedDevice {
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS128
           | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_UUIDS128 => {
-            self.push_service_uuid(BleUuid::Uuid128(data.try_into().unwrap()));
+            if let Ok(data) = data.try_into() {
+              self.push_service_uuid(BleUuid::Uuid128(data));
+            }
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_SVC_DATA_UUID16 => {
             if length < 2 {
@@ -164,7 +172,9 @@ impl BLEAdvertisedDevice {
             }
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_APPEARANCE => {
-            self.appearance = Some(u16::from_le_bytes(data.try_into().unwrap()));
+            if let Ok(appearance) = data.try_into() {
+              self.appearance = Some(u16::from_le_bytes(appearance));
+            }
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_MFG_DATA => {
             self.manufacture_data = Some(data.to_vec());

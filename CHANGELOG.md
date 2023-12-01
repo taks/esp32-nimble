@@ -1,3 +1,9 @@
+## [0.4.0] - 2023-12-01
+- Added `BLEAdvertising::min_interval`, `BLEAdvertising::max_interval` ([#51](https::/github.com/taks/esp32-nimble/pull/51))
+- Added `can_nofity`, `can_indicate`, `can_read`, `can_write`, `can_write_no_response` and `can_broadcast` functions to `BLERemoteCharacteristic` ([#53](https::/github.com/taks/esp32-nimble/pull/53))
+- Add additional checks to prevent OOB panics in BLE advertisement parser ([#54](https::/github.com/taks/esp32-nimble/pull/54))
+- Changed type of `BLEAdvertisedDevice::name()` to `&bstr::BStr` ([#54](https::/github.com/taks/esp32-nimble/pull/54))
+
 ## [0.3.2] - 2023-11-18
 - Fixed unresolved import error for the std environment. ([#48](https://github.com/taks/esp32-nimble/pull/48))
 - Added `BLEAdvertising::disc_mode`, `BLEAdvertising::high_duty_cycle` ([#49](https://github.com/taks/esp32-nimble/pull/49))

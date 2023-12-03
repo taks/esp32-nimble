@@ -1,5 +1,5 @@
-use esp32_nimble::{uuid128, BLEClient, BLEDevice};
 use bstr::ByteSlice;
+use esp32_nimble::{uuid128, BLEClient, BLEDevice};
 use esp_idf_hal::prelude::Peripherals;
 use esp_idf_hal::task::block_on;
 use esp_idf_hal::timer::{TimerConfig, TimerDriver};
@@ -15,7 +15,7 @@ fn main() {
   block_on(async {
     let ble_device = BLEDevice::take();
     let ble_scan = ble_device.get_scan();
-     let device = ble_scan
+    let device = ble_scan
       .active_scan(true)
       .interval(100)
       .window(99)

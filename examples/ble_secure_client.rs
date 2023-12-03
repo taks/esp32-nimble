@@ -1,8 +1,4 @@
-use esp32_nimble::{
-  enums::*,
-  utilities::BleUuid,
-  BLEClient, BLEDevice,
-};
+use esp32_nimble::{enums::*, utilities::BleUuid, BLEClient, BLEDevice};
 use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;
 use log::*;
@@ -29,7 +25,9 @@ fn main() {
       .active_scan(true)
       .interval(100)
       .window(99)
-      .find_device(10000, move |device| device.is_advertising_service(&SERVICE_UUID))
+      .find_device(10000, move |device| {
+        device.is_advertising_service(&SERVICE_UUID)
+      })
       .await
       .unwrap();
 

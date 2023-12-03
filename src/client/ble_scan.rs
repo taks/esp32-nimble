@@ -1,8 +1,8 @@
+use crate::utilities::mutex::Mutex;
 use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal};
 use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
-use crate::utilities::mutex::Mutex;
 
 pub struct BLEScan {
   #[allow(clippy::type_complexity)]

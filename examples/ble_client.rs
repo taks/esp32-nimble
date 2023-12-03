@@ -1,6 +1,5 @@
 use esp32_nimble::{uuid128, BLEClient, BLEDevice};
 use bstr::ByteSlice;
-use esp32_nimble::{utilities::mutex::Mutex, uuid128, BLEClient, BLEDevice};
 use esp_idf_hal::prelude::Peripherals;
 use esp_idf_hal::task::block_on;
 use esp_idf_hal::timer::{TimerConfig, TimerDriver};

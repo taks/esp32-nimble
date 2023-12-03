@@ -1,6 +1,6 @@
 [package]
 name = "esp32-nimble"
-version = "0.3.2"
+version = "0.4.0"
 authors = ["taks <857tn859@gmail.com>"]
 edition = "2021"
 resolver = "2"
@@ -22,7 +22,7 @@ opt-level = "z"
 [features]
 default = ["std"]
 
-std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std"]
+std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std", "bstr/std"]
 no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section"]
 
 [dependencies]
@@ -33,6 +33,7 @@ esp-idf-svc = { version = "0.47", default-features = false, features = ["alloc"]
 embedded-svc = { version = "0.26", default-features = false }
 
 bitflags = { version = "2.4.1" }
+bstr = { version = "1.8.0", default-features = false }
 embassy-sync = { version = "0.3.0" }
 once_cell = { version = "1.16.0", default-features = false }
 uuid = { version = "1.2.2", default-features = false, features = ["macro-diagnostics"] }

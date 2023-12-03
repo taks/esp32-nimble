@@ -1,6 +1,8 @@
 use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal};
+use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
+use crate::utilities::mutex::Mutex;
 
 pub struct BLEScan {
   #[allow(clippy::type_complexity)]
@@ -72,6 +74,34 @@ impl BLEScan {
   ) -> &mut Self {
     self.on_result = Some(Box::new(callback));
     self
+  }
+
+  /// Asynchronously finds a device.
+  ///
+  /// # Examples
+  ///
+  /// ```
+  /// let ble_device = BLEDevice::take().unwrap();
+  /// let ble_scan = ble_device.get_scan();
+  /// let name = "Device Name To Be Found";
+  /// let device = ble_scan.find_device(10000, |device| device.name() == name).await.unwrap();
+  /// ```
+  pub async fn find_device(
+    &mut self,
+    duration_ms: i32,
+    callback: impl Fn(&BLEAdvertisedDevice) -> bool + Send + Sync + 'static,
+  ) -> Result<Option<BLEAdvertisedDevice>, BLEReturnCode> {
+    let result = Arc::new(Mutex::new(Result::Ok(None)));
+    let result_clone = result.clone();
+    self.on_result(move |scan, device| {
+      if callback(device) {
+        *result_clone.lock() = scan.stop().and(Ok(Some(device.clone())));
+      }
+    });
+
+    self.start(duration_ms).await?;
+    let result = &*result.lock();
+    result.clone()
   }
 
   pub fn on_completed(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {

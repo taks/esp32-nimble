@@ -1,10 +1,8 @@
-use esp32_nimble::{utilities::mutex::Mutex, uuid128, BLEClient, BLEDevice};
+use esp32_nimble::{uuid128, BLEClient, BLEDevice};
 use esp_idf_hal::prelude::Peripherals;
 use esp_idf_hal::task::block_on;
 use esp_idf_hal::timer::{TimerConfig, TimerDriver};
 use esp_idf_sys as _;
-use log::*;
-use std::sync::Arc;
 
 fn main() {
   esp_idf_sys::link_patches();
@@ -16,25 +14,12 @@ fn main() {
   block_on(async {
     let ble_device = BLEDevice::take();
     let ble_scan = ble_device.get_scan();
-    let connect_device = Arc::new(Mutex::new(None));
+    let device = ble_scan
+      .find_device(10000, |device| device.name().contains("ESP32"))
+      .await
+      .unwrap();
 
-    let device0 = connect_device.clone();
-    ble_scan
-      .active_scan(true)
-      .interval(100)
-      .window(99)
-      .on_result(move |scan, device| {
-        if device.name().contains("ESP32") {
-          scan.stop().unwrap();
-          (*device0.lock()) = Some(device.clone());
-        }
-      });
-    ble_scan.start(10000).await.unwrap();
-
-    let device = &*connect_device.lock();
     if let Some(device) = device {
-      info!("Advertised Device: {:?}", device);
-
       let mut client = BLEClient::new();
       client.on_connect(|client| {
         client.update_conn_params(120, 120, 0, 60).unwrap();

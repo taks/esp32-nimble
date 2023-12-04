@@ -1,12 +1,7 @@
-use esp32_nimble::{
-  enums::*,
-  utilities::{mutex::Mutex, BleUuid},
-  BLEClient, BLEDevice,
-};
+use esp32_nimble::{enums::*, utilities::BleUuid, BLEClient, BLEDevice};
 use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;
 use log::*;
-use std::sync::Arc;
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
 
@@ -25,22 +20,16 @@ fn main() {
       .set_io_cap(SecurityIOCap::KeyboardOnly);
 
     let ble_scan = device.get_scan();
-    let connect_device = Arc::new(Mutex::new(None));
 
-    let device0 = connect_device.clone();
-    ble_scan
+    let device = ble_scan
       .active_scan(true)
       .interval(100)
       .window(99)
-      .on_result(move |scan, device| {
-        if device.is_advertising_service(&SERVICE_UUID) {
-          scan.stop().unwrap();
-          (*device0.lock()) = Some(device.clone());
-        }
-      });
-    ble_scan.start(10000).await.unwrap();
-
-    let device = &*connect_device.lock();
+      .find_device(10000, move |device| {
+        device.is_advertising_service(&SERVICE_UUID)
+      })
+      .await
+      .unwrap();
 
     let Some(device) = device else {
       ::log::warn!("device not found");

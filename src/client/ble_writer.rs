@@ -1,4 +1,4 @@
-use crate::{ble, BLEReturnCode, Signal};
+use crate::{ble, BLEReturnCode, Signal, utilities::voidp_to_ref};
 
 pub struct BLEWriter {
   conn_handle: u16,
@@ -61,7 +61,7 @@ impl BLEWriter {
     _service: *mut esp_idf_sys::ble_gatt_attr,
     arg: *mut core::ffi::c_void,
   ) -> i32 {
-    let writer = unsafe { &mut *(arg as *mut Self) };
+    let writer = unsafe { voidp_to_ref::<Self>(arg) };
     if writer.conn_handle != conn_handle {
       return 0;
     }

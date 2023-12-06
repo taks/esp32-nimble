@@ -2,7 +2,7 @@ use crate::{
   ble,
   ble_device::OWN_ADDR_TYPE,
   ble_return_code::return_code_to_string,
-  utilities::{ArcUnsafeCell, BleUuid},
+  utilities::{ArcUnsafeCell, BleUuid, voidp_to_ref},
   BLEAddress, BLEDevice, BLERemoteService, BLEReturnCode, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
@@ -236,7 +236,7 @@ impl BLEClient {
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let event = unsafe { &*event };
-    let client = unsafe { &mut *(arg as *mut Self) };
+    let client = unsafe { voidp_to_ref::<Self>(arg) };
 
     match event.type_ as _ {
       BLE_GAP_EVENT_CONNECT => {
@@ -396,7 +396,7 @@ impl BLEClient {
     service: *const esp_idf_sys::ble_gatt_svc,
     arg: *mut c_void,
   ) -> i32 {
-    let client = unsafe { &mut *(arg as *mut Self) };
+    let client = unsafe { voidp_to_ref::<Self>(arg) };
     if client.state.conn_handle != conn_handle {
       return 0;
     }

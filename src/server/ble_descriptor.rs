@@ -6,7 +6,7 @@ use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
   utilities::{
-    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append, BleUuid,
+    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append, BleUuid, voidp_to_ref,
   },
   AttValue, OnWriteArgs,
 };
@@ -83,7 +83,7 @@ impl BLEDescriptor {
   ) -> i32 {
     let ctxt = unsafe { &*ctxt };
 
-    let mutex = unsafe { &mut *(arg as *mut Mutex<Self>) };
+    let mutex = unsafe { voidp_to_ref::<Mutex<Self>>(arg) };
     let mut descriptor = mutex.lock();
 
     if unsafe { ble_uuid_cmp((*ctxt.__bindgen_anon_1.chr).uuid, &descriptor.uuid.u) != 0 } {

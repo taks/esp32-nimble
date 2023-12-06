@@ -1,7 +1,7 @@
 use super::ble_client::BLEClientState;
 use crate::{
   ble,
-  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell},
+  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell, voidp_to_ref},
   BLEAttribute, BLEClient, BLERemoteCharacteristic, BLEReturnCode, Signal,
 };
 use alloc::vec::Vec;
@@ -86,7 +86,7 @@ impl BLERemoteService {
     chr: *const esp_idf_sys::ble_gatt_chr,
     arg: *mut c_void,
   ) -> i32 {
-    let service = unsafe { &mut *(arg as *mut Self) };
+    let service = unsafe { voidp_to_ref::<Self>(arg) };
     if service.state.conn_handle() != conn_handle {
       return 0;
     }

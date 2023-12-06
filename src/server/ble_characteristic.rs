@@ -7,7 +7,7 @@ use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 use crate::{
   utilities::{
     as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
-    BleUuid,
+    BleUuid, voidp_to_ref,
   },
   AttValue, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
 };
@@ -252,7 +252,7 @@ impl BLECharacteristic {
   ) -> i32 {
     let ctxt = unsafe { &*ctxt };
 
-    let mutex = unsafe { &mut *(arg as *mut Mutex<Self>) };
+    let mutex = unsafe { voidp_to_ref::<Mutex<Self>>(arg) };
     let mut characteristic = mutex.lock();
 
     if unsafe { ble_uuid_cmp((*ctxt.__bindgen_anon_1.chr).uuid, &characteristic.uuid.u) != 0 } {

@@ -2,7 +2,7 @@ use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
 use crate::{
   ble,
-  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell},
+  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell, voidp_to_ref},
   BLERemoteDescriptor, BLEReturnCode, Signal,
 };
 use crate::{BLEAttribute, BLEClient};
@@ -142,7 +142,7 @@ impl BLERemoteCharacteristic {
     chr: *const esp_idf_sys::ble_gatt_chr,
     arg: *mut c_void,
   ) -> i32 {
-    let characteristic = unsafe { &mut *(arg as *mut Self) };
+    let characteristic = unsafe { voidp_to_ref::<Self>(arg) };
     if characteristic.state.conn_handle() != conn_handle {
       return 0;
     }
@@ -165,7 +165,7 @@ impl BLERemoteCharacteristic {
     dsc: *const esp_idf_sys::ble_gatt_dsc,
     arg: *mut c_void,
   ) -> i32 {
-    let characteristic = unsafe { &mut *(arg as *mut Self) };
+    let characteristic = unsafe { voidp_to_ref::<Self>(arg) };
     if characteristic.state.conn_handle() != conn_handle {
       return 0;
     }

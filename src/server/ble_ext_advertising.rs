@@ -310,7 +310,7 @@ impl BLEExtAdvertising {
     arg: *mut c_void,
   ) -> i32 {
     let event = unsafe { &*event };
-    let adv = unsafe { &mut *(arg as *mut Self) };
+    let adv = unsafe { voidp_to_ref::<Self>(arg) };
 
     match event.type_ as _ {
       esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE => {

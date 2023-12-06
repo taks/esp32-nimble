@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::ffi::c_void;
 
-use crate::{ble, BLEReturnCode, Signal};
+use crate::{ble, BLEReturnCode, Signal, utilities::voidp_to_ref};
 
 pub struct BLEReader {
   conn_handle: u16,
@@ -42,7 +42,7 @@ impl BLEReader {
     attr: *mut esp_idf_sys::ble_gatt_attr,
     arg: *mut c_void,
   ) -> i32 {
-    let (reader, data) = unsafe { &mut *(arg as *mut (&mut Self, Vec<u8>)) };
+    let (reader, data) = unsafe { voidp_to_ref::<(&mut Self, Vec<u8>)>(arg) };
     if conn_handle != reader.conn_handle {
       return 0;
     }

@@ -1,5 +1,5 @@
 use crate::utilities::mutex::Mutex;
-use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal};
+use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal, utilities::voidp_to_ref};
 use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
@@ -150,7 +150,7 @@ impl BLEScan {
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let event = unsafe { &*event };
-    let scan = unsafe { &mut *(arg as *mut Self) };
+    let scan = unsafe { voidp_to_ref::<Self>(arg) };
 
     match event.type_ as u32 {
       esp_idf_sys::BLE_GAP_EVENT_EXT_DISC | esp_idf_sys::BLE_GAP_EVENT_DISC => {
@@ -183,7 +183,7 @@ impl BLEScan {
               && advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _)
             || disc.event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
           {
-            let scan = unsafe { &mut *(arg as *mut Self) };
+            let scan = unsafe { voidp_to_ref::<Self>(arg) };
             callback(scan, advertised_device);
           }
         }

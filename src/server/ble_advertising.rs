@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{ble, enums::*, utilities::BleUuid, BLEDevice, BLEReturnCode, BLEServer};
+use crate::{ble, enums::*, utilities::{BleUuid, voidp_to_ref}, BLEDevice, BLEReturnCode, BLEServer};
 use alloc::{ffi::CString, vec::Vec};
 use once_cell::sync::Lazy;
 
@@ -403,7 +403,7 @@ impl BLEAdvertising {
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let _event = unsafe { &*event };
-    let _adv = unsafe { &mut *(arg as *mut Self) };
+    let _adv = unsafe { voidp_to_ref::<Self>(arg) };
 
     0
   }

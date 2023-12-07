@@ -1,7 +1,7 @@
 use super::ble_client::BLEClientState;
 use crate::{
   ble,
-  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell, voidp_to_ref},
+  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLEAttribute, BLEClient, BLERemoteCharacteristic, BLEReturnCode, Signal,
 };
 use alloc::vec::Vec;

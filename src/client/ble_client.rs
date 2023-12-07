@@ -2,7 +2,7 @@ use crate::{
   ble,
   ble_device::OWN_ADDR_TYPE,
   ble_return_code::return_code_to_string,
-  utilities::{ArcUnsafeCell, BleUuid, voidp_to_ref},
+  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid},
   BLEAddress, BLEDevice, BLERemoteService, BLEReturnCode, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};

@@ -6,7 +6,8 @@ use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
   utilities::{
-    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append, BleUuid, voidp_to_ref,
+    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
+    voidp_to_ref, BleUuid,
   },
   AttValue, OnWriteArgs,
 };

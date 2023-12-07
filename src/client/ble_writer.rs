@@ -1,4 +1,4 @@
-use crate::{ble, BLEReturnCode, Signal, utilities::voidp_to_ref};
+use crate::{ble, utilities::voidp_to_ref, BLEReturnCode, Signal};
 
 pub struct BLEWriter {
   conn_handle: u16,

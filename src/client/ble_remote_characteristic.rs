@@ -2,7 +2,7 @@ use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
 use crate::{
   ble,
-  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell, voidp_to_ref},
+  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLERemoteDescriptor, BLEReturnCode, Signal,
 };
 use crate::{BLEAttribute, BLEClient};

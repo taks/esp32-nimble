@@ -1,5 +1,5 @@
 use crate::utilities::mutex::Mutex;
-use crate::{ble, BLEAdvertisedDevice, BLEReturnCode, Signal, utilities::voidp_to_ref};
+use crate::{ble, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEReturnCode, Signal};
 use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;

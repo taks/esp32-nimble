@@ -1,6 +1,11 @@
 use core::ffi::c_void;
 
-use crate::{ble, enums::*, utilities::{BleUuid, voidp_to_ref}, BLEDevice, BLEReturnCode, BLEServer};
+use crate::{
+  ble,
+  enums::*,
+  utilities::{voidp_to_ref, BleUuid},
+  BLEDevice, BLEReturnCode, BLEServer,
+};
 use alloc::{ffi::CString, vec::Vec};
 use once_cell::sync::Lazy;
 

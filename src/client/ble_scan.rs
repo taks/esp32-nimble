@@ -14,6 +14,11 @@ pub struct BLEScan {
   signal: Signal<()>,
 }
 
+type CbArgType<'a> = (
+  &'a mut BLEScan,
+  Option<&'a mut (dyn FnMut(&mut BLEScan, &BLEAdvertisedDevice) + Send + Sync)>,
+);
+
 impl BLEScan {
   pub(crate) fn new() -> Self {
     let mut ret = Self {
@@ -76,6 +81,11 @@ impl BLEScan {
     self
   }
 
+  pub fn on_completed(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {
+    self.on_completed = Some(Box::new(callback));
+    self
+  }
+
   /// Asynchronously finds a device.
   ///
   /// # Examples
@@ -89,39 +99,50 @@ impl BLEScan {
   pub async fn find_device(
     &mut self,
     duration_ms: i32,
-    callback: impl Fn(&BLEAdvertisedDevice) -> bool + Send + Sync + 'static,
+    callback: impl Fn(&BLEAdvertisedDevice) -> bool + Send + Sync,
   ) -> Result<Option<BLEAdvertisedDevice>, BLEReturnCode> {
     let result = Arc::new(Mutex::new(Result::Ok(None)));
+
     let result_clone = result.clone();
-    self.on_result(move |scan, device| {
+    let mut on_result = move |scan: &mut Self, device: &BLEAdvertisedDevice| {
       if callback(device) {
         *result_clone.lock() = scan.stop().and(Ok(Some(device.clone())));
       }
-    });
+    };
 
-    self.start(duration_ms).await?;
+    self.start_core(duration_ms, Some(&mut on_result)).await?;
     let result = &*result.lock();
     result.clone()
   }
 
-  pub fn on_completed(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {
-    self.on_completed = Some(Box::new(callback));
-    self
+  pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
+    unsafe {
+      let scan = self as *mut Self;
+
+      let callback = (*scan).on_result.as_deref_mut(); // .as_ref().map(|x| x.deref_mut());
+      (*scan).start_core(duration_ms, callback).await
+    }
   }
 
-  pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
+  #[allow(clippy::type_complexity)]
+  async fn start_core(
+    &mut self,
+    duration_ms: i32,
+    callback: Option<&mut (dyn FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync)>,
+  ) -> Result<(), BLEReturnCode> {
+    let cb_arg = (self, callback);
     unsafe {
       ble!(esp_idf_sys::ble_gap_disc(
         crate::ble_device::OWN_ADDR_TYPE as _,
         duration_ms,
-        &self.scan_params,
+        &cb_arg.0.scan_params,
         Some(Self::handle_gap_event),
-        self as *mut Self as _,
+        core::ptr::addr_of!(cb_arg) as _,
       ))?;
     }
-    self.stopped = false;
+    cb_arg.0.stopped = false;
 
-    self.signal.wait().await;
+    cb_arg.0.signal.wait().await;
     Ok(())
   }
 
@@ -150,7 +171,7 @@ impl BLEScan {
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let event = unsafe { &*event };
-    let scan = unsafe { voidp_to_ref::<Self>(arg) };
+    let (scan, on_result) = unsafe { voidp_to_ref::<CbArgType>(arg) };
 
     match event.type_ as u32 {
       esp_idf_sys::BLE_GAP_EVENT_EXT_DISC | esp_idf_sys::BLE_GAP_EVENT_DISC => {
@@ -177,13 +198,13 @@ impl BLEScan {
         ::log::debug!("DATA: {:X?}", data);
         advertised_device.parse_advertisement(data);
 
-        if let Some(callback) = scan.on_result.as_mut() {
+        if let Some(callback) = on_result {
           if scan.scan_params.passive() != 0
             || (advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _
               && advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _)
             || disc.event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
           {
-            let scan = unsafe { voidp_to_ref::<Self>(arg) };
+            let (scan, _) = unsafe { voidp_to_ref::<CbArgType>(arg) };
             callback(scan, advertised_device);
           }
         }

@@ -60,9 +60,7 @@ fn main() {
         .await
         .unwrap();
 
-      timer.delay(timer.tick_hz()).await.unwrap();
-
-      // Timer::after(core::time::Duration::from_secs(10)).await;
+      timer.delay(timer.tick_hz() * 10).await.unwrap();
 
       client.disconnect().unwrap();
     }

@@ -6,7 +6,7 @@ use alloc::vec::Vec;
 
 use crate::{
   ble,
-  utilities::{os_mbuf_append, os_msys_get_pkthdr, BleUuid},
+  utilities::{os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
   BLEAddress, BLEReturnCode, BLEServer,
 };
 

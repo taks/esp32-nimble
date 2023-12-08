@@ -1,3 +1,7 @@
+## [0.4.1]
+- Added `BLEScan::find_device` ([#55](https::/github.com/taks/esp32-nimble/pull/55))
+- Added `BLEAdvertisedDevice::adv_type`, `BLEAdvertisedDevice::adv_flags`
+
 ## [0.4.0] - 2023-12-01
 - Added `BLEAdvertising::min_interval`, `BLEAdvertising::max_interval` ([#51](https::/github.com/taks/esp32-nimble/pull/51))
 - Added `can_nofity`, `can_indicate`, `can_read`, `can_write`, `can_write_no_response` and `can_broadcast` functions to `BLERemoteCharacteristic` ([#53](https::/github.com/taks/esp32-nimble/pull/53))

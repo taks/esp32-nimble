@@ -2,7 +2,7 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use bstr::{BStr, BString};
 
-use crate::enums::AdvType;
+use crate::enums::{AdvFlag, AdvType};
 use crate::utilities::BleUuid;
 use crate::BLEAddress;
 
@@ -25,7 +25,7 @@ impl BLEServiceData {
 pub struct BLEAdvertisedDevice {
   addr: BLEAddress,
   adv_type: AdvType,
-  ad_flag: Option<u8>,
+  adv_flags: Option<AdvFlag>,
   appearance: Option<u16>,
   name: BString,
   rssi: i32,
@@ -40,7 +40,7 @@ impl BLEAdvertisedDevice {
     Self {
       addr: param.addr.into(),
       adv_type: AdvType::try_from(param.event_type).unwrap(),
-      ad_flag: None,
+      adv_flags: None,
       appearance: None,
       name: BString::default(),
       rssi: param.rssi as _,
@@ -55,12 +55,19 @@ impl BLEAdvertisedDevice {
     self.name.as_ref()
   }
 
+  /// Get the address of the advertising device.
   pub fn addr(&self) -> &BLEAddress {
     &self.addr
   }
 
+  /// Get the advertisement type.
   pub fn adv_type(&self) -> AdvType {
     self.adv_type
+  }
+
+  /// Get the advertisement flags.
+  pub fn adv_flags(&self) -> Option<AdvFlag> {
+    self.adv_flags
   }
 
   pub fn rssi(&self) -> i32 {
@@ -107,7 +114,7 @@ impl BLEAdvertisedDevice {
         match type_ {
           esp_idf_sys::BLE_HS_ADV_TYPE_FLAGS => {
             let Some(ad_flag) = data.first() else { return };
-            self.ad_flag = Some(*ad_flag);
+            self.adv_flags = AdvFlag::from_bits(*ad_flag);
           }
           esp_idf_sys::BLE_HS_ADV_TYPE_INCOMP_NAME | esp_idf_sys::BLE_HS_ADV_TYPE_COMP_NAME => {
             self.name = BString::new(data.to_vec());

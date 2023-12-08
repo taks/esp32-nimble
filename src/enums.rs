@@ -152,3 +152,20 @@ pub enum AdvType {
   NonconnInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_NONCONN_IND as _,
   // DirectIndLd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD as _,
 }
+
+bitflags! {
+  #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  pub struct AdvFlag: u8 {
+    /// LE Limited Discoverable Mode
+    const DiscLimited = esp_idf_sys::BLE_HS_ADV_F_DISC_LTD as _;
+    /// LE General Discoverable Mode
+    const DiscGeneral = esp_idf_sys::BLE_HS_ADV_F_DISC_GEN as _;
+    /// BR/EDR Not Supported
+    const BrEdrUnsupported = esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP as _;
+    /// Simultaneous LE and BR/EDR to Same Device Capable (Controller)
+    const SimultaneousController = 0b01000;
+    /// Simultaneous LE and BR/EDR to Same Device Capable (Host)
+    const SimultaneousHost       = 0b10000;
+  }
+}

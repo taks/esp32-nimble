@@ -49,6 +49,12 @@ impl core::fmt::Display for BLEAddress {
 
 impl core::fmt::Debug for BLEAddress {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    write!(f, "{self}")
+    let type_str = match self.value.type_ as _ {
+      BLE_ADDR_RANDOM => "(random)",
+      BLE_ADDR_PUBLIC_ID => "(publicID)",
+      BLE_ADDR_RANDOM_ID => "(randomID)",
+      _ => "",
+    };
+    write!(f, "{self}{type_str}")
   }
 }

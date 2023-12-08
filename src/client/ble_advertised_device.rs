@@ -2,6 +2,7 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use bstr::{BStr, BString};
 
+use crate::enums::AdvType;
 use crate::utilities::BleUuid;
 use crate::BLEAddress;
 
@@ -23,7 +24,7 @@ impl BLEServiceData {
 #[derive(Debug, Clone)]
 pub struct BLEAdvertisedDevice {
   addr: BLEAddress,
-  adv_type: u8,
+  adv_type: AdvType,
   ad_flag: Option<u8>,
   appearance: Option<u16>,
   name: BString,
@@ -38,7 +39,7 @@ impl BLEAdvertisedDevice {
   pub(crate) fn new(param: &esp_idf_sys::ble_gap_disc_desc) -> Self {
     Self {
       addr: param.addr.into(),
-      adv_type: param.event_type,
+      adv_type: AdvType::try_from(param.event_type).unwrap(),
       ad_flag: None,
       appearance: None,
       name: BString::default(),
@@ -56,6 +57,10 @@ impl BLEAdvertisedDevice {
 
   pub fn addr(&self) -> &BLEAddress {
     &self.addr
+  }
+
+  pub fn adv_type(&self) -> AdvType {
+    self.adv_type
   }
 
   pub fn rssi(&self) -> i32 {
@@ -80,10 +85,6 @@ impl BLEAdvertisedDevice {
 
   pub fn get_manufacture_data(&self) -> Option<&[u8]> {
     self.manufacture_data.as_deref()
-  }
-
-  pub(crate) fn adv_type(&self) -> u8 {
-    self.adv_type
   }
 
   pub(crate) fn parse_advertisement(&mut self, payload: &[u8]) {

@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 use esp_idf_sys::*;
+use num_enum::TryFromPrimitive;
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -136,4 +137,18 @@ bitflags! {
     /// secure connection pairing
     const Sc = 0b100;
   }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive)]
+pub enum AdvType {
+  /// indirect advertising
+  Ind = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _,
+  /// direct advertising
+  DirectInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD as _,
+  /// indirect scan response
+  ScanInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_SCAN_IND as _,
+  /// indirect advertising - not connectable
+  NonconnInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_NONCONN_IND as _,
+  // DirectIndLd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD as _,
 }

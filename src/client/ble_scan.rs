@@ -1,3 +1,4 @@
+use crate::enums::AdvType;
 use crate::utilities::mutex::Mutex;
 use crate::{ble, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEReturnCode, Signal};
 use alloc::sync::Arc;
@@ -200,8 +201,8 @@ impl BLEScan {
 
         if let Some(callback) = on_result {
           if scan.scan_params.passive() != 0
-            || (advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _
-              && advertised_device.adv_type() != esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _)
+            || (advertised_device.adv_type() != AdvType::Ind
+              && advertised_device.adv_type() != AdvType::ScanInd)
             || disc.event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
           {
             let (scan, _) = unsafe { voidp_to_ref::<CbArgType>(arg) };

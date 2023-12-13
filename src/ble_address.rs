@@ -8,6 +8,7 @@ pub enum BLEAddressType {
   RandomID = BLE_ADDR_RANDOM_ID as _,
 }
 
+#[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct BLEAddress {
   pub(crate) value: esp_idf_sys::ble_addr_t,
@@ -23,6 +24,27 @@ impl BLEAddress {
     };
     ret.value.val.reverse();
     ret
+  }
+
+  pub fn from_str(input: &str, addr_type: BLEAddressType) -> Option<Self> {
+    let mut val = [0u8; 6];
+
+    let mut nth = 0;
+    for byte in input.split(|c| c == ':' || c == '-') {
+      if nth == 6 {
+        return None;
+      }
+
+      val[nth] = u8::from_str_radix(byte, 16).ok()?;
+
+      nth += 1;
+    }
+
+    if nth != 6 {
+      return None;
+    }
+
+    Some(Self::new(val, addr_type))
   }
 }
 

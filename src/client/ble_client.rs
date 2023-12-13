@@ -206,6 +206,19 @@ impl BLEClient {
     }
   }
 
+  /// Retrieves the most-recently measured RSSI.
+  /// A connection’s RSSI is updated whenever a data channel PDU is received.
+  pub fn get_rssi(&self) -> Result<i8, BLEReturnCode> {
+    let mut rssi: i8 = 0;
+    unsafe {
+      ble!(esp_idf_sys::ble_gap_conn_rssi(
+        self.conn_handle(),
+        &mut rssi
+      ))?;
+    }
+    Ok(rssi)
+  }
+
   pub async fn get_services(
     &mut self,
   ) -> Result<core::slice::IterMut<'_, BLERemoteService>, BLEReturnCode> {

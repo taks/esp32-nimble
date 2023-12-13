@@ -6,6 +6,7 @@ use alloc::vec::Vec;
 
 use crate::{
   ble,
+  enums::*,
   utilities::{os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
   BLEAddress, BLEReturnCode, BLEServer,
 };
@@ -78,6 +79,12 @@ impl BLEExtAdvertisement {
   /// Sets whether the scan response request callback should be called.
   pub fn enable_scan_request_callback(&mut self, val: bool) {
     self.params.set_scan_req_notif(val as _);
+  }
+
+  /// Set the filtering for the scan filter.
+  pub fn filter_policy(&mut self, value: AdvFilterPolicy) -> &mut Self {
+    self.params.filter_policy = value.into();
+    self
   }
 
   /// Clears the data stored in this instance, does not change settings.

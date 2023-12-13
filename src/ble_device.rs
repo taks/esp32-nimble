@@ -194,6 +194,15 @@ impl BLEDevice {
     true
   }
 
+  pub fn set_white_list(&mut self, white_list: &[BLEAddress]) -> Result<(), BLEReturnCode> {
+    unsafe {
+      ble!(esp_idf_sys::ble_gap_wl_set(
+        white_list.as_ptr() as _,
+        white_list.len() as _
+      ))
+    }
+  }
+
   pub fn security(&mut self) -> &mut BLESecurity {
     &mut self.security
   }

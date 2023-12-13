@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use esp_idf_sys::*;
-use num_enum::TryFromPrimitive;
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -168,4 +168,34 @@ bitflags! {
     /// Simultaneous LE and BR/EDR to Same Device Capable (Host)
     const SimultaneousHost       = 0b10000;
   }
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, IntoPrimitive)]
+pub enum ScanFilterPolicy {
+  /// Scanner processes all advertising packets (white list not used)
+  /// except directed, connectable advertising packets not sent to the scanner.
+  NoWl = BLE_HCI_SCAN_FILT_NO_WL as _,
+  /// Scanner processes advertisements from white list only.
+  /// A connectable, directed advertisement is ignored unless it contains scanners address.
+  UseWl = BLE_HCI_SCAN_FILT_USE_WL as _,
+  /// Scanner process all advertising packets (white list not used).
+  /// A connectable, directed advertisement shall not be ignored if the InitA is a resolvable private address.
+  NoWlInitA = BLE_HCI_SCAN_FILT_NO_WL_INITA as _,
+  /// Scanner process advertisements from white list only.
+  /// A connectable, directed advertisement shall not be ignored if the InitA is a resolvable private address.
+  UseWlInitA = BLE_HCI_SCAN_FILT_USE_WL_INITA as _,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, IntoPrimitive)]
+pub enum AdvFilterPolicy {
+  /// No filtering
+  None = BLE_HCI_ADV_FILT_NONE as _,
+  /// only allow scan requests from those on the white list.
+  Scan = BLE_HCI_ADV_FILT_SCAN as _,
+  /// only allow connections from those on the white list.
+  Connect = BLE_HCI_ADV_FILT_CONN as _,
+  /// only allow scan/connections from those on the white list.
+  Both = BLE_HCI_ADV_FILT_BOTH as _,
 }

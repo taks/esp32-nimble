@@ -1,6 +1,5 @@
-use crate::enums::AdvType;
 use crate::utilities::mutex::Mutex;
-use crate::{ble, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEReturnCode, Signal};
+use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEReturnCode, Signal};
 use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
@@ -56,6 +55,12 @@ impl BLEScan {
   /// from devices advertising in limited discovery mode, i.e. directed advertising.
   pub fn limited(&mut self, val: bool) -> &mut Self {
     self.scan_params.set_limited(val as _);
+    self
+  }
+
+  /// Sets the scan filter policy.
+  pub fn filter_policy(&mut self, val: ScanFilterPolicy) -> &mut Self {
+    self.scan_params.filter_policy = val.into();
     self
   }
 

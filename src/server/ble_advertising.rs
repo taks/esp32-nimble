@@ -253,6 +253,12 @@ impl BLEAdvertising {
     self
   }
 
+  /// Set the filtering for the scan filter.
+  pub fn filter_policy(&mut self, value: AdvFilterPolicy) -> &mut Self {
+    self.adv_params.filter_policy = value.into();
+    self
+  }
+
   /// Start advertising.
   /// Advertising not stop until it is manually stopped.
   pub fn start(&mut self) -> Result<(), BLEReturnCode> {

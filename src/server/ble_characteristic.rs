@@ -9,7 +9,7 @@ use crate::{
     as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
     voidp_to_ref, BleUuid,
   },
-  AttValue, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
+  AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
 };
 
 const NULL_HANDLE: u16 = 0xFFFF;
@@ -67,7 +67,7 @@ impl NotifyTx<'_> {
     }
   }
 
-  pub fn desc(&self) -> Result<esp_idf_sys::ble_gap_conn_desc, crate::BLEReturnCode> {
+  pub fn desc(&self) -> Result<BLEConnDesc, crate::BLEReturnCode> {
     crate::utilities::ble_gap_conn_find(self.notify_tx.conn_handle)
   }
 }
@@ -87,13 +87,13 @@ pub struct BLECharacteristic {
   pub(crate) handle: u16,
   pub(crate) properties: NimbleProperties,
   value: AttValue,
-  on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_read: Option<Box<dyn FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync>>,
   on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
   pub(crate) on_notify_tx: Option<Box<dyn FnMut(NotifyTx) + Send + Sync>>,
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
-  on_subscribe: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc, NimbleSub) + Send + Sync>>,
+  on_subscribe: Option<Box<dyn FnMut(&BLEConnDesc, NimbleSub) + Send + Sync>>,
 }
 
 impl BLECharacteristic {
@@ -129,7 +129,7 @@ impl BLECharacteristic {
 
   pub fn on_read(
     &mut self,
-    callback: impl FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_read = Some(Box::new(callback));
     self
@@ -264,9 +264,7 @@ impl BLECharacteristic {
         let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
-          if (*(ctxt.om)).om_pkthdr_len > 8
-            || characteristic.value.len() <= (esp_idf_sys::ble_att_mtu(desc.conn_handle) - 3) as _
-          {
+          if (*(ctxt.om)).om_pkthdr_len > 8 || characteristic.value.len() <= (desc.mtu() - 3) as _ {
             let characteristic = UnsafeCell::new(&mut characteristic);
             if let Some(callback) = &mut (*characteristic.get()).on_read {
               callback(&mut (*characteristic.get()).value, &desc);
@@ -352,7 +350,7 @@ impl BLECharacteristic {
 
   pub fn on_subscribe(
     &mut self,
-    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc, NimbleSub) + Send + Sync + 'static,
+    callback: impl FnMut(&BLEConnDesc, NimbleSub) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_subscribe = Some(Box::new(callback));
     self

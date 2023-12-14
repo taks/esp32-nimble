@@ -13,7 +13,7 @@ fn main() {
     ::log::info!("Client connected");
 
     server
-      .update_conn_params(desc.conn_handle, 24, 48, 0, 60)
+      .update_conn_params(desc.conn_handle(), 24, 48, 0, 60)
       .unwrap();
 
     ::log::info!("Multi-connect support: start advertising");

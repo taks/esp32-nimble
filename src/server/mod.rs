@@ -10,6 +10,9 @@ pub use self::ble_advertising::BLEAdvertising;
 mod ble_characteristic;
 pub use self::ble_characteristic::*;
 
+mod ble_conn_desc;
+pub use self::ble_conn_desc::*;
+
 mod ble_descriptor;
 pub use self::ble_descriptor::BLEDescriptor;
 pub use self::ble_descriptor::DescriptorProperties;

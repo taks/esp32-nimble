@@ -1,6 +1,8 @@
+use crate::BLEConnDesc;
+
 pub struct OnWriteArgs<'a> {
   pub recv_data: &'a [u8],
-  pub desc: &'a esp_idf_sys::ble_gap_conn_desc,
+  pub desc: &'a BLEConnDesc,
   pub(crate) reject: bool,
   pub(crate) error_code: u8,
 }

@@ -1,7 +1,7 @@
 use crate::{
   ble,
   utilities::{ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex, BleUuid},
-  BLECharacteristic, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
+  BLECharacteristic, BLEConnDesc, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::{
@@ -20,8 +20,8 @@ pub struct BLEServer {
   connections: Vec<u16>,
   indicate_wait: [u16; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
 
-  on_connect: Option<Box<dyn FnMut(&mut Self, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
-  on_disconnect: Option<Box<dyn FnMut(&esp_idf_sys::ble_gap_conn_desc, c_int) + Send + Sync>>,
+  on_connect: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
+  on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, c_int) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
 }
@@ -44,7 +44,7 @@ impl BLEServer {
 
   pub fn on_connect(
     &mut self,
-    callback: impl FnMut(&mut Self, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut Self, &BLEConnDesc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_connect = Some(Box::new(callback));
     self
@@ -55,7 +55,7 @@ impl BLEServer {
   /// * callback second parameter: The reason code for the disconnection.
   pub fn on_disconnect(
     &mut self,
-    callback: impl FnMut(&esp_idf_sys::ble_gap_conn_desc, c_int) + Send + Sync + 'static,
+    callback: impl FnMut(&BLEConnDesc, c_int) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_disconnect = Some(Box::new(callback));
     self
@@ -125,6 +125,13 @@ impl BLEServer {
 
   pub fn connected_count(&self) -> usize {
     self.connections.len()
+  }
+
+  pub fn connections(&self) -> impl Iterator<Item = BLEConnDesc> + '_ {
+    self
+      .connections
+      .iter()
+      .filter_map(|x| ble_gap_conn_find(*x).ok())
   }
 
   pub fn create_service(&mut self, uuid: BleUuid) -> Arc<Mutex<BLEService>> {
@@ -201,7 +208,7 @@ impl BLEServer {
         }
 
         if let Some(callback) = server.on_disconnect.as_mut() {
-          callback(&disconnect.conn, disconnect.reason);
+          callback(&BLEConnDesc(disconnect.conn), disconnect.reason);
         }
 
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]
@@ -224,7 +231,7 @@ impl BLEServer {
               | NimbleProperties::READ_ENC,
           ) {
             if let Ok(desc) = ble_gap_conn_find(subscribe.conn_handle) {
-              if desc.sec_state.encrypted() == 0 {
+              if !desc.encrypted() {
                 let rc = unsafe { esp_idf_sys::ble_gap_security_initiate(subscribe.conn_handle) };
                 if rc != 0 {
                   ::log::error!("ble_gap_security_initiate: rc={}", rc);
@@ -284,7 +291,7 @@ impl BLEServer {
           return esp_idf_sys::BLE_GAP_REPEAT_PAIRING_IGNORE as _;
         };
         unsafe {
-          esp_idf_sys::ble_store_util_delete_peer(&desc.peer_id_addr);
+          esp_idf_sys::ble_store_util_delete_peer(&desc.0.peer_id_addr);
         }
 
         // Return BLE_GAP_REPEAT_PAIRING_RETRY to indicate that the host should

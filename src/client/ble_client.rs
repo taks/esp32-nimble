@@ -297,7 +297,7 @@ impl BLEClient {
           == ((BLE_HS_ERR_HCI_BASE + ble_error_codes_BLE_ERR_PINKEY_MISSING) as _)
         {
           let desc = crate::utilities::ble_gap_conn_find(enc_change.conn_handle).unwrap();
-          unsafe { esp_idf_sys::ble_store_util_delete_peer(&desc.peer_id_addr) };
+          unsafe { esp_idf_sys::ble_store_util_delete_peer(&desc.0.peer_id_addr) };
         }
 
         client.state.signal.signal(enc_change.status as _);

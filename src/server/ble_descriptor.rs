@@ -1,7 +1,7 @@
-use core::{cell::UnsafeCell, ffi::c_void};
-
+use crate::BLEConnDesc;
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
+use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
@@ -31,7 +31,7 @@ pub struct BLEDescriptor {
   pub(crate) uuid: ble_uuid_any_t,
   pub(crate) properties: DescriptorProperties,
   value: AttValue,
-  on_read: Option<Box<dyn FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync>>,
+  on_read: Option<Box<dyn FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync>>,
   on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
 }
 
@@ -62,7 +62,7 @@ impl BLEDescriptor {
 
   pub fn on_read(
     &mut self,
-    callback: impl FnMut(&mut AttValue, &esp_idf_sys::ble_gap_conn_desc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_read = Some(Box::new(callback));
     self
@@ -96,9 +96,7 @@ impl BLEDescriptor {
         let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
 
         unsafe {
-          if (*(ctxt.om)).om_pkthdr_len > 8
-            || descriptor.value.len() <= (esp_idf_sys::ble_att_mtu(desc.conn_handle) - 3) as _
-          {
+          if (*(ctxt.om)).om_pkthdr_len > 8 || descriptor.value.len() <= (desc.mtu() - 3) as _ {
             let descriptor = UnsafeCell::new(&mut descriptor);
             if let Some(callback) = &mut (*descriptor.get()).on_read {
               callback(&mut (*descriptor.get()).value, &desc);

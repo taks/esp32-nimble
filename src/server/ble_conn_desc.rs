@@ -2,7 +2,6 @@ use crate::{ble, BLEAddress, BLEReturnCode};
 use esp_idf_sys::ble_gap_conn_desc;
 
 #[repr(transparent)]
-#[derive(Debug)]
 pub struct BLEConnDesc(pub(crate) ble_gap_conn_desc);
 
 impl BLEConnDesc {
@@ -83,5 +82,16 @@ impl BLEConnDesc {
       ))?;
     }
     Ok(rssi)
+  }
+}
+
+impl core::fmt::Debug for BLEConnDesc {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.debug_struct("BLEConnDesc")
+      .field("address", &self.address())
+      .field("bonded", &self.bonded())
+      .field("encrypted", &self.encrypted())
+      .field("authenticated", &self.authenticated())
+      .finish()
   }
 }

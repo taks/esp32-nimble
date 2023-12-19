@@ -20,7 +20,6 @@ jobs:
           - target: riscv32imc-esp-espidf
             idf-version: release/v4.4
             rustflags: "-C default-linker-libraries"
-            build-options: --example ble5_*
           - target: riscv32imc-esp-espidf
             idf-version: release/v5.0
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
@@ -33,7 +32,6 @@ jobs:
             mcu: esp32c6
           - target: xtensa-esp32-espidf
             idf-version: release/v4.4
-            build-options: --example ble_*
           - target: xtensa-esp32-espidf
             idf-version: release/v5.0
             rustflags: "--cfg espidf_time64"
@@ -52,15 +50,21 @@ jobs:
       - name: Setup | MCU
         if: ${{ matrix.mcu }}
         run: echo "MCU=${{ matrix.mcu }}" >> "$GITHUB_ENV"
-      - name: Build
-        env:
-          ESP_IDF_VERSION: ${{ matrix.idf-version }}
-          RUSTFLAGS: "${{ matrix.rustflags }}"
-        run: cargo build --target ${{ matrix.target }} ${{ matrix.build-options }}
+      - name: Setup env
+        run: |
+          echo "ESP_IDF_VERSION=${{ matrix.idf-version }}" >> "$GITHUB_ENV"
+          echo "RUSTFLAGS=${{ matrix.rustflags }}" >> "$GITHUB_ENV"
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check
-        env:
-          ESP_IDF_VERSION: ${{ matrix.idf-version }}
-          RUSTFLAGS: "${{ matrix.rustflags }}"
         run: cargo clippy --target ${{ matrix.target }} -- -D clippy::all
+      - name: Build
+        run: cargo build --target ${{ matrix.target }}
+      - name: Build | no_std
+        run: cargo build --target ${{ matrix.target }} --no-default-features --features no_std
+      - name: Build | Examples
+        if: ${{ (matrix.target == 'xtensa-esp32-espidf') && (matrix.idf-version == 'v5.1.1') }}
+        run: cargo build --target ${{ matrix.target }} --example ble_*
+      - name: Build | Examples(ble5)
+        if: ${{ (matrix.target == 'riscv32imc-esp-espidf') && (matrix.idf-version == 'v5.1.1') }}
+        run: cargo build --target ${{ matrix.target }} --example ble5_*

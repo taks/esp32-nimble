@@ -36,7 +36,7 @@ bitflags = { version = "2.4.1" }
 bstr = { version = "1.8.0", default-features = false }
 embassy-sync = { version = "0.3.0" }
 num_enum = { version = "0.7", default-features = false }
-once_cell = { version = "1.16.0", default-features = false }
+once_cell = { version = "1.19.0", default-features = false }
 uuid = { version = "1.2.2", default-features = false, features = ["macro-diagnostics"] }
 
 [dev-dependencies]

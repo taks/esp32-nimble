@@ -23,7 +23,7 @@ opt-level = "z"
 default = ["std"]
 
 std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std", "bstr/std"]
-no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section"]
+no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section", "bstr/alloc"]
 
 [dependencies]
 log = { version = "0.4", default-features = false }

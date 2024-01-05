@@ -10,7 +10,7 @@ fn main() {
 
   let server = ble_device.get_server();
   server.on_connect(|server, desc| {
-    ::log::info!("Client connected");
+    ::log::info!("Client connected: {:?}", desc);
 
     server
       .update_conn_params(desc.conn_handle(), 24, 48, 0, 60)

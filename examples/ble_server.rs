@@ -1,4 +1,4 @@
-use esp32_nimble::{uuid128, BLEDevice, NimbleProperties};
+use esp32_nimble::{uuid128, BLEDevice, BLEReturnCode, NimbleProperties};
 use esp_idf_sys as _;
 use std::format;
 
@@ -19,9 +19,11 @@ fn main() {
     ::log::info!("Multi-connect support: start advertising");
     ble_device.get_advertising().start().unwrap();
   });
+
   server.on_disconnect(|_desc, reason| {
-    ::log::info!("Client disconnected ({:X})", reason);
+    ::log::info!("Client disconnected ({:?})", BLEReturnCode(reason as _));
   });
+
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 
   // A static characteristic.

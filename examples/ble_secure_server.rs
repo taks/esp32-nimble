@@ -17,7 +17,7 @@ fn main() {
     ::log::info!("Client connected");
   });
   server.on_disconnect(|_desc, reason| {
-    ::log::info!("Client disconnected ({:X})", reason);
+    ::log::info!("Client disconnected ({:?})", BLEReturnCode(reason as _));
   });
 
   let service = server.create_service(BleUuid::Uuid16(0xABCD));

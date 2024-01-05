@@ -29,7 +29,7 @@ impl core::fmt::Debug for BLEReturnCode {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match return_code_to_string(self.0) {
       Some(text) => write!(f, "{text}")?,
-      None => write!(f, "{}", self.0)?,
+      None => write!(f, "0x{:X}", self.0)?,
     };
 
     Ok(())
@@ -103,8 +103,12 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
     match rc_ {
       esp_idf_sys::ble_error_codes_BLE_ERR_UNKNOWN_HCI_CMD => Some("Unknown HCI Command"),
       esp_idf_sys::ble_error_codes_BLE_ERR_UNK_CONN_ID => Some("Unknown Connection Identifier"),
+      esp_idf_sys::ble_error_codes_BLE_ERR_AUTH_FAIL => Some("Authentication Failure"),
       esp_idf_sys::ble_error_codes_BLE_ERR_INV_HCI_CMD_PARMS => {
         Some("Invalid HCI Command Parameters")
+      }
+      esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM => {
+        Some("Remote User Terminated Connection")
       }
       esp_idf_sys::ble_error_codes_BLE_ERR_CONN_TERM_LOCAL => {
         Some("Connection Terminated By Local Host")

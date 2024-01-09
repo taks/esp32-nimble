@@ -1,3 +1,5 @@
+use core::borrow::Borrow;
+
 use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
 use crate::{
@@ -27,8 +29,8 @@ bitflags! {
 
 #[allow(clippy::type_complexity)]
 pub struct BLERemoteCharacteristicState {
-  service: WeakUnsafeCell<BLERemoteServiceState>,
-  uuid: BleUuid,
+  pub(crate) service: WeakUnsafeCell<BLERemoteServiceState>,
+  pub(crate) uuid: BleUuid,
   pub handle: u16,
   end_handle: u16,
   properties: GattCharacteristicProperties,
@@ -262,5 +264,26 @@ impl BLERemoteCharacteristic {
       let data = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };
       no_notify(data);
     }
+  }
+}
+
+impl core::fmt::Display for BLERemoteCharacteristic {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    write!(f, "BLERemoteCharacteristic[{}]", self.state.uuid)
+  }
+}
+
+impl core::fmt::Debug for BLERemoteCharacteristic {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.debug_struct("BLERemoteCharacteristic")
+      .field("uuid", &self.state.uuid)
+      .field(
+        "service",
+        &self.state.service.upgrade().map(|svc| svc.borrow().uuid),
+      )
+      .field("handle", &self.state.handle)
+      .field("end_handle", &self.state.end_handle)
+      .field("properties", &self.state.properties)
+      .finish()
   }
 }

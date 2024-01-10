@@ -51,7 +51,7 @@ fn main() {
         return ::log::error!("characteristic can't notify: {}", characteristic);
       }
 
-      ::log::info!("subscribe {}", characteristic);
+      ::log::info!("subscribe to {}", characteristic);
       characteristic
         .on_notify(|data| {
           ::log::info!("{}", core::str::from_utf8(data).unwrap());

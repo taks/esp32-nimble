@@ -6,6 +6,7 @@
 - Added `BLEClient::get_rssi` ([#58](https::/github.com/taks/esp32-nimble/pull/58))
 - Added `BLEConnDesc`
 - Fixed no_std build.
+- Added `BLEServer::ble_gatts_show_local`
 
 ## [0.4.0] - 2023-12-01
 - Added `BLEAdvertising::min_interval`, `BLEAdvertising::max_interval` ([#51](https::/github.com/taks/esp32-nimble/pull/51))

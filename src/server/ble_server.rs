@@ -95,9 +95,6 @@ impl BLEServer {
     unsafe {
       ble!(esp_idf_sys::ble_gatts_start())?;
 
-      #[cfg(debug_assertions)]
-      esp_idf_sys::ble_gatts_show_local();
-
       for svc in &self.services {
         let mut svc = svc.lock();
         ble!(esp_idf_sys::ble_gatts_find_svc(
@@ -121,6 +118,14 @@ impl BLEServer {
     self.started = true;
 
     Ok(())
+  }
+
+  /// Prints dump of local GATT database.
+  /// This is useful to log local state of database in human readable form.
+  pub fn ble_gatts_show_local(&self) {
+    unsafe {
+      esp_idf_sys::ble_gatts_show_local();
+    }
   }
 
   pub fn connected_count(&self) -> usize {

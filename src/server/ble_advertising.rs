@@ -383,6 +383,8 @@ impl BLEAdvertising {
 
         ble!(esp_idf_sys::ble_gap_adv_set_fields(&self.adv_data))?;
       }
+
+      self.adv_data_set = true;
     }
 
     let handle_gap_event = if server.is_some() {

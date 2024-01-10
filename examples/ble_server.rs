@@ -63,7 +63,7 @@ fn main() {
 
   ble_advertising.start().unwrap();
 
-  server::ble_gatts_show_local();
+  server.ble_gatts_show_local();
 
   let mut counter = 0;
   loop {

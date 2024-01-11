@@ -16,8 +16,10 @@ fn main() {
       .update_conn_params(desc.conn_handle(), 24, 48, 0, 60)
       .unwrap();
 
-    ::log::info!("Multi-connect support: start advertising");
-    ble_device.get_advertising().start().unwrap();
+    if server.connected_count() < (esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
+      ::log::info!("Multi-connect support: start advertising");
+      ble_device.get_advertising().start().unwrap();
+    }
   });
 
   server.on_disconnect(|_desc, reason| {

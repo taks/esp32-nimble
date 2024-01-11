@@ -9,7 +9,7 @@ use core::ffi::c_void;
 
 pub struct BLERemoteServiceState {
   client: WeakUnsafeCell<BLEClientState>,
-  uuid: BleUuid,
+  pub(crate) uuid: BleUuid,
   start_handle: u16,
   pub(crate) end_handle: u16,
   pub(crate) characteristics: Option<Vec<BLERemoteCharacteristic>>,
@@ -104,9 +104,26 @@ impl BLERemoteService {
   }
 }
 
+impl core::fmt::Display for BLERemoteService {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    write!(f, "BLERemoteService[{}]", self.state.uuid)
+  }
+}
+
 impl core::fmt::Debug for BLERemoteService {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    write!(f, "BLERemoteService[{}]", self.state.uuid)?;
-    Ok(())
+    f.debug_struct("BLERemoteService")
+      .field("uuid", &self.state.uuid)
+      .field("start_handle", &self.state.start_handle)
+      .field("end_handle", &self.state.end_handle)
+      .field(
+        "characteristics",
+        &self
+          .state
+          .characteristics
+          .as_ref()
+          .map(|chars| chars.iter().map(|c| c.uuid()).collect::<Vec<_>>()),
+      )
+      .finish()
   }
 }

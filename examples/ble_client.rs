@@ -39,8 +39,8 @@ fn main() {
       let characteristic = service.get_characteristic(uuid).await.unwrap();
       let value = characteristic.read_value().await.unwrap();
       ::log::info!(
-        "{:?} value: {}",
-        uuid,
+        "{} value: {}",
+        characteristic,
         core::str::from_utf8(&value).unwrap()
       );
 
@@ -48,10 +48,10 @@ fn main() {
       let characteristic = service.get_characteristic(uuid).await.unwrap();
 
       if !characteristic.can_notify() {
-        return ::log::error!("characteristic can't notify: {:?}", uuid);
+        return ::log::error!("characteristic can't notify: {}", characteristic);
       }
 
-      ::log::info!("subscribe {:?}", uuid);
+      ::log::info!("subscribe to {}", characteristic);
       characteristic
         .on_notify(|data| {
           ::log::info!("{}", core::str::from_utf8(data).unwrap());

@@ -350,6 +350,8 @@ impl BLEServer {
           }
         }
       }
+      esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED
+      | esp_idf_sys::BLE_GAP_EVENT_PHY_UPDATE_COMPLETE => {}
       _ => {
         ::log::warn!("unhandled event: {}", event.type_);
       }

@@ -6,7 +6,7 @@ use crate::{
   utilities::{voidp_to_ref, BleUuid},
   BLEDevice, BLEReturnCode, BLEServer,
 };
-use alloc::{ffi::CString, vec::Vec};
+use alloc::{boxed::Box, ffi::CString, vec::Vec};
 use once_cell::sync::Lazy;
 
 const BLE_HS_ADV_MAX_SZ: u8 = esp_idf_sys::BLE_HS_ADV_MAX_SZ as u8;
@@ -30,6 +30,7 @@ pub struct BLEAdvertising {
   name: Option<CString>,
   mfg_data: Vec<u8>,
   scan_response: bool,
+  on_complete: Option<Box<dyn FnMut() + Send + Sync>>,
 }
 
 impl BLEAdvertising {
@@ -51,6 +52,7 @@ impl BLEAdvertising {
       name: None,
       mfg_data: Vec::new(),
       scan_response: true,
+      on_complete: None,
     };
 
     ret.reset().unwrap();
@@ -414,9 +416,23 @@ impl BLEAdvertising {
     unsafe { esp_idf_sys::ble_gap_adv_active() != 0 }
   }
 
-  extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
-    let _event = unsafe { &*event };
-    let _adv = unsafe { voidp_to_ref::<Self>(arg) };
+  pub fn on_complete(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {
+    self.on_complete = Some(Box::new(callback));
+    self
+  }
+
+  pub(crate) extern "C" fn handle_gap_event(
+    event: *mut esp_idf_sys::ble_gap_event,
+    arg: *mut c_void,
+  ) -> i32 {
+    let event = unsafe { &*event };
+    let adv = unsafe { voidp_to_ref::<Self>(arg) };
+
+    if event.type_ == esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE as _ {
+      if let Some(callback) = adv.on_complete.as_mut() {
+        callback();
+      }
+    }
 
     0
   }

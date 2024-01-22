@@ -279,7 +279,9 @@ impl BLEServer {
         }
       }
       #[cfg(not(esp_idf_bt_nimble_ext_adv))]
-      esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE => {}
+      esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE => {
+        return crate::BLEAdvertising::handle_gap_event(_event, _arg);
+      }
       #[cfg(esp_idf_bt_nimble_ext_adv)]
       esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE | esp_idf_sys::BLE_GAP_EVENT_SCAN_REQ_RCVD => {
         return crate::BLEExtAdvertising::handle_gap_event(_event, _arg);

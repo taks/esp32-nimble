@@ -1,4 +1,4 @@
-use core::ffi::c_void;
+use core::ffi::{c_int, c_void};
 
 use crate::{
   ble,
@@ -30,7 +30,7 @@ pub struct BLEAdvertising {
   name: Option<CString>,
   mfg_data: Vec<u8>,
   scan_response: bool,
-  on_complete: Option<Box<dyn FnMut() + Send + Sync>>,
+  on_complete: Option<Box<dyn FnMut(c_int) + Send + Sync>>,
 }
 
 impl BLEAdvertising {
@@ -416,7 +416,7 @@ impl BLEAdvertising {
     unsafe { esp_idf_sys::ble_gap_adv_active() != 0 }
   }
 
-  pub fn on_complete(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {
+  pub fn on_complete(&mut self, callback: impl FnMut(c_int) + Send + Sync + 'static) -> &mut Self {
     self.on_complete = Some(Box::new(callback));
     self
   }
@@ -430,7 +430,7 @@ impl BLEAdvertising {
 
     if event.type_ == esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE as _ {
       if let Some(callback) = adv.on_complete.as_mut() {
-        callback();
+        callback(unsafe { event.__bindgen_anon_1.adv_complete.reason });
       }
     }
 

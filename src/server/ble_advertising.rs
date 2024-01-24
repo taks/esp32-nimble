@@ -437,3 +437,5 @@ impl BLEAdvertising {
     0
   }
 }
+
+unsafe impl Send for BLEAdvertising {}

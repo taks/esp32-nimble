@@ -10,7 +10,8 @@ fn main() {
     .security()
     .set_auth(AuthReq::all())
     .set_passkey(123456)
-    .set_io_cap(SecurityIOCap::DisplayOnly);
+    .set_io_cap(SecurityIOCap::DisplayOnly)
+    .resolve_rpa();
 
   let server = device.get_server();
   server.on_connect(|_server, desc| {

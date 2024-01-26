@@ -9,7 +9,7 @@ use crate::{
     ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
     voidp_to_ref, BleUuid,
   },
-  AttValue, OnWriteArgs,
+  AttValue, OnWriteDescriptorArgs,
 };
 
 bitflags! {
@@ -32,7 +32,7 @@ pub struct BLEDescriptor {
   pub(crate) properties: DescriptorProperties,
   value: AttValue,
   on_read: Option<Box<dyn FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync>>,
-  on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
+  on_write: Option<Box<dyn FnMut(&mut OnWriteDescriptorArgs) + Send + Sync>>,
 }
 
 impl BLEDescriptor {
@@ -70,7 +70,7 @@ impl BLEDescriptor {
 
   pub fn on_write(
     &mut self,
-    callback: impl FnMut(&mut OnWriteArgs) + Send + Sync + 'static,
+    callback: impl FnMut(&mut OnWriteDescriptorArgs) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_write = Some(Box::new(callback));
     self
@@ -125,7 +125,7 @@ impl BLEDescriptor {
 
         if let Some(callback) = &mut descriptor.on_write {
           let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
-          let mut arg = OnWriteArgs {
+          let mut arg = OnWriteDescriptorArgs {
             recv_data: &buf,
             desc: &desc,
             reject: false,

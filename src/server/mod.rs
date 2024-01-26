@@ -35,3 +35,4 @@ pub mod hid;
 
 mod on_write_args;
 pub use self::on_write_args::OnWriteArgs;
+pub use self::on_write_args::OnWriteDescriptorArgs;

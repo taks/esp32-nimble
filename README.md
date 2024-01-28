@@ -46,5 +46,4 @@ device
 ```
 
 - `.set_auth(AuthReq::Bond)` sets up bonding, crucial for storing security keys that enable future automatic reconnections.
-- **Caution**: Avoid `.set_auth(AuthReq::Sc)` (Secure Connections), as it can interfere with the ability of iOS devices to reconnect.
 - `.resolve_rpa()`: This function is essential for adapting to the changing Bluetooth addresses used by iOS devices, a feature known as Resolvable Private Address (RPA). It's vital for maintaining reliable and seamless connections with iOS devices, ensuring that your ESP32 device can recognize and reconnect to an iOS device even when its Bluetooth address changes.

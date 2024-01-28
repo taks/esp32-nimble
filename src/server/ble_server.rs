@@ -24,6 +24,7 @@ pub struct BLEServer {
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, c_int) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
+  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc) -> bool + Send + Sync>>,
 }
 
 impl BLEServer {
@@ -39,6 +40,7 @@ impl BLEServer {
       on_disconnect: None,
       on_passkey_request: None,
       on_confirm_pin: None,
+      on_authentication_complete: None,
     }
   }
 
@@ -74,6 +76,14 @@ impl BLEServer {
     callback: impl Fn(u32) -> bool + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_confirm_pin = Some(Box::new(callback));
+    self
+  }
+
+  pub fn on_authentication_complete(
+    &mut self,
+    callback: impl Fn(&BLEConnDesc) -> bool + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_authentication_complete = Some(Box::new(callback));
     self
   }
 
@@ -306,7 +316,13 @@ impl BLEServer {
         return esp_idf_sys::BLE_GAP_REPEAT_PAIRING_RETRY as _;
       }
       esp_idf_sys::BLE_GAP_EVENT_ENC_CHANGE => {
-        // let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };
+        let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };
+        let Ok(desk) = ble_gap_conn_find(enc_change.conn_handle) else {
+          return esp_idf_sys::BLE_ATT_ERR_INVALID_HANDLE as _;
+        };
+        if let Some(callback) = &server.on_authentication_complete {
+          callback(&desk);
+        }
         ::log::info!("AuthenticationComplete");
       }
       esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {

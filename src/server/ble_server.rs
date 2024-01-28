@@ -24,7 +24,7 @@ pub struct BLEServer {
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, c_int) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc) -> bool + Send + Sync>>,
+  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc, c_int) -> bool + Send + Sync>>,
 }
 
 impl BLEServer {
@@ -79,9 +79,14 @@ impl BLEServer {
     self
   }
 
+  /// The callback function is called when the pairing procedure is complete.
+  /// * callback first parameter: A reference to a `BLEConnDesc` instance.
+  /// * callback second parameter: Indicates the result of the encryption state change attempt;
+  /// o 0: the encrypted state was successfully updated;
+  /// o BLE host error code: the encryption state change attempt failed for the specified reason.
   pub fn on_authentication_complete(
     &mut self,
-    callback: impl Fn(&BLEConnDesc) -> bool + Send + Sync + 'static,
+    callback: impl Fn(&BLEConnDesc, c_int) -> bool + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_authentication_complete = Some(Box::new(callback));
     self
@@ -321,7 +326,7 @@ impl BLEServer {
           return esp_idf_sys::BLE_ATT_ERR_INVALID_HANDLE as _;
         };
         if let Some(callback) = &server.on_authentication_complete {
-          callback(&desk);
+          callback(&desk, enc_change.status);
         }
         ::log::info!("AuthenticationComplete");
       }

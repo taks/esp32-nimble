@@ -135,6 +135,7 @@ impl BLECharacteristic {
     self
   }
 
+  /// This characteristic is locked while the callback is executing. If you call `.lock()` on this characteristic from inside the callback, it will never execute.
   pub fn on_write(
     &mut self,
     callback: impl FnMut(&mut OnWriteArgs) + Send + Sync + 'static,

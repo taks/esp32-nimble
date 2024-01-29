@@ -24,7 +24,7 @@ pub struct BLEServer {
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, c_int) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc, c_int) -> bool + Send + Sync>>,
+  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc, c_int) + Send + Sync>>,
 }
 
 impl BLEServer {
@@ -86,7 +86,7 @@ impl BLEServer {
   /// o BLE host error code: the encryption state change attempt failed for the specified reason.
   pub fn on_authentication_complete(
     &mut self,
-    callback: impl Fn(&BLEConnDesc, c_int) -> bool + Send + Sync + 'static,
+    callback: impl Fn(&BLEConnDesc, c_int) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_authentication_complete = Some(Box::new(callback));
     self

@@ -328,7 +328,6 @@ impl BLEServer {
         if let Some(callback) = &server.on_authentication_complete {
           callback(&desk, enc_change.status);
         }
-        ::log::info!("AuthenticationComplete");
       }
       esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {
         let passkey = unsafe { &event.__bindgen_anon_1.passkey };

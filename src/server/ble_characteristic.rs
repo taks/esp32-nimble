@@ -294,21 +294,25 @@ impl BLECharacteristic {
 
         let mut notify = false;
 
-        if let Some(callback) = &mut characteristic.on_write {
-          let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
-          let mut arg = OnWriteArgs {
-            recv_data: &buf,
-            desc: &desc,
-            reject: false,
-            error_code: 0,
-            notify: false,
-          };
-          callback(&mut arg);
+        unsafe {
+          let characteristic = UnsafeCell::new(&mut characteristic);
+          if let Some(callback) = &mut (*characteristic.get()).on_write {
+            let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+            let mut arg = OnWriteArgs {
+              current_data: (*characteristic.get()).value.value(),
+              recv_data: &buf,
+              desc: &desc,
+              reject: false,
+              error_code: 0,
+              notify: false,
+            };
+            callback(&mut arg);
 
-          if arg.reject {
-            return arg.error_code as _;
+            if arg.reject {
+              return arg.error_code as _;
+            }
+            notify = arg.notify;
           }
-          notify = arg.notify;
         }
         characteristic.set_value(&buf);
         if notify {

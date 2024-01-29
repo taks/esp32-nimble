@@ -1,14 +1,27 @@
 use crate::BLEConnDesc;
 
 pub struct OnWriteArgs<'a> {
-  pub recv_data: &'a [u8],
-  pub desc: &'a BLEConnDesc,
+  pub(crate) current_data: &'a [u8],
+  pub(crate) recv_data: &'a [u8],
+  pub(crate) desc: &'a BLEConnDesc,
   pub(crate) reject: bool,
   pub(crate) error_code: u8,
   pub(crate) notify: bool,
 }
 
 impl OnWriteArgs<'_> {
+  pub fn current_data(&self) -> &[u8] {
+    self.current_data
+  }
+
+  pub fn recv_data(&self) -> &[u8] {
+    self.recv_data
+  }
+
+  pub fn desc(&self) -> &BLEConnDesc {
+    self.desc
+  }
+
   /// If the reject is called, no value is written to BLECharacteristic or BLEDescriptor.
   /// A write error (0xFF) is sent to the sender.
   pub fn reject(&mut self) {
@@ -28,13 +41,26 @@ impl OnWriteArgs<'_> {
 }
 
 pub struct OnWriteDescriptorArgs<'a> {
-  pub recv_data: &'a [u8],
-  pub desc: &'a BLEConnDesc,
+  pub(crate) current_data: &'a [u8],
+  pub(crate) recv_data: &'a [u8],
+  pub(crate) desc: &'a BLEConnDesc,
   pub(crate) reject: bool,
   pub(crate) error_code: u8,
 }
 
 impl OnWriteDescriptorArgs<'_> {
+  pub fn current_data(&self) -> &[u8] {
+    self.current_data
+  }
+
+  pub fn recv_data(&self) -> &[u8] {
+    self.recv_data
+  }
+
+  pub fn desc(&self) -> &BLEConnDesc {
+    self.desc
+  }
+
   /// If the reject is called, no value is written to BLECharacteristic or BLEDescriptor.
   /// A write error (0xFF) is sent to the sender.
   pub fn reject(&mut self) {

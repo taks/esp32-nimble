@@ -59,11 +59,15 @@ fn main() {
   );
   writable_characteristic
     .lock()
-    .on_read(move |_, _| {
+    .on_read(|_, _| {
       ::log::info!("Read from writable characteristic.");
     })
-    .on_write(move |args| {
-      ::log::info!("Wrote to writable characteristic: {:?}", args.recv_data);
+    .on_write(|args| {
+      ::log::info!(
+        "Wrote to writable characteristic: {:?} -> {:?}",
+        args.current_data(),
+        args.recv_data()
+      );
     });
 
   let ble_advertising = ble_device.get_advertising();

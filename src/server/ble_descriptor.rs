@@ -123,18 +123,22 @@ impl BLEDescriptor {
           om = unsafe { (*om).om_next.sle_next };
         }
 
-        if let Some(callback) = &mut descriptor.on_write {
-          let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
-          let mut arg = OnWriteDescriptorArgs {
-            recv_data: &buf,
-            desc: &desc,
-            reject: false,
-            error_code: 0,
-          };
-          callback(&mut arg);
+        unsafe {
+          let descriptor = UnsafeCell::new(&mut descriptor);
+          if let Some(callback) = &mut (*descriptor.get()).on_write {
+            let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+            let mut arg = OnWriteDescriptorArgs {
+              current_data: (*descriptor.get()).value.value(),
+              recv_data: &buf,
+              desc: &desc,
+              reject: false,
+              error_code: 0,
+            };
+            callback(&mut arg);
 
-          if arg.reject {
-            return arg.error_code as _;
+            if arg.reject {
+              return arg.error_code as _;
+            }
           }
         }
         descriptor.set_value(&buf);

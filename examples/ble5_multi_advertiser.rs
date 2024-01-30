@@ -46,7 +46,7 @@ fn main() {
   legacy_scan_response.service_data(SERVICE_UUID, "Legacy SR".as_bytes());
 
   {
-    let advertising = ble_device.get_advertising().lock();
+    let mut advertising = ble_device.get_advertising().lock();
     advertising
       .set_instance_data(0, &mut ext_scannable)
       .unwrap();

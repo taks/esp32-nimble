@@ -3,7 +3,10 @@ use core::ffi::c_void;
 use esp_idf_sys::esp_nofail;
 use once_cell::sync::Lazy;
 
-use crate::{ble, client::BLEScan, enums::*, BLEAddress, BLEReturnCode, BLESecurity, BLEServer};
+use crate::{
+  ble, client::BLEScan, enums::*, utilities::mutex::Mutex, BLEAddress, BLEReturnCode, BLESecurity,
+  BLEServer,
+};
 
 #[cfg(not(esp_idf_bt_nimble_ext_adv))]
 type BLEAdvertising = crate::BLEAdvertising;
@@ -33,7 +36,8 @@ static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
 });
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
 pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
-static mut BLE_ADVERTISING: Lazy<BLEAdvertising> = Lazy::new(BLEAdvertising::new);
+static mut BLE_ADVERTISING: Lazy<Mutex<BLEAdvertising>> =
+  Lazy::new(|| Mutex::new(BLEAdvertising::new()));
 
 pub static mut OWN_ADDR_TYPE: OwnAddrType = OwnAddrType::Public;
 static mut INITIALIZED: bool = false;
@@ -129,7 +133,7 @@ impl BLEDevice {
     unsafe { Lazy::force_mut(&mut BLE_SERVER) }
   }
 
-  pub fn get_advertising(&self) -> &'static mut BLEAdvertising {
+  pub fn get_advertising(&self) -> &'static mut Mutex<BLEAdvertising> {
     unsafe { Lazy::force_mut(&mut BLE_ADVERTISING) }
   }
 

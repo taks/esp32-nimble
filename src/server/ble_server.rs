@@ -233,7 +233,7 @@ impl BLEServer {
 
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]
         if server.advertise_on_disconnect {
-          if let Err(err) = BLEDevice::take().get_advertising().start() {
+          if let Err(err) = BLEDevice::take().get_advertising().lock().start() {
             ::log::warn!("can't start advertising: {:?}", err);
           }
         }

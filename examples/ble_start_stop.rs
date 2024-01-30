@@ -22,6 +22,7 @@ fn main() {
   .unwrap();
 
   let ble_device = BLEDevice::take();
+  let ble_advertising = ble_device.get_advertising();
 
   let server = ble_device.get_server();
   server.on_connect(|server, desc| {
@@ -32,7 +33,7 @@ fn main() {
       .unwrap();
 
     ::log::info!("Multi-connect support: start advertising");
-    ble_device.get_advertising().start().unwrap();
+    ble_advertising.lock().start().unwrap();
   });
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 
@@ -70,12 +71,12 @@ fn main() {
       );
     });
 
-  let ble_advertising = ble_device.get_advertising();
   ble_advertising
+    .lock()
     .name("ESP32-GATT-Server")
-    .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
-
-  ble_advertising.start().unwrap();
+    .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"))
+    .start()
+    .unwrap();
 
   let mut buf = [0_u8; 10];
   let mut initialized = true;
@@ -89,7 +90,7 @@ fn main() {
       } else {
         ::log::info!("start BLE");
         BLEDevice::init();
-        ble_advertising.start().unwrap();
+        ble_advertising.lock().start().unwrap();
       }
       initialized = !initialized;
     }

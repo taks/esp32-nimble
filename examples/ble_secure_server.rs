@@ -6,6 +6,8 @@ fn main() {
   esp_idf_svc::log::EspLogger::initialize_default();
 
   let device = BLEDevice::take();
+  let ble_advertising = device.get_advertising();
+
   device
     .security()
     .set_auth(AuthReq::all())
@@ -19,7 +21,7 @@ fn main() {
 
     if server.connected_count() < (esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
       ::log::info!("Multi-connect support: start advertising");
-      device.get_advertising().start().unwrap();
+      ble_advertising.lock().start().unwrap();
     }
   });
   server.on_disconnect(|_desc, reason| {
@@ -46,8 +48,6 @@ fn main() {
     .lock()
     .set_value("secure_characteristic".as_bytes());
 
-  let ble_advertising = device.get_advertising();
-
   // With esp32-c3, advertising stops when a device is bonded.
   // (https://github.com/taks/esp32-nimble/issues/70)
   #[cfg(esp32c3)]
@@ -55,6 +55,7 @@ fn main() {
     BLEDevice::take().get_advertising().start().unwrap();
   });
   ble_advertising
+    .lock()
     .name("ESP32-GATT-Server")
     .add_service_uuid(BleUuid::Uuid16(0xABCD))
     .start()

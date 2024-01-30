@@ -36,7 +36,7 @@ static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
 });
 static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
 pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
-static mut BLE_ADVERTISING: Lazy<Mutex<BLEAdvertising>> =
+static BLE_ADVERTISING: Lazy<Mutex<BLEAdvertising>> =
   Lazy::new(|| Mutex::new(BLEAdvertising::new()));
 
 pub static mut OWN_ADDR_TYPE: OwnAddrType = OwnAddrType::Public;
@@ -133,8 +133,8 @@ impl BLEDevice {
     unsafe { Lazy::force_mut(&mut BLE_SERVER) }
   }
 
-  pub fn get_advertising(&self) -> &'static mut Mutex<BLEAdvertising> {
-    unsafe { Lazy::force_mut(&mut BLE_ADVERTISING) }
+  pub fn get_advertising(&self) -> &'static Mutex<BLEAdvertising> {
+    Lazy::force(&BLE_ADVERTISING)
   }
 
   pub fn set_power(

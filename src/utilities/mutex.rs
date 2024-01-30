@@ -1,15 +1,11 @@
-use core::cell::UnsafeCell;
-use core::ptr;
-use core::time::Duration;
+// original: https://github.com/esp-rs/esp-idf-svc/blob/master/src/private/mutex.rs
 
+use core::cell::UnsafeCell;
+use core::ops::{Deref, DerefMut};
 use esp_idf_sys::*;
 
 // NOTE: ESP-IDF-specific
 const PTHREAD_MUTEX_INITIALIZER: u32 = 0xFFFFFFFF;
-
-pub type Mutex<T> = embedded_svc::utils::mutex::Mutex<RawMutex, T>;
-
-pub type Condvar = embedded_svc::utils::mutex::Condvar<RawCondvar>;
 
 pub struct RawMutex(UnsafeCell<pthread_mutex_t>);
 
@@ -44,104 +40,57 @@ impl Drop for RawMutex {
 unsafe impl Sync for RawMutex {}
 unsafe impl Send for RawMutex {}
 
-impl embedded_svc::utils::mutex::RawMutex for RawMutex {
-  #[allow(clippy::declare_interior_mutable_const)]
-  const INIT: Self = RawMutex::new();
+pub struct Mutex<T>(RawMutex, UnsafeCell<T>);
 
-  fn new() -> Self {
-    Self::new()
+impl<T> Mutex<T> {
+  #[inline(always)]
+  pub const fn new(data: T) -> Self {
+    Self(RawMutex::new(), UnsafeCell::new(data))
   }
 
-  unsafe fn lock(&self) {
-    Self::lock(self);
-  }
-
-  unsafe fn unlock(&self) {
-    Self::unlock(self);
+  #[inline(always)]
+  pub fn lock(&self) -> MutexGuard<'_, T> {
+    MutexGuard::new(self)
   }
 }
 
-pub struct RawCondvar(UnsafeCell<pthread_cond_t>);
+unsafe impl<T> Sync for Mutex<T> where T: Send {}
+unsafe impl<T> Send for Mutex<T> where T: Send {}
 
-impl RawCondvar {
-  pub fn new() -> Self {
-    let mut cond: pthread_cond_t = Default::default();
+pub struct MutexGuard<'a, T>(&'a Mutex<T>);
 
-    let r = unsafe { pthread_cond_init(&mut cond as *mut _, ptr::null()) };
-    debug_assert_eq!(r, 0);
+impl<'a, T> MutexGuard<'a, T> {
+  #[inline(always)]
+  fn new(mutex: &'a Mutex<T>) -> Self {
+    unsafe {
+      mutex.0.lock();
+    }
 
-    Self(UnsafeCell::new(cond))
-  }
-
-  #[allow(clippy::missing_safety_doc)]
-  pub unsafe fn wait(&self, mutex: &RawMutex) {
-    let r = pthread_cond_wait(self.0.get(), mutex.0.get());
-    debug_assert_eq!(r, 0);
-  }
-
-  #[allow(clippy::missing_safety_doc)]
-  pub unsafe fn wait_timeout(&self, mutex: &RawMutex, duration: Duration) -> bool {
-    let mut now: timeval = core::mem::zeroed();
-    gettimeofday(&mut now, core::ptr::null_mut());
-
-    let abstime = timespec {
-      tv_sec: now.tv_sec + duration.as_secs() as esp_idf_sys::time_t,
-      tv_nsec: (now.tv_usec * 1000) + duration.subsec_nanos() as i32,
-    };
-
-    let r = pthread_cond_timedwait(self.0.get(), mutex.0.get(), &abstime as *const _);
-    debug_assert!(r == ETIMEDOUT as i32 || r == 0);
-
-    r == ETIMEDOUT as i32
-  }
-
-  pub fn notify_one(&self) {
-    let r = unsafe { pthread_cond_signal(self.0.get()) };
-    debug_assert_eq!(r, 0);
-  }
-
-  pub fn notify_all(&self) {
-    let r = unsafe { pthread_cond_broadcast(self.0.get()) };
-    debug_assert_eq!(r, 0);
+    Self(mutex)
   }
 }
 
-unsafe impl Sync for RawCondvar {}
-unsafe impl Send for RawCondvar {}
-
-impl Default for RawCondvar {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
-impl Drop for RawCondvar {
+impl<'a, T> Drop for MutexGuard<'a, T> {
+  #[inline(always)]
   fn drop(&mut self) {
-    let r = unsafe { pthread_cond_destroy(self.0.get()) };
-    debug_assert_eq!(r, 0);
+    unsafe {
+      self.0 .0.unlock();
+    }
   }
 }
 
-impl embedded_svc::utils::mutex::RawCondvar for RawCondvar {
-  type RawMutex = RawMutex;
+impl<'a, T> Deref for MutexGuard<'a, T> {
+  type Target = T;
 
-  fn new() -> Self {
-    Self::new()
+  #[inline(always)]
+  fn deref(&self) -> &Self::Target {
+    unsafe { self.0 .1.get().as_mut().unwrap() }
   }
+}
 
-  unsafe fn wait(&self, mutex: &Self::RawMutex) {
-    Self::wait(self, mutex);
-  }
-
-  unsafe fn wait_timeout(&self, mutex: &Self::RawMutex, duration: Duration) -> bool {
-    Self::wait_timeout(self, mutex, duration)
-  }
-
-  fn notify_one(&self) {
-    Self::notify_one(self);
-  }
-
-  fn notify_all(&self) {
-    Self::notify_all(self);
+impl<'a, T> DerefMut for MutexGuard<'a, T> {
+  #[inline(always)]
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    unsafe { self.0 .1.get().as_mut().unwrap() }
   }
 }

@@ -93,7 +93,7 @@ pub struct BLECharacteristic {
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
-  on_subscribe: Option<Box<dyn FnMut(&BLEConnDesc, NimbleSub) + Send + Sync>>,
+  on_subscribe: Option<Box<dyn FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync>>,
 }
 
 impl BLECharacteristic {
@@ -355,14 +355,17 @@ impl BLECharacteristic {
       self.subscribed_list.push((subscribe.conn_handle, sub_val));
     }
 
-    if let Some(callback) = &mut self.on_subscribe {
-      callback(&desc, sub_val);
+    unsafe {
+      let self_ = UnsafeCell::new(self);
+      if let Some(callback) = &mut (*self_.get()).on_subscribe {
+        callback(*self_.get(), &desc, sub_val);
+      }
     }
   }
 
   pub fn on_subscribe(
     &mut self,
-    callback: impl FnMut(&BLEConnDesc, NimbleSub) + Send + Sync + 'static,
+    callback: impl FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_subscribe = Some(Box::new(callback));
     self

@@ -247,11 +247,13 @@ impl Keyboard {
 
     let ble_advertising = device.get_advertising();
     ble_advertising
+      .lock()
       .name("ESP32 Keyboard")
       .appearance(0x03C1)
       .add_service_uuid(hid.hid_service().lock().uuid())
-      .scan_response(false);
-    ble_advertising.start().unwrap();
+      .scan_response(false)
+      .start()
+      .unwrap();
 
     Self {
       server,

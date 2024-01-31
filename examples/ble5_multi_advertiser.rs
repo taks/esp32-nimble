@@ -45,19 +45,21 @@ fn main() {
     BLEExtAdvertisement::new(BLE_HCI_LE_PHY_1M as _, BLE_HCI_LE_PHY_1M as _);
   legacy_scan_response.service_data(SERVICE_UUID, "Legacy SR".as_bytes());
 
-  let advertising = ble_device.get_advertising();
-  advertising
-    .set_instance_data(0, &mut ext_scannable)
-    .unwrap();
-  advertising
-    .set_instance_data(1, &mut legacy_connectable)
-    .unwrap();
-  advertising
-    .set_scan_response_data(1, &mut legacy_scan_response)
-    .unwrap();
+  {
+    let mut advertising = ble_device.get_advertising().lock();
+    advertising
+      .set_instance_data(0, &mut ext_scannable)
+      .unwrap();
+    advertising
+      .set_instance_data(1, &mut legacy_connectable)
+      .unwrap();
+    advertising
+      .set_scan_response_data(1, &mut legacy_scan_response)
+      .unwrap();
 
-  advertising.start(0).unwrap();
-  advertising.start(1).unwrap();
+    advertising.start(0).unwrap();
+    advertising.start(1).unwrap();
+  }
 
   loop {
     esp_idf_hal::delay::FreeRtos::delay_ms(5000);

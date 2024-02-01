@@ -16,7 +16,6 @@ const BLE_HS_FOREVER: i32 = i32::MAX;
 
 pub struct BLEAdvertising {
   adv_data: esp_idf_sys::ble_hs_adv_fields,
-  scan_data: esp_idf_sys::ble_hs_adv_fields,
   adv_params: esp_idf_sys::ble_gap_adv_params,
   service_uuids_16: Vec<esp_idf_sys::ble_uuid16_t>,
   service_uuids_32: Vec<esp_idf_sys::ble_uuid32_t>,
@@ -38,7 +37,6 @@ impl BLEAdvertising {
   pub(crate) fn new() -> Self {
     let mut ret = Self {
       adv_data: esp_idf_sys::ble_hs_adv_fields::default(),
-      scan_data: esp_idf_sys::ble_hs_adv_fields::default(),
       adv_params: esp_idf_sys::ble_gap_adv_params::default(),
       service_uuids_16: Vec::new(),
       service_uuids_32: Vec::new(),
@@ -65,7 +63,6 @@ impl BLEAdvertising {
     }
 
     self.adv_data = esp_idf_sys::ble_hs_adv_fields::default();
-    self.scan_data = esp_idf_sys::ble_hs_adv_fields::default();
     self.adv_params = esp_idf_sys::ble_gap_adv_params::default();
     self.service_uuids_16.clear();
     self.service_uuids_32.clear();
@@ -287,6 +284,7 @@ impl BLEAdvertising {
 
     if !self.custom_adv_data && !self.adv_data_set {
       let mut payload_len: u8 = if self.adv_data.flags > 0 { 2 + 1 } else { 0 };
+      let mut scan_data = esp_idf_sys::ble_hs_adv_fields::default();
 
       if self.adv_data.mfg_data_len > 0 {
         payload_len += 2 + self.adv_data.mfg_data_len;
@@ -355,13 +353,13 @@ impl BLEAdvertising {
 
       if payload_len + 2 + self.adv_data.name_len > BLE_HS_ADV_MAX_SZ {
         if self.scan_response && !self.custom_scan_response_data {
-          self.scan_data.name = self.adv_data.name;
-          self.scan_data.name_len = self.adv_data.name_len;
-          if self.scan_data.name_len > BLE_HS_ADV_MAX_SZ - 2 {
-            self.scan_data.name_len = BLE_HS_ADV_MAX_SZ - 2;
-            self.scan_data.set_name_is_complete(0);
+          scan_data.name = self.adv_data.name;
+          scan_data.name_len = self.adv_data.name_len;
+          if scan_data.name_len > BLE_HS_ADV_MAX_SZ - 2 {
+            scan_data.name_len = BLE_HS_ADV_MAX_SZ - 2;
+            scan_data.set_name_is_complete(0);
           } else {
-            self.scan_data.set_name_is_complete(1);
+            scan_data.set_name_is_complete(1);
           }
           self.adv_data.name = core::ptr::null();
           self.adv_data.name_len = 0;
@@ -380,7 +378,7 @@ impl BLEAdvertising {
 
       unsafe {
         if self.scan_response && !self.custom_scan_response_data {
-          ble!(esp_idf_sys::ble_gap_adv_rsp_set_fields(&self.scan_data))?;
+          ble!(esp_idf_sys::ble_gap_adv_rsp_set_fields(&scan_data))?;
         }
 
         ble!(esp_idf_sys::ble_gap_adv_set_fields(&self.adv_data))?;

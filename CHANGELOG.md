@@ -1,5 +1,7 @@
 ## [0.5.1] - 2024-02-01
 - Fixed a bug when changing advertising name. ([#85](https::/github.com/taks/esp32-nimble/pull/85))
+- Fixed `BLEAdvertising::start_with_duration`
+  (`ble_gap_adv_set_fields`, `ble_gap_adv_rsp_set_fields` were called every time.)
 
 ## [0.5.0] - 2024-01-10
 - Added `BLEScan::find_device` ([#55](https::/github.com/taks/esp32-nimble/pull/55))

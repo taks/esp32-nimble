@@ -4,6 +4,9 @@ pub use self::att_value::AttValue;
 mod ble_2904;
 pub use self::ble_2904::*;
 
+mod ble_advertisement_data;
+pub use self::ble_advertisement_data::BLEAdvertisementData;
+
 mod ble_advertising;
 pub use self::ble_advertising::BLEAdvertising;
 

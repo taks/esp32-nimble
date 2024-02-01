@@ -2,7 +2,8 @@
 #![allow(dead_code)]
 
 use esp32_nimble::{
-  enums::*, hid::*, utilities::mutex::Mutex, BLECharacteristic, BLEDevice, BLEHIDDevice, BLEServer,
+  enums::*, hid::*, utilities::mutex::Mutex, BLEAdvertisementData, BLECharacteristic, BLEDevice,
+  BLEHIDDevice, BLEServer,
 };
 use esp_idf_sys as _;
 use std::sync::Arc;
@@ -248,12 +249,15 @@ impl Keyboard {
     let ble_advertising = device.get_advertising();
     ble_advertising
       .lock()
-      .name("ESP32 Keyboard")
-      .appearance(0x03C1)
-      .add_service_uuid(hid.hid_service().lock().uuid())
       .scan_response(false)
-      .start()
+      .set_data(
+        &BLEAdvertisementData::new()
+          .name("ESP32 Keyboard")
+          .appearance(0x03C1)
+          .add_service_uuid(hid.hid_service().lock().uuid()),
+      )
       .unwrap();
+    ble_advertising.lock().start().unwrap();
 
     Self {
       server,

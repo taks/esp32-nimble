@@ -1,3 +1,6 @@
+## [0.5.1] - 2024-02-01
+- Fixed a bug when changing advertising name. ([#85](https::/github.com/taks/esp32-nimble/pull/85))
+
 ## [0.5.0] - 2024-01-10
 - Added `BLEScan::find_device` ([#55](https::/github.com/taks/esp32-nimble/pull/55))
 - Added `BLEAdvertisedDevice::adv_type`, `BLEAdvertisedDevice::adv_flags`

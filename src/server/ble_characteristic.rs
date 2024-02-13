@@ -363,6 +363,8 @@ impl BLECharacteristic {
     }
   }
 
+  /// Do not call `lock` on this characteristic inside the callback, use the first input instead.
+  /// In the future, this characteristic could be locked while the callback executes.
   pub fn on_subscribe(
     &mut self,
     callback: impl FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync + 'static,

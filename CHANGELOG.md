@@ -2,6 +2,11 @@
 - Implement Display and Debug traits for BLERemoteCharacteristic & BLERemoteService ([#66](https://github.com/taks/esp32-nimble/pull/66))
 - Added `BLEAdvertising::on_complete`
 - Added `OnWriteArgs::notify::notify` ([#75](https::/github.com/taks/esp32-nimble/pull/75))
+- Added `BLEServer::on_authentication_complete`
+- Added `OnWriteArgs::current_data` ([#81](https::/github.com/taks/esp32-nimble/pull/81))
+- Changed the return type of `get_advertising` to `Mutex<BLEAdvertising>` ([#84](https::/github.com/taks/esp32-nimble/pull/84))
+- Added self argument to `BLERemoteCharacteristic::on_subscribe` callback
+- Fixed advertising length calculation ([#87](https::/github.com/taks/esp32-nimble/pull/87))
 
 ## [0.5.1] - 2024-02-01
 - Fixed a bug when changing advertising name. ([#85](https::/github.com/taks/esp32-nimble/pull/85))

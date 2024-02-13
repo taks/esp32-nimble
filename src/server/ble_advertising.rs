@@ -95,7 +95,7 @@ impl BLEAdvertising {
       adv_data.set_uuids16_is_complete(1);
       adv_data.uuids16 = data.service_uuids_16.as_ptr();
       adv_data.num_uuids16 = data.service_uuids_16.len() as _;
-      payload_len += 2 + 4 * (data.service_uuids_16.len() - 1) as u8;
+      payload_len += 2 + 2 * data.service_uuids_16.len() as u8;
     }
 
     if data.service_uuids_32.is_empty() {
@@ -106,7 +106,7 @@ impl BLEAdvertising {
       adv_data.set_uuids32_is_complete(1);
       adv_data.uuids32 = data.service_uuids_32.as_ptr();
       adv_data.num_uuids32 = data.service_uuids_32.len() as _;
-      payload_len += 4 + 6 * (data.service_uuids_32.len() - 1) as u8;
+      payload_len += 2 + 4 * data.service_uuids_32.len() as u8;
     }
 
     if data.service_uuids_128.is_empty() {
@@ -117,7 +117,7 @@ impl BLEAdvertising {
       adv_data.set_uuids128_is_complete(1);
       adv_data.uuids128 = data.service_uuids_128.as_ptr();
       adv_data.num_uuids128 = data.service_uuids_128.len() as _;
-      payload_len += 16 + 18 * (data.service_uuids_128.len() - 1) as u8;
+      payload_len += 2 + 16 * data.service_uuids_128.len() as u8;
     }
 
     if payload_len + 2 + adv_data.name_len > BLE_HS_ADV_MAX_SZ {

@@ -41,9 +41,11 @@ Properly setting the security options in your Rust implementation is key:
 device
   .security()
   .set_auth(AuthReq::Bond) // Bonding enables key storage for reconnection
+  .set_passkey(123456) // Optional, sets the passkey for pairing (can also be set dynamically with BLEServer::on_passkey_request)
   .set_io_cap(SecurityIOCap::NoInputNoOutput) // You can choose any IO capability
   .resolve_rpa(); // Crucial for managing iOS's dynamic Bluetooth addresses
 ```
 
 - `.set_auth(AuthReq::Bond)` sets up bonding, crucial for storing security keys that enable future automatic reconnections.
 - `.resolve_rpa()`: This function is essential for adapting to the changing Bluetooth addresses used by iOS devices, a feature known as Resolvable Private Address (RPA). It's vital for maintaining reliable and seamless connections with iOS devices, ensuring that your ESP32 device can recognize and reconnect to an iOS device even when its Bluetooth address changes.
+- BLE Passkeys are a minimum of 6 digits by spec, so if you set a passkey of '1234' it is actually '001234' so to properly display the code to a user you must pad the left i.e. `format!("{:0>6}",pkey)`

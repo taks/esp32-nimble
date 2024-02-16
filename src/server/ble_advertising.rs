@@ -6,7 +6,7 @@ use crate::{
 use alloc::boxed::Box;
 use once_cell::sync::Lazy;
 
-const BLE_HS_ADV_MAX_SZ: u8 = esp_idf_sys::BLE_HS_ADV_MAX_SZ as u8;
+const BLE_HS_ADV_MAX_SZ: usize = esp_idf_sys::BLE_HS_ADV_MAX_SZ as usize;
 
 // Copied from ble_hs.h, for some reason esp_idf_sys didn't pick this up.
 const BLE_HS_FOREVER: i32 = i32::MAX;
@@ -42,90 +42,25 @@ impl BLEAdvertising {
     Ok(())
   }
 
-  pub fn set_data(&mut self, data: &BLEAdvertisementData) -> Result<(), BLEReturnCode> {
-    let mut adv_data = data.adv_data;
-    let mut scan_data = esp_idf_sys::ble_hs_adv_fields::default();
-
+  pub fn set_data(&mut self, data: &mut BLEAdvertisementData) -> Result<(), BLEReturnCode> {
     if self.adv_params.conn_mode == (ConnMode::Non as _) && !self.scan_response {
-      adv_data.flags = 0;
+      data.flags = 0;
     } else {
-      adv_data.flags =
+      data.flags =
         (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _;
     }
 
-    let mut payload_len: u8 = if adv_data.flags > 0 { 2 + 1 } else { 0 };
+    let mut adv_data = data.as_ble_hs_adv_fields();
+    let mut scan_data = esp_idf_sys::ble_hs_adv_fields::default();
 
-    if adv_data.mfg_data_len > 0 {
-      payload_len += 2 + adv_data.mfg_data_len;
-    }
+    let mut payload_len = data.payload_len();
 
-    if adv_data.svc_data_uuid16_len > 0 {
-      payload_len += 2 + adv_data.svc_data_uuid16_len;
-    }
-
-    if adv_data.svc_data_uuid32_len > 0 {
-      payload_len += 2 + adv_data.svc_data_uuid32_len;
-    }
-
-    if adv_data.svc_data_uuid128_len > 0 {
-      payload_len += 2 + adv_data.svc_data_uuid128_len;
-    }
-
-    if adv_data.uri_len > 0 {
-      payload_len += 2 + adv_data.uri_len;
-    }
-
-    if adv_data.appearance_is_present() > 0 {
-      payload_len += 2 + (esp_idf_sys::BLE_HS_ADV_APPEARANCE_LEN as u8);
-    }
-
-    if adv_data.tx_pwr_lvl_is_present() > 0 {
-      payload_len += 2 + (esp_idf_sys::BLE_HS_ADV_TX_PWR_LVL_LEN as u8);
-    }
-
-    if !adv_data.slave_itvl_range.is_null() {
-      payload_len += 2 + (esp_idf_sys::BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN as u8);
-    }
-
-    if data.service_uuids_16.is_empty() {
-      adv_data.set_uuids16_is_complete(0);
-      adv_data.uuids16 = core::ptr::null();
-      adv_data.num_uuids16 = 0;
-    } else {
-      adv_data.set_uuids16_is_complete(1);
-      adv_data.uuids16 = data.service_uuids_16.as_ptr();
-      adv_data.num_uuids16 = data.service_uuids_16.len() as _;
-      payload_len += 2 + 2 * data.service_uuids_16.len() as u8;
-    }
-
-    if data.service_uuids_32.is_empty() {
-      adv_data.set_uuids32_is_complete(0);
-      adv_data.uuids32 = core::ptr::null();
-      adv_data.num_uuids32 = 0;
-    } else {
-      adv_data.set_uuids32_is_complete(1);
-      adv_data.uuids32 = data.service_uuids_32.as_ptr();
-      adv_data.num_uuids32 = data.service_uuids_32.len() as _;
-      payload_len += 2 + 4 * data.service_uuids_32.len() as u8;
-    }
-
-    if data.service_uuids_128.is_empty() {
-      adv_data.set_uuids128_is_complete(0);
-      adv_data.uuids128 = core::ptr::null();
-      adv_data.num_uuids128 = 0;
-    } else {
-      adv_data.set_uuids128_is_complete(1);
-      adv_data.uuids128 = data.service_uuids_128.as_ptr();
-      adv_data.num_uuids128 = data.service_uuids_128.len() as _;
-      payload_len += 2 + 16 * data.service_uuids_128.len() as u8;
-    }
-
-    if payload_len + 2 + adv_data.name_len > BLE_HS_ADV_MAX_SZ {
+    if payload_len > BLE_HS_ADV_MAX_SZ {
       if self.scan_response {
         scan_data.name = adv_data.name;
         scan_data.name_len = adv_data.name_len;
-        if scan_data.name_len > BLE_HS_ADV_MAX_SZ - 2 {
-          scan_data.name_len = BLE_HS_ADV_MAX_SZ - 2;
+        if scan_data.name_len > (BLE_HS_ADV_MAX_SZ - 2) as _ {
+          scan_data.name_len = (BLE_HS_ADV_MAX_SZ - 2) as _;
           scan_data.set_name_is_complete(0);
         } else {
           scan_data.set_name_is_complete(1);
@@ -139,8 +74,9 @@ impl BLEAdvertising {
           adv_data.set_tx_pwr_lvl_is_present(0);
           payload_len -= 2 + 1;
         }
-        if adv_data.name_len > (BLE_HS_ADV_MAX_SZ - payload_len - 2) {
-          adv_data.name_len = BLE_HS_ADV_MAX_SZ - payload_len - 2;
+
+        if payload_len > BLE_HS_ADV_MAX_SZ {
+          adv_data.name_len -= (payload_len - BLE_HS_ADV_MAX_SZ) as u8;
           adv_data.set_name_is_complete(0);
         }
       }

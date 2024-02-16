@@ -59,7 +59,7 @@ fn main() {
   ble_advertising
     .lock()
     .set_data(
-      &BLEAdvertisementData::new()
+      BLEAdvertisementData::new()
         .name("ESP32-GATT-Server")
         .add_service_uuid(BleUuid::Uuid16(0xABCD)),
     )

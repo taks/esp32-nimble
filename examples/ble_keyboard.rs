@@ -251,7 +251,7 @@ impl Keyboard {
       .lock()
       .scan_response(false)
       .set_data(
-        &BLEAdvertisementData::new()
+        BLEAdvertisementData::new()
           .name("ESP32 Keyboard")
           .appearance(0x03C1)
           .add_service_uuid(hid.hid_service().lock().uuid()),

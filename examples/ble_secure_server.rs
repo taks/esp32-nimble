@@ -28,7 +28,11 @@ fn main() {
     ::log::info!("Client disconnected ({:?})", BLEReturnCode(reason as _));
   });
   server.on_authentication_complete(|desc, status| {
-    ::log::info!("AuthenticationComplete({}): {:?}", status, desc);
+    ::log::info!(
+      "AuthenticationComplete({:?}): {:?}",
+      BLEReturnCode(status as _),
+      desc
+    );
   });
 
   let service = server.create_service(BleUuid::Uuid16(0xABCD));

@@ -1,5 +1,5 @@
 use crate::{enums::PowerType, utilities::BleUuid, BLEDevice};
-use alloc::{ffi::CString, vec::Vec};
+use alloc::{string::String, vec::Vec};
 
 pub struct BLEAdvertisementData {
   // 0x01 - Flags
@@ -14,7 +14,7 @@ pub struct BLEAdvertisementData {
   service_uuids_128: Vec<esp_idf_sys::ble_uuid128_t>,
   uuids128_is_complete: bool,
   // 0x08,0x09 - Local name
-  name: Option<CString>,
+  name: String,
   name_is_complete: bool,
   // 0x0a - Tx power level
   tx_pwr_lvl_is_present: bool,
@@ -47,7 +47,7 @@ impl BLEAdvertisementData {
       uuids32_is_complete: true,
       service_uuids_128: Vec::new(),
       uuids128_is_complete: true,
-      name: None,
+      name: String::new(),
       name_is_complete: true,
       tx_pwr_lvl_is_present: false,
       svc_data_uuid16: Vec::new(),
@@ -60,7 +60,8 @@ impl BLEAdvertisementData {
 
   /// Set the advertised name of the device.
   pub fn name(&mut self, name: &str) -> &mut Self {
-    self.name = Some(CString::new(name).unwrap());
+    self.name.clear();
+    self.name.push_str(name);
 
     self
   }
@@ -136,8 +137,8 @@ impl BLEAdvertisementData {
       payload_len += 2 + 16 * self.service_uuids_128.len();
     }
 
-    if let Some(name) = &self.name {
-      payload_len += 2 + name.to_bytes().len();
+    if !self.name.is_empty() {
+      payload_len += 2 + self.name.len();
     }
 
     if self.tx_pwr_lvl_is_present {
@@ -197,9 +198,9 @@ impl BLEAdvertisementData {
       ret.num_uuids128 = self.service_uuids_128.len() as _;
     }
 
-    if let Some(name) = &self.name {
-      ret.name = name.as_ptr().cast();
-      ret.name_len = name.to_bytes().len() as _;
+    if !self.name.is_empty() {
+      ret.name = self.name.as_ptr().cast();
+      ret.name_len = self.name.len() as _;
       ret.set_name_is_complete(self.name_is_complete as _);
     }
 

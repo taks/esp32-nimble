@@ -1,22 +1,13 @@
 use esp_idf_sys::*;
 
 /// Bluetooth Device address type
+#[derive(PartialEq,Eq)]
 pub enum BLEAddressType {
   Public = BLE_ADDR_PUBLIC as _,
   Random = BLE_ADDR_RANDOM as _,
   PublicID = BLE_ADDR_PUBLIC_ID as _,
   RandomID = BLE_ADDR_RANDOM_ID as _,
 }
-
-impl PartialEq for BLEAddressType {
-  fn eq(&self, other: &Self) -> bool {
-      self == other
-  }
-}
-
-
-impl Eq for BLEAddressType {}
-
 
 #[repr(transparent)]
 #[derive(Copy, Clone)]

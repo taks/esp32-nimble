@@ -8,6 +8,16 @@ pub enum BLEAddressType {
   RandomID = BLE_ADDR_RANDOM_ID as _,
 }
 
+impl PartialEq for BLEAddressType {
+  fn eq(&self, other: &Self) -> bool {
+      self == other
+  }
+}
+
+
+impl Eq for BLEAddressType {}
+
+
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct BLEAddress {
@@ -80,3 +90,11 @@ impl core::fmt::Debug for BLEAddress {
     write!(f, "{self}{type_str}")
   }
 }
+
+impl PartialEq for BLEAddress {
+  fn eq(&self, other: &Self) -> bool {
+      self.value.val == other.value.val && self.value.type_ == other.value.type_
+  }
+}
+
+impl Eq for BLEAddress {}

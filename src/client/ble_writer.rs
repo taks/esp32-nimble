@@ -17,7 +17,12 @@ impl BLEWriter {
 
   pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEReturnCode> {
     unsafe {
-      let mtu = { esp_idf_sys::ble_att_mtu(self.conn_handle) - 3 } as usize;
+      // ble_att_mtu() returns 0 for a closed connection
+      let mtu = esp_idf_sys::ble_att_mtu(self.conn_handle);
+      if mtu == 0 {
+        return Err(BLEReturnCode(esp_idf_sys::BLE_HS_ENOTCONN));
+      }
+      let mtu = { mtu - 3 } as usize;
 
       if !response && data.len() <= mtu {
         return ble!(esp_idf_sys::ble_gattc_write_no_rsp_flat(

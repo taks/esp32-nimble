@@ -98,8 +98,59 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
       esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES => Some("Insufficient Resources to complete the request."),
       _ => None,
     }
-  } else {
+  } else if rc < esp_idf_sys::BLE_HS_ERR_L2C_BASE {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_HCI_BASE;
+    match rc_ {
+      esp_idf_sys::BLE_L2CAP_SIG_ERR_CMD_NOT_UNDERSTOOD => {
+        Some("Invalid or unsupported incoming L2CAP sig command.")
+      }
+      esp_idf_sys::BLE_L2CAP_SIG_ERR_MTU_EXCEEDED => Some("Incoming packet too large."),
+      esp_idf_sys::BLE_L2CAP_SIG_ERR_INVALID_CID => Some("No channel with specified ID."),
+      _ => None,
+    }
+  } else if rc < esp_idf_sys::BLE_HS_ERR_SM_US_BASE {
+    let rc_ = rc - esp_idf_sys::BLE_HS_ERR_L2C_BASE;
+    match rc_ {
+      esp_idf_sys::BLE_SM_ERR_PASSKEY => {
+        Some("The user input of passkey failed, for example, the user cancelled the operation.")
+      }
+      esp_idf_sys::BLE_SM_ERR_OOB => Some("The OOB data is not available."),
+      esp_idf_sys::BLE_SM_ERR_AUTHREQ => Some("The pairing procedure cannot be performed as authentication requirements cannot be met due to IO capabilities of one or both devices."),
+      esp_idf_sys::BLE_SM_ERR_CONFIRM_MISMATCH => Some("The confirm value does not match the calculated compare value."),
+      esp_idf_sys::BLE_SM_ERR_PAIR_NOT_SUPP => Some("Pairing is not supported by the device."),
+      esp_idf_sys::BLE_SM_ERR_ENC_KEY_SZ => Some("The resultant encryption key size is insufficient for the security requirements of this device."),
+      esp_idf_sys::BLE_SM_ERR_CMD_NOT_SUPP => Some("The SMP command received is not supported on this device."),
+      esp_idf_sys::BLE_SM_ERR_UNSPECIFIED => Some("Pairing failed due to an unspecified reason."),
+      esp_idf_sys::BLE_SM_ERR_REPEATED => Some("Pairing or authentication procedure is disallowed because too little time has elapsed since last pairing request or security request."),
+      esp_idf_sys::BLE_SM_ERR_INVAL => Some("The Invalid Parameters error code indicates that the command length is invalid or that a parameter is outside of the specified range."),
+      esp_idf_sys::BLE_SM_ERR_DHKEY => Some("Indicates to the remote device that the DHKey Check value received doesn’t match the one calculated by the local device."),
+      esp_idf_sys::BLE_SM_ERR_NUMCMP => Some("Indicates that the confirm values in the numeric comparison protocol do not match."),
+      esp_idf_sys::BLE_SM_ERR_ALREADY => Some("Indicates that the pairing over the LE transport failed due to a Pairing Request sent over the BR/EDR transport in process."),
+      esp_idf_sys::BLE_SM_ERR_CROSS_TRANS => Some("Indicates that the BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport."),
+      _ => None,
+    }
+  } else if rc < esp_idf_sys::BLE_HS_ERR_SM_PEER_BASE {
+    let rc_ = rc - esp_idf_sys::BLE_HS_ERR_SM_US_BASE;
+    match rc_ {
+      esp_idf_sys::BLE_SM_ERR_PASSKEY => Some("The user input of passkey failed, for example, the user cancelled the operation."),
+      esp_idf_sys::BLE_SM_ERR_OOB => Some("The OOB data is not available."),
+      esp_idf_sys::BLE_SM_ERR_AUTHREQ => Some("The pairing procedure cannot be performed as authentication requirements cannot be met due to IO capabilities of one or both devices."),
+      esp_idf_sys::BLE_SM_ERR_CONFIRM_MISMATCH => Some("The confirm value does not match the calculated compare value."),
+      esp_idf_sys::BLE_SM_ERR_PAIR_NOT_SUPP => Some("Pairing is not supported by the device."),
+      esp_idf_sys::BLE_SM_ERR_ENC_KEY_SZ => Some("The resultant encryption key size is insufficient for the security requirements of this device."),
+      esp_idf_sys::BLE_SM_ERR_CMD_NOT_SUPP => Some("The SMP command received is not supported on this device."),
+      esp_idf_sys::BLE_SM_ERR_UNSPECIFIED => Some("Pairing failed due to an unspecified reason."),
+      esp_idf_sys::BLE_SM_ERR_REPEATED => Some("Pairing or authentication procedure is disallowed because too little time has elapsed since last pairing request or security request."),
+      esp_idf_sys::BLE_SM_ERR_INVAL => Some("The Invalid Parameters error code indicates that the command length is invalid or that a parameter is outside of the specified range."),
+      esp_idf_sys::BLE_SM_ERR_DHKEY => Some("Indicates to the remote device that the DHKey Check value received doesn’t match the one calculated by the local device."),
+      esp_idf_sys::BLE_SM_ERR_NUMCMP => Some("Indicates that the confirm values in the numeric comparison protocol do not match."),
+      esp_idf_sys::BLE_SM_ERR_ALREADY => Some("Indicates that the pairing over the LE transport failed due to a Pairing Request sent over the BR/EDR transport in process."),
+      esp_idf_sys::BLE_SM_ERR_CROSS_TRANS => Some("Indicates that the BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport."),
+      _ => None,
+    }
+  } else {
+    //TODO: esp_idf_sys::BLE_HS_ERR_HW_BASE
+    let rc_ = rc - esp_idf_sys::BLE_HS_ERR_SM_PEER_BASE;
     match rc_ {
       esp_idf_sys::ble_error_codes_BLE_ERR_UNKNOWN_HCI_CMD => Some("Unknown HCI Command"),
       esp_idf_sys::ble_error_codes_BLE_ERR_UNK_CONN_ID => Some("Unknown Connection Identifier"),

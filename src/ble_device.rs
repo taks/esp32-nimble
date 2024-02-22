@@ -103,9 +103,15 @@ impl BLEDevice {
   pub fn deinit() -> Result<(), EspError> {
     unsafe {
       esp!(esp_idf_sys::nimble_port_stop())?;
-      esp!(esp_idf_sys::nimble_port_deinit())?;
+
       #[cfg(esp_idf_version_major = "4")]
-      esp!(esp_idf_sys::esp_nimble_hci_and_controller_deinit())?;
+      {
+        esp_idf_sys::nimble_port_deinit();
+        esp!(esp_idf_sys::esp_nimble_hci_and_controller_deinit())?;
+      }
+
+      #[cfg(not(esp_idf_version_major = "4"))]
+      esp!(esp_idf_sys::nimble_port_deinit())?;
 
       INITIALIZED = false;
       SYNCED = false;

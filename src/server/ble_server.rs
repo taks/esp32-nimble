@@ -207,6 +207,18 @@ impl BLEServer {
     unsafe { ble!(esp_idf_sys::ble_gap_update_params(conn_handle, &params)) }
   }
 
+  pub(crate) fn reset(&mut self) {
+    self.advertise_on_disconnect = true;
+    self.services.clear();
+    self.notify_characteristic.clear();
+    self.connections.clear();
+    self.on_connect = None;
+    self.on_disconnect = None;
+    self.on_passkey_request = None;
+    self.on_confirm_pin = None;
+    self.on_authentication_complete = None;
+  }
+
   pub(crate) extern "C" fn handle_gap_event(
     _event: *mut esp_idf_sys::ble_gap_event,
     _arg: *mut c_void,

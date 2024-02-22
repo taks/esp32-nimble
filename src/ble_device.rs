@@ -123,6 +123,7 @@ impl BLEDevice {
   pub fn deinit_full() -> Result<(), EspError> {
     Self::deinit()?;
     unsafe {
+      #[cfg(not(esp_idf_bt_nimble_ext_adv))]
       if let Some(advertising) = Lazy::get(&BLE_ADVERTISING) {
         advertising.lock().reset().unwrap();
       }

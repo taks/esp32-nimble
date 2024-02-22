@@ -175,6 +175,11 @@ impl BLEScan {
     self.scan_results.clear();
   }
 
+  pub(crate) fn reset(&mut self) {
+    self.on_result = None;
+    self.on_completed = None;
+  }
+
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let event = unsafe { &*event };
     let (scan, on_result) = unsafe { voidp_to_ref::<CbArgType>(arg) };

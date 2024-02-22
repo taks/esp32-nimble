@@ -86,7 +86,7 @@ fn main() {
     if (buf[..len]).contains(&b's') {
       if initialized {
         ::log::info!("stop BLE");
-        BLEDevice::deinit();
+        BLEDevice::deinit().unwrap();
       } else {
         ::log::info!("start BLE");
         BLEDevice::init();

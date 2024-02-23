@@ -7,6 +7,12 @@
 - Changed the return type of `get_advertising` to `Mutex<BLEAdvertising>` ([#84](https::/github.com/taks/esp32-nimble/pull/84))
 - Added self argument to `BLERemoteCharacteristic::on_subscribe` callback
 - Fixed advertising length calculation ([#87](https::/github.com/taks/esp32-nimble/pull/87))
+- Avoid int underflow in `BLEWriter::write_value()` ([#91](https::/github.com/taks/esp32-nimble/pull/91))
+- Fixes Add missing return codes for security manager ([#95](https::/github.com/taks/esp32-nimble/pull/95))
+- Added `disconnect` and `disconnect_with_reason` ([#96](https::/github.com/taks/esp32-nimble/pull/96))
+- Added `BLEDevice::deinit_full` ([#100](https::/github.com/taks/esp32-nimble/pull/100))
+- Implement PartialEq and Eq for BLEAddress and BLEAddressType ([#92](https::/github.com/taks/esp32-nimble/pull/92))
+- Added `BLEAdvertisementData` ([#101](https::/github.com/taks/esp32-nimble/pull/101))
 
 ## [0.5.1] - 2024-02-01
 - Fixed a bug when changing advertising name. ([#85](https::/github.com/taks/esp32-nimble/pull/85))

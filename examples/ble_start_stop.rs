@@ -1,4 +1,4 @@
-use esp32_nimble::{uuid128, BLEDevice, NimbleProperties};
+use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
 use esp_idf_hal::peripherals::Peripherals;
 use esp_idf_hal::uart::*;
 use esp_idf_hal::units::Hertz;
@@ -73,10 +73,13 @@ fn main() {
 
   ble_advertising
     .lock()
-    .name("ESP32-GATT-Server")
-    .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"))
-    .start()
+    .set_data(
+      BLEAdvertisementData::new()
+        .name("ESP32-GATT-Server")
+        .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
+    )
     .unwrap();
+  ble_advertising.lock().start().unwrap();
 
   let mut buf = [0_u8; 10];
   let mut initialized = true;

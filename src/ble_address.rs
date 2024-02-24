@@ -84,7 +84,7 @@ impl core::fmt::Debug for BLEAddress {
 
 impl PartialEq for BLEAddress {
   fn eq(&self, other: &Self) -> bool {
-    self.value.val == other.value.val && self.value.type_ == other.value.type_
+    self.value.val == other.value.val
   }
 }
 

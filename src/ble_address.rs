@@ -1,7 +1,9 @@
 use esp_idf_sys::*;
+use num_enum::TryFromPrimitive;
 
 /// Bluetooth Device address type
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, TryFromPrimitive)]
+#[repr(u8)]
 pub enum BLEAddressType {
   Public = BLE_ADDR_PUBLIC as _,
   Random = BLE_ADDR_RANDOM as _,
@@ -46,6 +48,16 @@ impl BLEAddress {
     }
 
     Some(Self::new(val, addr_type))
+  }
+
+  /// Get the native representation of the address.
+  pub fn val(&self) -> [u8; 6] {
+    self.value.val
+  }
+
+  /// Get the address type.
+  pub fn addr_type(&self) -> BLEAddressType {
+    BLEAddressType::try_from(self.value.type_).unwrap()
   }
 }
 

@@ -13,6 +13,7 @@
 - Added `BLEDevice::deinit_full` ([#100](https::/github.com/taks/esp32-nimble/pull/100))
 - Implement PartialEq and Eq for BLEAddress and BLEAddressType ([#92](https::/github.com/taks/esp32-nimble/pull/92))
 - Added `BLEAdvertisementData` ([#101](https::/github.com/taks/esp32-nimble/pull/101))
+- Added `BLEAddress::val`, `BLEAddress::addr_type`
 
 ## [0.5.1] - 2024-02-01
 - Fixed a bug when changing advertising name. ([#85](https::/github.com/taks/esp32-nimble/pull/85))

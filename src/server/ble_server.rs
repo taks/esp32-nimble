@@ -153,6 +153,19 @@ impl BLEServer {
     Ok(())
   }
 
+  /// Disconnect the specified client.
+  pub fn disconnect(&mut self, conn_id: u16) -> Result<(), BLEReturnCode> {
+    self.disconnect_with_reason(
+      conn_id,
+      esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _,
+    )
+  }
+
+  /// Disconnect the specified client with optional reason.
+  pub fn disconnect_with_reason(&mut self, conn_id: u16, reason: u8) -> Result<(), BLEReturnCode> {
+    unsafe { ble!(esp_idf_sys::ble_gap_terminate(conn_id, reason)) }
+  }
+
   /// Prints dump of local GATT database.
   /// This is useful to log local state of database in human readable form.
   pub fn ble_gatts_show_local(&self) {
@@ -210,6 +223,18 @@ impl BLEServer {
     };
 
     unsafe { ble!(esp_idf_sys::ble_gap_update_params(conn_handle, &params)) }
+  }
+
+  pub(crate) fn reset(&mut self) {
+    self.advertise_on_disconnect = true;
+    self.services.clear();
+    self.notify_characteristic.clear();
+    self.connections.clear();
+    self.on_connect = None;
+    self.on_disconnect = None;
+    self.on_passkey_request = None;
+    self.on_confirm_pin = None;
+    self.on_authentication_complete = None;
   }
 
   pub(crate) extern "C" fn handle_gap_event(

@@ -1,4 +1,4 @@
-use esp32_nimble::{uuid128, BLEDevice, BLEReturnCode, NimbleProperties};
+use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, BLEReturnCode, NimbleProperties};
 use esp_idf_sys as _;
 use std::format;
 
@@ -65,10 +65,13 @@ fn main() {
 
   ble_advertising
     .lock()
-    .name("ESP32-GATT-Server")
-    .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"))
-    .start()
+    .set_data(
+      BLEAdvertisementData::new()
+        .name("ESP32-GATT-Server")
+        .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
+    )
     .unwrap();
+  ble_advertising.lock().start().unwrap();
 
   server.ble_gatts_show_local();
 

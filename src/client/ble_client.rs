@@ -131,18 +131,22 @@ impl BLEClient {
     Ok(())
   }
 
-  pub fn disconnect(&self) -> Result<(), BLEReturnCode> {
+  /// Disconnect from the peer.
+  pub fn disconnect(&mut self) -> Result<(), BLEReturnCode> {
+    self.disconnect_with_reason(esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _)
+  }
+
+  /// Disconnect from the peer with optional reason.
+  pub fn disconnect_with_reason(&mut self, reason: u8) -> Result<(), BLEReturnCode> {
     if !self.connected() {
       return Ok(());
     }
 
     unsafe {
-      let rc = esp_idf_sys::ble_gap_terminate(
+      ble!(esp_idf_sys::ble_gap_terminate(
         self.state.conn_handle,
-        esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _,
-      );
-
-      BLEReturnCode::convert(rc as _)
+        reason
+      ))
     }
   }
 

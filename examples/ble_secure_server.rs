@@ -1,4 +1,6 @@
-use esp32_nimble::{enums::*, utilities::BleUuid, BLEDevice, BLEReturnCode, NimbleProperties};
+use esp32_nimble::{
+  enums::*, utilities::BleUuid, BLEAdvertisementData, BLEDevice, BLEReturnCode, NimbleProperties,
+};
 use esp_idf_sys as _;
 
 fn main() {
@@ -55,15 +57,18 @@ fn main() {
   // With esp32-c3, advertising stops when a device is bonded.
   // (https://github.com/taks/esp32-nimble/issues/70)
   #[cfg(esp32c3)]
-  ble_advertising.on_complete(|_| {
-    BLEDevice::take().get_advertising().start().unwrap();
+  ble_advertising.lock().on_complete(|_| {
+    ble_advertising.lock().start().unwrap();
   });
   ble_advertising
     .lock()
-    .name("ESP32-GATT-Server")
-    .add_service_uuid(BleUuid::Uuid16(0xABCD))
-    .start()
+    .set_data(
+      BLEAdvertisementData::new()
+        .name("ESP32-GATT-Server")
+        .add_service_uuid(BleUuid::Uuid16(0xABCD)),
+    )
     .unwrap();
+  ble_advertising.lock().start().unwrap();
 
   ::log::info!("bonded_addresses: {:?}", device.bonded_addresses().unwrap());
 

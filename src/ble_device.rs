@@ -1,6 +1,6 @@
 use alloc::{ffi::CString, vec::Vec};
 use core::ffi::c_void;
-use esp_idf_sys::esp_nofail;
+use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 
 use crate::{
@@ -100,29 +100,49 @@ impl BLEDevice {
   }
 
   /// Shutdown the NimBLE stack/controller
-  pub fn deinit() {
+  pub fn deinit() -> Result<(), EspError> {
     unsafe {
-      let ret = esp_idf_sys::nimble_port_stop();
-      if ret == 0 {
-        esp_idf_sys::nimble_port_deinit();
-        #[cfg(esp_idf_version_major = "4")]
-        {
-          let ret = esp_idf_sys::esp_nimble_hci_and_controller_deinit();
-          if ret != esp_idf_sys::ESP_OK {
-            ::log::warn!(
-              "esp_nimble_hci_and_controller_deinit() failed with error: {}",
-              ret
-            );
-          }
-        }
-        INITIALIZED = false;
-        SYNCED = false;
+      esp!(esp_idf_sys::nimble_port_stop())?;
 
-        if let Some(server) = Lazy::get_mut(&mut BLE_SERVER) {
-          server.started = false;
-        }
+      #[cfg(esp_idf_version_major = "4")]
+      {
+        esp_idf_sys::nimble_port_deinit();
+        esp!(esp_idf_sys::esp_nimble_hci_and_controller_deinit())?;
+      }
+
+      #[cfg(not(esp_idf_version_major = "4"))]
+      esp!(esp_idf_sys::nimble_port_deinit())?;
+
+      INITIALIZED = false;
+      SYNCED = false;
+
+      if let Some(server) = Lazy::get_mut(&mut BLE_SERVER) {
+        server.started = false;
       }
     };
+
+    Ok(())
+  }
+
+  /// Shutdown the NimBLE stack/controller
+  /// server/advertising/scan will be reset.
+  pub fn deinit_full() -> Result<(), EspError> {
+    Self::deinit()?;
+    unsafe {
+      #[cfg(not(esp_idf_bt_nimble_ext_adv))]
+      if let Some(advertising) = Lazy::get(&BLE_ADVERTISING) {
+        advertising.lock().reset().unwrap();
+      }
+
+      if let Some(server) = Lazy::get_mut(&mut BLE_SERVER) {
+        server.reset();
+      }
+
+      if let Some(scan) = Lazy::get_mut(&mut BLE_SCAN) {
+        scan.reset();
+      }
+    }
+    Ok(())
   }
 
   pub fn get_scan(&self) -> &'static mut BLEScan {

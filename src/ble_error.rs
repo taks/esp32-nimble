@@ -44,7 +44,7 @@ impl core::fmt::Debug for BLEError {
 
 pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
   let rc = rc as u32;
-  if rc < esp_idf_sys::BLE_HS_ERR_ATT_BASE {
+  if rc < 0x100 {
     match rc {
       esp_idf_sys::BLE_HS_EALREADY => Some("Operation already in progress or completed."),
       esp_idf_sys::BLE_HS_EINVAL => Some("One or more arguments are invalid."),
@@ -83,7 +83,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
       esp_idf_sys::BLE_HS_ESTORE_FAIL => Some("Storage IO error."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_HCI_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_ATT_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_ATT_BASE;
     match rc_ {
       esp_idf_sys::BLE_ATT_ERR_INVALID_HANDLE => Some("The attribute handle given was not valid on this server."),
@@ -105,7 +105,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
       esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES => Some("Insufficient Resources to complete the request."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_L2C_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_HCI_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_HCI_BASE;
     match rc_ {
       esp_idf_sys::BLE_L2CAP_SIG_ERR_CMD_NOT_UNDERSTOOD => {
@@ -115,7 +115,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
       esp_idf_sys::BLE_L2CAP_SIG_ERR_INVALID_CID => Some("No channel with specified ID."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_SM_US_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_L2C_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_L2C_BASE;
     match rc_ {
       esp_idf_sys::BLE_SM_ERR_PASSKEY => {
@@ -136,7 +136,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
       esp_idf_sys::BLE_SM_ERR_CROSS_TRANS => Some("Indicates that the BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_SM_PEER_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_SM_US_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_SM_US_BASE;
     match rc_ {
       esp_idf_sys::BLE_SM_ERR_PASSKEY => Some("The user input of passkey failed, for example, the user cancelled the operation."),

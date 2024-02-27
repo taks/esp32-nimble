@@ -2,7 +2,7 @@ use super::ble_client::BLEClientState;
 use crate::{
   ble,
   utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
-  BLEAttribute, BLEClient, BLERemoteCharacteristic, BLEReturnCode, Signal,
+  BLEAttribute, BLEClient, BLEError, BLERemoteCharacteristic, Signal,
 };
 use alloc::vec::Vec;
 use core::ffi::c_void;
@@ -51,7 +51,7 @@ impl BLERemoteService {
 
   pub async fn get_characteristics(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, BLERemoteCharacteristic>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteCharacteristic>, BLEError> {
     if self.state.characteristics.is_none() {
       self.state.characteristics = Some(Vec::new());
       unsafe {
@@ -73,11 +73,11 @@ impl BLERemoteService {
   pub async fn get_characteristic(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut BLERemoteCharacteristic, BLEReturnCode> {
+  ) -> Result<&mut BLERemoteCharacteristic, BLEError> {
     let mut iter = self.get_characteristics().await?;
     iter
       .find(|x| x.uuid() == uuid)
-      .ok_or_else(|| BLEReturnCode::fail().unwrap_err())
+      .ok_or_else(|| BLEError::fail().unwrap_err())
   }
 
   extern "C" fn characteristic_disc_cb(

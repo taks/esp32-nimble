@@ -1,4 +1,4 @@
-use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, BLEReturnCode, NimbleProperties};
+use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
 use std::format;
 
@@ -24,7 +24,7 @@ fn main() {
   });
 
   server.on_disconnect(|_desc, reason| {
-    ::log::info!("Client disconnected ({:?})", BLEReturnCode(reason as _));
+    ::log::info!("Client disconnected ({:?})", reason);
   });
 
   let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));

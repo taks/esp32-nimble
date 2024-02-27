@@ -4,7 +4,7 @@ use super::ble_remote_characteristic::BLERemoteCharacteristicState;
 use super::{BLEReader, BLEWriter};
 use crate::{
   utilities::{BleUuid, WeakUnsafeCell},
-  BLEReturnCode,
+  BLEError,
 };
 
 #[derive(Clone)]
@@ -37,12 +37,12 @@ impl BLERemoteDescriptor {
     }
   }
 
-  pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEReturnCode> {
+  pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEError> {
     let mut reader = BLEReader::new(self.conn_handle(), self.handle);
     reader.read_value().await
   }
 
-  pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEReturnCode> {
+  pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEError> {
     let mut writer = BLEWriter::new(self.conn_handle(), self.handle);
     writer.write_value(data, response).await
   }

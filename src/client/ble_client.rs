@@ -1,9 +1,9 @@
 use crate::{
   ble,
   ble_device::OWN_ADDR_TYPE,
-  ble_return_code::return_code_to_string,
+  ble_error::return_code_to_string,
   utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid},
-  BLEAddress, BLEDevice, BLERemoteService, BLEReturnCode, Signal,
+  BLEAddress, BLEDevice, BLEError, BLERemoteService, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
@@ -88,11 +88,11 @@ impl BLEClient {
     self
   }
 
-  pub async fn connect(&mut self, addr: &BLEAddress) -> Result<(), BLEReturnCode> {
+  pub async fn connect(&mut self, addr: &BLEAddress) -> Result<(), BLEError> {
     unsafe {
       if esp_idf_sys::ble_gap_conn_find_by_addr(&addr.value, core::ptr::null_mut()) == 0 {
         ::log::warn!("A connection to {:?} already exists", addr);
-        return BLEReturnCode::fail();
+        return BLEError::fail();
       }
 
       ble!(esp_idf_sys::ble_gap_connect(
@@ -118,7 +118,7 @@ impl BLEClient {
     Ok(())
   }
 
-  pub async fn secure_connection(&mut self) -> Result<(), BLEReturnCode> {
+  pub async fn secure_connection(&mut self) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_gap_security_initiate(
         self.state.conn_handle
@@ -132,12 +132,12 @@ impl BLEClient {
   }
 
   /// Disconnect from the peer.
-  pub fn disconnect(&mut self) -> Result<(), BLEReturnCode> {
+  pub fn disconnect(&mut self) -> Result<(), BLEError> {
     self.disconnect_with_reason(esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _)
   }
 
   /// Disconnect from the peer with optional reason.
-  pub fn disconnect_with_reason(&mut self, reason: u8) -> Result<(), BLEReturnCode> {
+  pub fn disconnect_with_reason(&mut self, reason: u8) -> Result<(), BLEError> {
     if !self.connected() {
       return Ok(());
     }
@@ -192,7 +192,7 @@ impl BLEClient {
     max_interval: u16,
     latency: u16,
     timeout: u16,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     let params = esp_idf_sys::ble_gap_upd_params {
       itvl_min: min_interval,
       itvl_max: max_interval,
@@ -212,7 +212,7 @@ impl BLEClient {
 
   /// Retrieves the most-recently measured RSSI.
   /// A connection’s RSSI is updated whenever a data channel PDU is received.
-  pub fn get_rssi(&self) -> Result<i8, BLEReturnCode> {
+  pub fn get_rssi(&self) -> Result<i8, BLEError> {
     let mut rssi: i8 = 0;
     unsafe {
       ble!(esp_idf_sys::ble_gap_conn_rssi(
@@ -225,7 +225,7 @@ impl BLEClient {
 
   pub async fn get_services(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, BLERemoteService>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteService>, BLEError> {
     if self.state.services.is_none() {
       self.state.services = Some(Vec::new());
       unsafe {
@@ -241,14 +241,11 @@ impl BLEClient {
     Ok(self.state.services.as_mut().unwrap().iter_mut())
   }
 
-  pub async fn get_service(
-    &mut self,
-    uuid: BleUuid,
-  ) -> Result<&mut BLERemoteService, BLEReturnCode> {
+  pub async fn get_service(&mut self, uuid: BleUuid) -> Result<&mut BLERemoteService, BLEError> {
     let mut iter = self.get_services().await?;
     iter
       .find(|x| x.uuid() == uuid)
-      .ok_or_else(|| BLEReturnCode::fail().unwrap_err())
+      .ok_or_else(|| BLEError::fail().unwrap_err())
   }
 
   extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {

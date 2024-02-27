@@ -67,7 +67,7 @@ impl NotifyTx<'_> {
     }
   }
 
-  pub fn desc(&self) -> Result<BLEConnDesc, crate::BLEReturnCode> {
+  pub fn desc(&self) -> Result<BLEConnDesc, crate::BLEError> {
     crate::utilities::ble_gap_conn_find(self.notify_tx.conn_handle)
   }
 }

@@ -8,7 +8,7 @@ use crate::{
   ble,
   enums::*,
   utilities::{os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
-  BLEAddress, BLEReturnCode, BLEServer,
+  BLEAddress, BLEError, BLEServer,
 };
 
 pub struct BLEExtAdvertisement {
@@ -224,7 +224,7 @@ impl BLEExtAdvertising {
     &mut self,
     inst_id: u8,
     adv: &mut BLEExtAdvertisement,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     adv.params.sid = inst_id;
 
     // Legacy advertising as connectable requires the scannable flag also.
@@ -261,7 +261,7 @@ impl BLEExtAdvertising {
 
       let buf = os_msys_get_pkthdr(adv.payload.len() as _, 0);
       if buf.is_null() {
-        return BLEReturnCode::fail();
+        return BLEError::fail();
       }
       ble!(os_mbuf_append(buf, &adv.payload))?;
 
@@ -283,11 +283,11 @@ impl BLEExtAdvertising {
     &mut self,
     inst_id: u8,
     lsr: &BLEExtAdvertisement,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     unsafe {
       let buf = os_msys_get_pkthdr(lsr.payload.len() as _, 0);
       if buf.is_null() {
-        return BLEReturnCode::fail();
+        return BLEError::fail();
       }
       ble!(os_mbuf_append(buf, &lsr.payload))?;
 
@@ -295,7 +295,7 @@ impl BLEExtAdvertising {
     }
   }
 
-  pub fn start(&mut self, inst_id: u8) -> Result<(), BLEReturnCode> {
+  pub fn start(&mut self, inst_id: u8) -> Result<(), BLEError> {
     self.start_with_duration(inst_id, 0, 0)
   }
 
@@ -304,7 +304,7 @@ impl BLEExtAdvertising {
     inst_id: u8,
     duration: i32,
     max_event: i32,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_gap_ext_adv_start(
         inst_id, duration, max_event

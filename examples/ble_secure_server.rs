@@ -1,5 +1,5 @@
 use esp32_nimble::{
-  enums::*, utilities::BleUuid, BLEAdvertisementData, BLEDevice, BLEReturnCode, NimbleProperties,
+  enums::*, utilities::BleUuid, BLEAdvertisementData, BLEDevice, NimbleProperties,
 };
 use esp_idf_sys as _;
 
@@ -27,14 +27,10 @@ fn main() {
     }
   });
   server.on_disconnect(|_desc, reason| {
-    ::log::info!("Client disconnected ({:?})", BLEReturnCode(reason as _));
+    ::log::info!("Client disconnected ({:?})", reason);
   });
-  server.on_authentication_complete(|desc, status| {
-    ::log::info!(
-      "AuthenticationComplete({:?}): {:?}",
-      BLEReturnCode(status as _),
-      desc
-    );
+  server.on_authentication_complete(|desc, result| {
+    ::log::info!("AuthenticationComplete({:?}): {:?}", result, desc);
   });
 
   let service = server.create_service(BleUuid::Uuid16(0xABCD));

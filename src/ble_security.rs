@@ -26,10 +26,8 @@ impl BLESecurity {
   }
 
   /// Set the passkey the server will ask for when pairing.
-  /// * The passkey returned should be between 000000..=999999 inclusive
-  /// and will always be exactly 6 digits, i.e. if 1234u32 is returned
-  /// the correct passkey will be '001234' and should be presented to the user padded to 6 digits
-  /// i.e. `format!("{:0>6}",pkey)`
+  /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
+  /// will require the user to provide '001234'
   /// * a dynamic passkey can also be set by [`crate::BLEServer::on_passkey_request`]
   pub fn set_passkey(&mut self, passkey: u32) -> &mut Self {
     debug_assert!(

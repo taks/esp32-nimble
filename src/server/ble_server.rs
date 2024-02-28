@@ -63,11 +63,27 @@ impl BLEServer {
     self
   }
 
+  /// Set a callback fn for generating a passkey if required by the connection
+  /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
+  /// will require the user to provide '001234'
+  /// * a static passkey can also be set by [`crate::BLESecurity::set_passkey`]
   pub fn on_passkey_request(
     &mut self,
     callback: impl Fn() -> u32 + Send + Sync + 'static,
   ) -> &mut Self {
-    self.on_passkey_request = Some(Box::new(callback));
+    if cfg!(debug_assertions) {
+      self.on_passkey_request = Some(Box::new(move || {
+        let passkey = callback();
+        debug_assert!(
+          passkey <= 999999,
+          "passkey must be between 000000..=999999 inclusive"
+        );
+        passkey
+      }));
+    } else {
+      self.on_passkey_request = Some(Box::new(callback));
+    }
+
     self
   }
 

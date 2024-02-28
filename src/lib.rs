@@ -2,7 +2,7 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::single_match)]
 #![feature(decl_macro)]
-
+#![doc = include_str!("../README.md")]
 extern crate alloc;
 
 #[doc(hidden)]

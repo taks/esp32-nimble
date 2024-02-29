@@ -1,13 +1,10 @@
 use crate::{
   ble,
   utilities::{ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex, BleUuid},
-  BLECharacteristic, BLEConnDesc, BLEDevice, BLEReturnCode, BLEService, NimbleProperties, NotifyTx,
+  BLECharacteristic, BLEConnDesc, BLEDevice, BLEError, BLEService, NimbleProperties, NotifyTx,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use core::{
-  cell::UnsafeCell,
-  ffi::{c_int, c_void},
-};
+use core::{cell::UnsafeCell, ffi::c_void};
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 
@@ -21,10 +18,10 @@ pub struct BLEServer {
   indicate_wait: [u16; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
 
   on_connect: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
-  on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, c_int) + Send + Sync>>,
+  on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc, c_int) + Send + Sync>>,
+  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
 }
 
 impl BLEServer {
@@ -57,7 +54,7 @@ impl BLEServer {
   /// * callback second parameter: The reason code for the disconnection.
   pub fn on_disconnect(
     &mut self,
-    callback: impl FnMut(&BLEConnDesc, c_int) + Send + Sync + 'static,
+    callback: impl FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_disconnect = Some(Box::new(callback));
     self
@@ -102,13 +99,13 @@ impl BLEServer {
   /// o BLE host error code: the encryption state change attempt failed for the specified reason.
   pub fn on_authentication_complete(
     &mut self,
-    callback: impl Fn(&BLEConnDesc, c_int) + Send + Sync + 'static,
+    callback: impl Fn(&BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_authentication_complete = Some(Box::new(callback));
     self
   }
 
-  pub fn start(&mut self) -> Result<(), BLEReturnCode> {
+  pub fn start(&mut self) -> Result<(), BLEError> {
     if self.started {
       return Ok(());
     }
@@ -152,7 +149,7 @@ impl BLEServer {
   }
 
   /// Disconnect the specified client.
-  pub fn disconnect(&mut self, conn_id: u16) -> Result<(), BLEReturnCode> {
+  pub fn disconnect(&mut self, conn_id: u16) -> Result<(), BLEError> {
     self.disconnect_with_reason(
       conn_id,
       esp_idf_sys::ble_error_codes_BLE_ERR_REM_USER_CONN_TERM as _,
@@ -160,7 +157,7 @@ impl BLEServer {
   }
 
   /// Disconnect the specified client with optional reason.
-  pub fn disconnect_with_reason(&mut self, conn_id: u16, reason: u8) -> Result<(), BLEReturnCode> {
+  pub fn disconnect_with_reason(&mut self, conn_id: u16, reason: u8) -> Result<(), BLEError> {
     unsafe { ble!(esp_idf_sys::ble_gap_terminate(conn_id, reason)) }
   }
 
@@ -210,7 +207,7 @@ impl BLEServer {
     max_interval: u16,
     latency: u16,
     timeout: u16,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     let params = esp_idf_sys::ble_gap_upd_params {
       itvl_min: min_interval,
       itvl_max: max_interval,
@@ -269,7 +266,10 @@ impl BLEServer {
         }
 
         if let Some(callback) = server.on_disconnect.as_mut() {
-          callback(&BLEConnDesc(disconnect.conn), disconnect.reason);
+          callback(
+            &BLEConnDesc(disconnect.conn),
+            BLEError::convert(disconnect.reason as _),
+          );
         }
 
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]
@@ -367,7 +367,7 @@ impl BLEServer {
           return esp_idf_sys::BLE_ATT_ERR_INVALID_HANDLE as _;
         };
         if let Some(callback) = &server.on_authentication_complete {
-          callback(&desk, enc_change.status);
+          callback(&desk, BLEError::convert(enc_change.status as _));
         }
       }
       esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {

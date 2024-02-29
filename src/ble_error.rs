@@ -1,33 +1,39 @@
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct BLEReturnCode(pub u32);
+use core::num::NonZeroI32;
 
-impl BLEReturnCode {
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+pub struct BLEError(NonZeroI32);
+
+impl BLEError {
   pub fn fail() -> Result<(), Self> {
     Self::convert(0xFFFF)
   }
 
-  pub const fn from(error: u32) -> Option<Self> {
-    if error == 0 {
-      None
-    } else {
-      Some(Self(error))
-    }
+  pub const fn from_non_zero(error: NonZeroI32) -> Self {
+    Self(error)
   }
 
   pub fn check_and_return<T>(error: u32, value: T) -> Result<T, Self> {
     match error {
       0 | esp_idf_sys::BLE_HS_EALREADY | esp_idf_sys::BLE_HS_EDONE => Ok(value),
-      error => Err(Self(error)),
+      error => Err(Self(unsafe { NonZeroI32::new_unchecked(error as _) })),
     }
   }
-  pub fn convert(error: u32) -> Result<(), Self> {
-    Self::check_and_return(error, ())
+
+  pub const fn convert(error: u32) -> Result<(), Self> {
+    match error {
+      0 | esp_idf_sys::BLE_HS_EALREADY | esp_idf_sys::BLE_HS_EDONE => Ok(()),
+      error => Err(Self(unsafe { NonZeroI32::new_unchecked(error as _) })),
+    }
+  }
+
+  pub fn code(&self) -> u32 {
+    self.0.get() as _
   }
 }
 
-impl core::fmt::Debug for BLEReturnCode {
+impl core::fmt::Debug for BLEError {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    match return_code_to_string(self.0) {
+    match return_code_to_string(self.0.get()) {
       Some(text) => write!(f, "{text}")?,
       None => write!(f, "0x{:X}", self.0)?,
     };
@@ -36,8 +42,9 @@ impl core::fmt::Debug for BLEReturnCode {
   }
 }
 
-pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
-  if rc < esp_idf_sys::BLE_HS_ERR_ATT_BASE {
+pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
+  let rc = rc as u32;
+  if rc < 0x100 {
     match rc {
       esp_idf_sys::BLE_HS_EALREADY => Some("Operation already in progress or completed."),
       esp_idf_sys::BLE_HS_EINVAL => Some("One or more arguments are invalid."),
@@ -76,7 +83,7 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
       esp_idf_sys::BLE_HS_ESTORE_FAIL => Some("Storage IO error."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_HCI_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_ATT_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_ATT_BASE;
     match rc_ {
       esp_idf_sys::BLE_ATT_ERR_INVALID_HANDLE => Some("The attribute handle given was not valid on this server."),
@@ -98,7 +105,7 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
       esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES => Some("Insufficient Resources to complete the request."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_L2C_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_HCI_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_HCI_BASE;
     match rc_ {
       esp_idf_sys::BLE_L2CAP_SIG_ERR_CMD_NOT_UNDERSTOOD => {
@@ -108,7 +115,7 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
       esp_idf_sys::BLE_L2CAP_SIG_ERR_INVALID_CID => Some("No channel with specified ID."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_SM_US_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_L2C_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_L2C_BASE;
     match rc_ {
       esp_idf_sys::BLE_SM_ERR_PASSKEY => {
@@ -129,7 +136,7 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
       esp_idf_sys::BLE_SM_ERR_CROSS_TRANS => Some("Indicates that the BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport."),
       _ => None,
     }
-  } else if rc < esp_idf_sys::BLE_HS_ERR_SM_PEER_BASE {
+  } else if rc < (esp_idf_sys::BLE_HS_ERR_SM_US_BASE + 0x100) {
     let rc_ = rc - esp_idf_sys::BLE_HS_ERR_SM_US_BASE;
     match rc_ {
       esp_idf_sys::BLE_SM_ERR_PASSKEY => Some("The user input of passkey failed, for example, the user cancelled the operation."),
@@ -174,7 +181,8 @@ pub fn return_code_to_string(rc: u32) -> Option<&'static str> {
 
 macro_rules! ble {
   ($err:expr) => {{
-    $crate::BLEReturnCode::convert($err as _)
+    $crate::BLEError::convert($err as _)
   }};
 }
+
 pub(crate) use ble;

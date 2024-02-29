@@ -5,7 +5,7 @@ use super::{BLEReader, BLEWriter};
 use crate::{
   ble,
   utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
-  BLERemoteDescriptor, BLEReturnCode, Signal,
+  BLEError, BLERemoteDescriptor, Signal,
 };
 use crate::{BLEAttribute, BLEClient};
 use alloc::{boxed::Box, vec::Vec};
@@ -95,7 +95,7 @@ impl BLERemoteCharacteristic {
 
   pub async fn get_descriptors(
     &mut self,
-  ) -> Result<core::slice::IterMut<'_, BLERemoteDescriptor>, BLEReturnCode> {
+  ) -> Result<core::slice::IterMut<'_, BLERemoteDescriptor>, BLEError> {
     if self.state.descriptors.is_none() {
       self.state.descriptors = Some(Vec::new());
 
@@ -131,11 +131,11 @@ impl BLERemoteCharacteristic {
   pub async fn get_descriptor(
     &mut self,
     uuid: BleUuid,
-  ) -> Result<&mut BLERemoteDescriptor, BLEReturnCode> {
+  ) -> Result<&mut BLERemoteDescriptor, BLEError> {
     let mut iter = self.get_descriptors().await?;
     iter
       .find(|x| x.uuid() == uuid)
-      .ok_or_else(|| BLEReturnCode::fail().unwrap_err())
+      .ok_or_else(|| BLEError::fail().unwrap_err())
   }
 
   extern "C" fn next_char_cb(
@@ -191,29 +191,29 @@ impl BLERemoteCharacteristic {
     error.status as _
   }
 
-  pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEReturnCode> {
+  pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEError> {
     let mut reader = BLEReader::new(self.state.conn_handle(), self.state.handle);
     reader.read_value().await
   }
 
-  pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEReturnCode> {
+  pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEError> {
     let mut writer = BLEWriter::new(self.state.conn_handle(), self.state.handle);
     writer.write_value(data, response).await
   }
 
-  pub async fn subscribe_notify(&mut self, response: bool) -> Result<(), BLEReturnCode> {
+  pub async fn subscribe_notify(&mut self, response: bool) -> Result<(), BLEError> {
     self.set_notify(0x01, response).await
   }
 
-  pub async fn subscribe_indicate(&mut self, response: bool) -> Result<(), BLEReturnCode> {
+  pub async fn subscribe_indicate(&mut self, response: bool) -> Result<(), BLEError> {
     self.set_notify(0x02, response).await
   }
 
-  pub async fn unsubscribe(&mut self, response: bool) -> Result<(), BLEReturnCode> {
+  pub async fn unsubscribe(&mut self, response: bool) -> Result<(), BLEError> {
     self.set_notify(0x00, response).await
   }
 
-  async fn set_notify(&mut self, val: u16, response: bool) -> Result<(), BLEReturnCode> {
+  async fn set_notify(&mut self, val: u16, response: bool) -> Result<(), BLEError> {
     let desc = self.get_descriptor(BleUuid::from_uuid16(0x2902)).await?;
     desc.write_value(&val.to_ne_bytes(), response).await
   }

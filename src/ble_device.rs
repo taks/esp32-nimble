@@ -4,7 +4,7 @@ use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 
 use crate::{
-  ble, client::BLEScan, enums::*, utilities::mutex::Mutex, BLEAddress, BLEReturnCode, BLESecurity,
+  ble, client::BLEScan, enums::*, utilities::mutex::Mutex, BLEAddress, BLEError, BLESecurity,
   BLEServer,
 };
 
@@ -161,7 +161,7 @@ impl BLEDevice {
     &mut self,
     power_type: PowerType,
     power_level: PowerLevel,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::esp_ble_tx_power_set(
         power_type as _,
@@ -175,7 +175,7 @@ impl BLEDevice {
   }
 
   /// Get the addresses of all bonded peer device.
-  pub fn bonded_addresses(&self) -> Result<Vec<BLEAddress>, BLEReturnCode> {
+  pub fn bonded_addresses(&self) -> Result<Vec<BLEAddress>, BLEError> {
     let mut peer_id_addrs =
       [esp_idf_sys::ble_addr_t::default(); esp_idf_sys::MYNEWT_VAL_BLE_STORE_MAX_BONDS as _];
     let mut num_peers: core::ffi::c_int = 0;
@@ -197,18 +197,18 @@ impl BLEDevice {
   }
 
   /// Deletes all bonding information.
-  pub fn delete_all_bonds(&self) -> Result<(), BLEReturnCode> {
+  pub fn delete_all_bonds(&self) -> Result<(), BLEError> {
     unsafe { ble!(esp_idf_sys::ble_store_clear()) }
   }
 
   /// Deletes a peer bond.
   ///
   /// * `address`: The address of the peer with which to delete bond info.
-  pub fn delete_bond(&self, address: &BLEAddress) -> Result<(), BLEReturnCode> {
+  pub fn delete_bond(&self, address: &BLEAddress) -> Result<(), BLEError> {
     unsafe { ble!(esp_idf_sys::ble_gap_unpair(&address.value)) }
   }
 
-  pub fn set_white_list(&mut self, white_list: &[BLEAddress]) -> Result<(), BLEReturnCode> {
+  pub fn set_white_list(&mut self, white_list: &[BLEAddress]) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_gap_wl_set(
         white_list.as_ptr() as _,
@@ -260,13 +260,13 @@ impl BLEDevice {
   }
 
   /// Set the own address to be used when the address type is random.
-  pub fn set_rnd_addr(&mut self, mut addr: [u8; 6]) -> Result<(), BLEReturnCode> {
+  pub fn set_rnd_addr(&mut self, mut addr: [u8; 6]) -> Result<(), BLEError> {
     addr.reverse();
     unsafe { ble!(esp_idf_sys::ble_hs_id_set_rnd(addr.as_ptr())) }
   }
 
   #[allow(temporary_cstring_as_ptr)]
-  pub fn set_device_name(device_name: &str) -> Result<(), BLEReturnCode> {
+  pub fn set_device_name(device_name: &str) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_svc_gap_device_name_set(
         CString::new(device_name).unwrap().as_ptr().cast()

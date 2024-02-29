@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::ffi::c_void;
 
-use crate::{ble, utilities::voidp_to_ref, BLEReturnCode, Signal};
+use crate::{ble, utilities::voidp_to_ref, BLEError, Signal};
 
 pub struct BLEReader {
   conn_handle: u16,
@@ -18,7 +18,7 @@ impl BLEReader {
     }
   }
 
-  pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEReturnCode> {
+  pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEError> {
     let data = Vec::<u8>::new();
     let mut arg = (self, data);
 

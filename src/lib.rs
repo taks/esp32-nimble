@@ -20,9 +20,9 @@ pub(crate) type Channel<T, const N: usize> =
 mod ble_device;
 pub use self::ble_device::BLEDevice;
 
-mod ble_return_code;
-pub(crate) use self::ble_return_code::ble;
-pub use self::ble_return_code::BLEReturnCode;
+mod ble_error;
+pub(crate) use self::ble_error::ble;
+pub use self::ble_error::BLEError;
 
 mod ble_security;
 pub use self::ble_security::BLESecurity;

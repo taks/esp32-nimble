@@ -1,8 +1,6 @@
 use core::ffi::{c_int, c_void};
 
-use crate::{
-  ble, enums::*, utilities::voidp_to_ref, BLEAdvertisementData, BLEReturnCode, BLEServer,
-};
+use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisementData, BLEError, BLEServer};
 use alloc::boxed::Box;
 use once_cell::sync::Lazy;
 
@@ -30,7 +28,7 @@ impl BLEAdvertising {
     ret
   }
 
-  pub fn reset(&mut self) -> Result<(), BLEReturnCode> {
+  pub fn reset(&mut self) -> Result<(), BLEError> {
     if self.is_advertising() {
       self.stop()?;
     }
@@ -42,7 +40,7 @@ impl BLEAdvertising {
     Ok(())
   }
 
-  pub fn set_data(&mut self, data: &mut BLEAdvertisementData) -> Result<(), BLEReturnCode> {
+  pub fn set_data(&mut self, data: &mut BLEAdvertisementData) -> Result<(), BLEError> {
     if self.adv_params.conn_mode == (ConnMode::Non as _) && !self.scan_response {
       data.flags = 0;
     } else {
@@ -91,7 +89,7 @@ impl BLEAdvertising {
     }
   }
 
-  pub fn set_raw_data(&mut self, data: &[u8]) -> Result<(), BLEReturnCode> {
+  pub fn set_raw_data(&mut self, data: &[u8]) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_gap_adv_set_data(
         data.as_ptr(),
@@ -100,7 +98,7 @@ impl BLEAdvertising {
     }
   }
 
-  pub fn set_raw_scan_response_data(&mut self, data: &[u8]) -> Result<(), BLEReturnCode> {
+  pub fn set_raw_scan_response_data(&mut self, data: &[u8]) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_gap_adv_rsp_set_data(
         data.as_ptr(),
@@ -159,12 +157,12 @@ impl BLEAdvertising {
 
   /// Start advertising.
   /// Advertising not stop until it is manually stopped.
-  pub fn start(&mut self) -> Result<(), BLEReturnCode> {
+  pub fn start(&mut self) -> Result<(), BLEError> {
     self.start_with_duration(BLE_HS_FOREVER)
   }
 
   /// Start advertising.
-  pub fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
+  pub fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEError> {
     let mut server = unsafe { Lazy::get_mut(&mut crate::ble_device::BLE_SERVER) };
     if let Some(server) = server.as_mut() {
       if !server.started {
@@ -197,7 +195,7 @@ impl BLEAdvertising {
     Ok(())
   }
 
-  pub fn stop(&self) -> Result<(), BLEReturnCode> {
+  pub fn stop(&self) -> Result<(), BLEError> {
     unsafe { ble!(esp_idf_sys::ble_gap_adv_stop()) }
   }
 

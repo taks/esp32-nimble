@@ -1,5 +1,5 @@
 use crate::utilities::mutex::Mutex;
-use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEReturnCode, Signal};
+use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEError, Signal};
 use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
@@ -106,7 +106,7 @@ impl BLEScan {
     &mut self,
     duration_ms: i32,
     callback: impl Fn(&BLEAdvertisedDevice) -> bool + Send + Sync,
-  ) -> Result<Option<BLEAdvertisedDevice>, BLEReturnCode> {
+  ) -> Result<Option<BLEAdvertisedDevice>, BLEError> {
     let result = Arc::new(Mutex::new(Result::Ok(None)));
 
     let result_clone = result.clone();
@@ -121,7 +121,7 @@ impl BLEScan {
     result.clone()
   }
 
-  pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEReturnCode> {
+  pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEError> {
     unsafe {
       let scan = self as *mut Self;
 
@@ -135,7 +135,7 @@ impl BLEScan {
     &mut self,
     duration_ms: i32,
     callback: Option<&mut (dyn FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync)>,
-  ) -> Result<(), BLEReturnCode> {
+  ) -> Result<(), BLEError> {
     let cb_arg = (self, callback);
     unsafe {
       ble!(esp_idf_sys::ble_gap_disc(
@@ -152,11 +152,11 @@ impl BLEScan {
     Ok(())
   }
 
-  pub fn stop(&mut self) -> Result<(), BLEReturnCode> {
+  pub fn stop(&mut self) -> Result<(), BLEError> {
     self.stopped = true;
     let rc = unsafe { esp_idf_sys::ble_gap_disc_cancel() };
     if rc != 0 && rc != (esp_idf_sys::BLE_HS_EALREADY as _) {
-      return BLEReturnCode::convert(rc as _);
+      return BLEError::convert(rc as _);
     }
 
     if let Some(callback) = self.on_completed.as_mut() {

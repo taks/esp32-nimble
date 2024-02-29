@@ -1,4 +1,4 @@
-use crate::{ble, utilities::voidp_to_ref, BLEReturnCode, Signal};
+use crate::{ble, utilities::voidp_to_ref, BLEError, Signal};
 
 pub struct BLEWriter {
   conn_handle: u16,
@@ -15,12 +15,12 @@ impl BLEWriter {
     }
   }
 
-  pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEReturnCode> {
+  pub async fn write_value(&mut self, data: &[u8], response: bool) -> Result<(), BLEError> {
     unsafe {
       // ble_att_mtu() returns 0 for a closed connection
       let mtu = esp_idf_sys::ble_att_mtu(self.conn_handle);
       if mtu == 0 {
-        return Err(BLEReturnCode(esp_idf_sys::BLE_HS_ENOTCONN));
+        return BLEError::convert(esp_idf_sys::BLE_HS_ENOTCONN as _);
       }
       let mtu = { mtu - 3 } as usize;
 

@@ -157,7 +157,7 @@ impl BLERemoteCharacteristic {
     }
 
     characteristic.state.signal.signal(error.status as _);
-    error.status as _
+    esp_idf_sys::BLE_HS_EDONE as _
   }
 
   extern "C" fn descriptor_disc_cb(

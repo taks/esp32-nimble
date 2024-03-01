@@ -75,7 +75,7 @@ impl NotifyTx<'_> {
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-  ///Empty NimbleSub i.e. `NimbleSub::is_empty()==true` means Unsubscribe or No Subscription
+  ///Empty NimbleSub i.e. `NimbleSub::is_empty()==true` means Unsubscribe(d)
   pub struct NimbleSub: u16 {
     /// Subscribe if Notify
     const NOTIFY = 0x0001;

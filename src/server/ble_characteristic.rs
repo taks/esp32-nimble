@@ -75,8 +75,11 @@ impl NotifyTx<'_> {
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  ///Empty NimbleSub i.e. `NimbleSub::is_empty()==true` means Unsubscribe(d)
   pub struct NimbleSub: u16 {
+    /// Subscribe if Notify
     const NOTIFY = 0x0001;
+    /// Subscribe if Indicate
     const INDICATE = 0x0002;
   }
 }
@@ -365,6 +368,8 @@ impl BLECharacteristic {
 
   /// Do not call `lock` on this characteristic inside the callback, use the first input instead.
   /// In the future, this characteristic could be locked while the callback executes.
+  /// * `callback` - Function to call when a subscription event is recieved, including subscribe and unsubscribe events
+  /// see [`crate::NimbleSub`] for event type
   pub fn on_subscribe(
     &mut self,
     callback: impl FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync + 'static,

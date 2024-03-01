@@ -113,16 +113,18 @@ impl BLERemoteCharacteristic {
         ble!(self.state.signal.wait().await)?;
       }
 
-      unsafe {
-        ble!(esp_idf_sys::ble_gattc_disc_all_dscs(
-          self.state.conn_handle(),
-          self.state.handle,
-          self.state.end_handle,
-          Some(Self::descriptor_disc_cb),
-          self as *mut Self as _,
-        ))?;
+      if self.state.handle != self.state.end_handle {
+        unsafe {
+          ble!(esp_idf_sys::ble_gattc_disc_all_dscs(
+            self.state.conn_handle(),
+            self.state.handle,
+            self.state.end_handle,
+            Some(Self::descriptor_disc_cb),
+            self as *mut Self as _,
+          ))?;
+        }
+        ble!(self.state.signal.wait().await)?;
       }
-      ble!(self.state.signal.wait().await)?;
     }
 
     Ok(self.state.descriptors.as_mut().unwrap().iter_mut())
@@ -188,7 +190,7 @@ impl BLERemoteCharacteristic {
     }
 
     characteristic.state.signal.signal(error.status as _);
-    error.status as _
+    esp_idf_sys::BLE_HS_EDONE as _
   }
 
   pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEError> {

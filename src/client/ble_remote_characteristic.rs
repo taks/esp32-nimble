@@ -188,7 +188,7 @@ impl BLERemoteCharacteristic {
     }
 
     characteristic.state.signal.signal(error.status as _);
-    error.status as _
+    esp_idf_sys::BLE_HS_EDONE as _
   }
 
   pub async fn read_value(&mut self) -> Result<Vec<u8>, BLEError> {

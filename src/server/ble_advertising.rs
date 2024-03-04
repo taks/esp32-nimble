@@ -90,12 +90,15 @@ impl BLEAdvertising {
   }
 
   pub fn set_raw_data(&mut self, data: &[u8]) -> Result<(), BLEError> {
-    unsafe {
-      ble!(esp_idf_sys::ble_gap_adv_set_data(
-        data.as_ptr(),
-        data.len() as i32
-      ))
-    }
+    let rc = unsafe { esp_idf_sys::ble_gap_adv_set_data(data.as_ptr(), data.len() as i32) } as u32;
+
+    // convert BLE_ERR_INV_HCI_CMD_PARMS to BLE_HS_EINVAL
+    // https://github.com/taks/esp32-nimble/issues/104
+    // https://github.com/apache/mynewt-nimble/issues/1717
+    ble!(match rc {
+      esp_idf_sys::ble_error_codes_BLE_ERR_INV_HCI_CMD_PARMS => esp_idf_sys::BLE_HS_EINVAL,
+      rc => rc,
+    })
   }
 
   pub fn set_raw_scan_response_data(&mut self, data: &[u8]) -> Result<(), BLEError> {

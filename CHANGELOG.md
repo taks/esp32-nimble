@@ -1,4 +1,4 @@
-## [0.6.0]
+## [0.6.0]- 2024-03-07
 - Implement Display and Debug traits for BLERemoteCharacteristic & BLERemoteService ([#66](https://github.com/taks/esp32-nimble/pull/66))
 - Added `BLEAdvertising::on_complete`
 - Added `OnWriteArgs::notify::notify` ([#75](https::/github.com/taks/esp32-nimble/pull/75))

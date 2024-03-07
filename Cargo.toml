@@ -1,6 +1,6 @@
 [package]
 name = "esp32-nimble"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["taks <857tn859@gmail.com>"]
 edition = "2021"
 resolver = "2"
@@ -37,7 +37,7 @@ bstr = { version = "1.8.0", default-features = false }
 embassy-sync = { version = "0.5.0" }
 num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
-uuid = { version = "1.2.2", default-features = false, features = ["macro-diagnostics"] }
+uuid = { version = "1", default-features = false, features = ["macro-diagnostics"] }
 
 [dev-dependencies]
 esp-idf-sys = { version = "0.34", default-features = false, features = ["binstart", "alloc_handler"] }

@@ -1,42 +1,42 @@
 ## [0.6.0]- 2024-03-07
 - Implement Display and Debug traits for BLERemoteCharacteristic & BLERemoteService ([#66](https://github.com/taks/esp32-nimble/pull/66))
 - Added `BLEAdvertising::on_complete`
-- Added `OnWriteArgs::notify::notify` ([#75](https::/github.com/taks/esp32-nimble/pull/75))
+- Added `OnWriteArgs::notify::notify` ([#75](https://github.com/taks/esp32-nimble/pull/75))
 - Added `BLEServer::on_authentication_complete`
-- Added `OnWriteArgs::current_data` ([#81](https::/github.com/taks/esp32-nimble/pull/81))
-- Changed the return type of `get_advertising` to `Mutex<BLEAdvertising>` ([#84](https::/github.com/taks/esp32-nimble/pull/84))
+- Added `OnWriteArgs::current_data` ([#81](https://github.com/taks/esp32-nimble/pull/81))
+- Changed the return type of `get_advertising` to `Mutex<BLEAdvertising>` ([#84](https://github.com/taks/esp32-nimble/pull/84))
 - Added self argument to `BLERemoteCharacteristic::on_subscribe` callback
-- Fixed advertising length calculation ([#87](https::/github.com/taks/esp32-nimble/pull/87))
-- Avoid int underflow in `BLEWriter::write_value()` ([#91](https::/github.com/taks/esp32-nimble/pull/91))
-- Fixes Add missing return codes for security manager ([#95](https::/github.com/taks/esp32-nimble/pull/95))
-- Added `disconnect` and `disconnect_with_reason` ([#96](https::/github.com/taks/esp32-nimble/pull/96))
-- Added `BLEDevice::deinit_full` ([#100](https::/github.com/taks/esp32-nimble/pull/100))
-- Implement PartialEq and Eq for BLEAddress and BLEAddressType ([#92](https::/github.com/taks/esp32-nimble/pull/92))
-- Added `BLEAdvertisementData` ([#101](https::/github.com/taks/esp32-nimble/pull/101))
+- Fixed advertising length calculation ([#87](https://github.com/taks/esp32-nimble/pull/87))
+- Avoid int underflow in `BLEWriter::write_value()` ([#91](https://github.com/taks/esp32-nimble/pull/91))
+- Fixes Add missing return codes for security manager ([#95](https://github.com/taks/esp32-nimble/pull/95))
+- Added `disconnect` and `disconnect_with_reason` ([#96](https://github.com/taks/esp32-nimble/pull/96))
+- Added `BLEDevice::deinit_full` ([#100](https://github.com/taks/esp32-nimble/pull/100))
+- Implement PartialEq and Eq for BLEAddress and BLEAddressType ([#92](https://github.com/taks/esp32-nimble/pull/92))
+- Added `BLEAdvertisementData` ([#101](https://github.com/taks/esp32-nimble/pull/101))
 - Added `BLEAddress::val`, `BLEAddress::addr_type`
-- Changed `BLEReturnCode(pub u32)` to `BLEError(NonZeroI32)` ([#105](https::/github.com/taks/esp32-nimble/pull/105))
-- Fixed `BLERemoteCharacteristic::get_descriptors` ([#106](https::/github.com/taks/esp32-nimble/pull/106), [#108](https::/github.com/taks/esp32-nimble/pull/108))
+- Changed `BLEReturnCode(pub u32)` to `BLEError(NonZeroI32)` ([#105](https://github.com/taks/esp32-nimble/pull/105))
+- Fixed `BLERemoteCharacteristic::get_descriptors` ([#106](https://github.com/taks/esp32-nimble/pull/106), [#108](https://github.com/taks/esp32-nimble/pull/108))
 
 ## [0.5.1] - 2024-02-01
-- Fixed a bug when changing advertising name. ([#85](https::/github.com/taks/esp32-nimble/pull/85))
+- Fixed a bug when changing advertising name. ([#85](https://github.com/taks/esp32-nimble/pull/85))
 - Fixed `BLEAdvertising::start_with_duration`
   (`ble_gap_adv_set_fields`, `ble_gap_adv_rsp_set_fields` were called every time.)
 
 ## [0.5.0] - 2024-01-10
-- Added `BLEScan::find_device` ([#55](https::/github.com/taks/esp32-nimble/pull/55))
+- Added `BLEScan::find_device` ([#55](https://github.com/taks/esp32-nimble/pull/55))
 - Added `BLEAdvertisedDevice::adv_type`, `BLEAdvertisedDevice::adv_flags`
 - Added `BLEAddress::from_str`
 - Added whitelist API.
-- Added `BLEClient::get_rssi` ([#58](https::/github.com/taks/esp32-nimble/pull/58))
+- Added `BLEClient::get_rssi` ([#58](https://github.com/taks/esp32-nimble/pull/58))
 - Added `BLEConnDesc`
 - Fixed no_std build.
 - Added `BLEServer::ble_gatts_show_local`
 
 ## [0.4.0] - 2023-12-01
-- Added `BLEAdvertising::min_interval`, `BLEAdvertising::max_interval` ([#51](https::/github.com/taks/esp32-nimble/pull/51))
-- Added `can_nofity`, `can_indicate`, `can_read`, `can_write`, `can_write_no_response` and `can_broadcast` functions to `BLERemoteCharacteristic` ([#53](https::/github.com/taks/esp32-nimble/pull/53))
-- Add additional checks to prevent OOB panics in BLE advertisement parser ([#54](https::/github.com/taks/esp32-nimble/pull/54))
-- Changed type of `BLEAdvertisedDevice::name()` to `&bstr::BStr` ([#54](https::/github.com/taks/esp32-nimble/pull/54))
+- Added `BLEAdvertising::min_interval`, `BLEAdvertising::max_interval` ([#51](https://github.com/taks/esp32-nimble/pull/51))
+- Added `can_nofity`, `can_indicate`, `can_read`, `can_write`, `can_write_no_response` and `can_broadcast` functions to `BLERemoteCharacteristic` ([#53](https://github.com/taks/esp32-nimble/pull/53))
+- Add additional checks to prevent OOB panics in BLE advertisement parser ([#54](https://github.com/taks/esp32-nimble/pull/54))
+- Changed type of `BLEAdvertisedDevice::name()` to `&bstr::BStr` ([#54](https://github.com/taks/esp32-nimble/pull/54))
 
 ## [0.3.2] - 2023-11-18
 - Fixed unresolved import error for the std environment. ([#48](https://github.com/taks/esp32-nimble/pull/48))

@@ -62,10 +62,7 @@ impl BLEService {
                 esp_idf_version_minor = "2",
                 not(esp_idf_version_patch = "0")
               ))]
-              cpfd: match chr.cpfd.as_mut() {
-                Some(cpfd) => cpfd,
-                None => core::ptr::null_mut(),
-              },
+              cpfd: chr.cpfd.as_mut_ptr(),
             });
         }
         self

@@ -102,7 +102,7 @@ pub struct BLECharacteristic {
     esp_idf_version_minor = "2",
     not(esp_idf_version_patch = "0")
   ))]
-  pub(crate) cpfd: Option<esp_idf_sys::ble_gatt_cpfd>,
+  pub(crate) cpfd: [esp_idf_sys::ble_gatt_cpfd; 2],
 }
 
 impl BLECharacteristic {
@@ -124,7 +124,7 @@ impl BLECharacteristic {
         esp_idf_version_minor = "2",
         not(esp_idf_version_patch = "0")
       ))]
-      cpfd: None,
+      cpfd: [Default::default(); 2],
     }
   }
 
@@ -267,7 +267,7 @@ impl BLECharacteristic {
   ))]
   /// Set the Characteristic Presentation Format.
   pub fn cpfd(&mut self, cpfd: esp_idf_sys::ble_gatt_cpfd) {
-    self.cpfd = Some(cpfd);
+    self.cpfd[0] = cpfd;
   }
 
   pub(super) extern "C" fn handle_gap_event(

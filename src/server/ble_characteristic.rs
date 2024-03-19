@@ -97,6 +97,12 @@ pub struct BLECharacteristic {
   svc_def_descriptors: Vec<esp_idf_sys::ble_gatt_dsc_def>,
   subscribed_list: Vec<(u16, NimbleSub)>,
   on_subscribe: Option<Box<dyn FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync>>,
+  #[cfg(all(
+    esp_idf_version_major = "5",
+    esp_idf_version_minor = "2",
+    not(esp_idf_version_patch = "0")
+  ))]
+  pub(crate) cpfd: Option<esp_idf_sys::ble_gatt_cpfd>,
 }
 
 impl BLECharacteristic {
@@ -113,6 +119,12 @@ impl BLECharacteristic {
       svc_def_descriptors: Vec::new(),
       subscribed_list: Vec::new(),
       on_subscribe: None,
+      #[cfg(all(
+        esp_idf_version_major = "5",
+        esp_idf_version_minor = "2",
+        not(esp_idf_version_patch = "0")
+      ))]
+      cpfd: None,
     }
   }
 
@@ -246,6 +258,16 @@ impl BLECharacteristic {
         unsafe { esp_idf_sys::ble_gattc_notify_custom(it.0, self.handle, om) };
       }
     }
+  }
+
+  #[cfg(all(
+    esp_idf_version_major = "5",
+    esp_idf_version_minor = "2",
+    not(esp_idf_version_patch = "0")
+  ))]
+  /// Set the Characteristic Presentation Format.
+  pub fn cpfd(&mut self, cpfd: esp_idf_sys::ble_gatt_cpfd) {
+    self.cpfd = Some(cpfd);
   }
 
   pub(super) extern "C" fn handle_gap_event(

@@ -57,6 +57,12 @@ impl BLEService {
               flags: chr.properties.bits(),
               min_key_size: 0,
               val_handle: &mut chr.handle,
+              #[cfg(all(
+                esp_idf_version_major = "5",
+                esp_idf_version_minor = "2",
+                not(esp_idf_version_patch = "0")
+              ))]
+              cpfd: chr.cpfd.as_mut_ptr(),
             });
         }
         self

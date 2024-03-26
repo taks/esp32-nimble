@@ -1,7 +1,7 @@
-use core::{cell::UnsafeCell, ffi::c_void};
-
+use crate::cpfd::Cpfd;
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
+use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
@@ -266,8 +266,16 @@ impl BLECharacteristic {
     not(esp_idf_version_patch = "0")
   ))]
   /// Set the Characteristic Presentation Format.
-  pub fn cpfd(&mut self, cpfd: esp_idf_sys::ble_gatt_cpfd) {
-    self.cpfd[0] = cpfd;
+  pub fn cpfd(&mut self, cpfd: Cpfd) {
+    if cpfd.name_space == (esp_idf_sys::BLE_GATT_CHR_NAMESPACE_BT_SIG as _) {
+      debug_assert!(cpfd.description <= (esp_idf_sys::BLE_GATT_CHR_BT_SIG_DESC_EXTERNAL as _));
+    }
+
+    self.cpfd[0].format = cpfd.format.into();
+    self.cpfd[0].exponent = cpfd.exponent;
+    self.cpfd[0].unit = cpfd.unit.into();
+    self.cpfd[0].name_space = cpfd.name_space;
+    self.cpfd[0].description = cpfd.description;
   }
 
   pub(super) extern "C" fn handle_gap_event(

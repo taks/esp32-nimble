@@ -1,8 +1,14 @@
-use crate::cpfd::Cpfd;
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
+
+#[cfg(all(
+  esp_idf_version_major = "5",
+  esp_idf_version_minor = "2",
+  not(esp_idf_version_patch = "0")
+))]
+use crate::cpfd::Cpfd;
 
 use crate::{
   utilities::{

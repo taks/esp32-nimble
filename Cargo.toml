@@ -24,6 +24,7 @@ default = ["std"]
 
 std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std", "bstr/std"]
 no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section", "bstr/alloc"]
+debug = []
 
 [dependencies]
 log = { version = "0.4", default-features = false }

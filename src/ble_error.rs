@@ -179,9 +179,20 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
   }
 }
 
+#[cfg(not(feature = "debug"))]
 macro_rules! ble {
   ($err:expr) => {{
     $crate::BLEError::convert($err as _)
+  }};
+}
+#[cfg(feature = "debug")]
+macro_rules! ble {
+  ($err:expr) => {{
+    let rc = $crate::BLEError::convert($err as _);
+    if let Err(err) = rc {
+      ::log::warn!(target: "esp32_nimble", "{}[{}]: {:?}", file!(), line!(), err);
+    }
+    rc
   }};
 }
 

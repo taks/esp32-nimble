@@ -52,7 +52,9 @@ impl L2cap {
     }
   }
 
-  pub(crate) fn get_chan_info(chan: *mut esp_idf_sys::ble_l2cap_chan) -> esp_idf_sys::ble_l2cap_chan_info {
+  pub(crate) fn get_chan_info(
+    chan: *mut esp_idf_sys::ble_l2cap_chan,
+  ) -> esp_idf_sys::ble_l2cap_chan_info {
     let mut chan_info = esp_idf_sys::ble_l2cap_chan_info::default();
     let rc = unsafe { esp_idf_sys::ble_l2cap_get_chan_info(chan, &mut chan_info as _) };
     assert_eq!(rc, 0);

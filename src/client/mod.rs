@@ -25,3 +25,6 @@ use ble_reader::BLEReader;
 
 mod ble_writer;
 use ble_writer::BLEWriter;
+
+mod l2cap_client;
+pub use l2cap_client::L2capClient;

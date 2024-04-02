@@ -1,6 +1,10 @@
+use alloc::boxed::Box;
 use core::cell::RefCell;
 
-use alloc::boxed::Box;
+#[cfg(not(esp_idf_soc_esp_nimble_controller))]
+use esp_idf_sys::os_mbuf_free;
+#[cfg(esp_idf_soc_esp_nimble_controller)]
+use esp_idf_sys::r_os_mbuf_free as os_mbuf_free;
 
 use crate::{
   ble,
@@ -84,7 +88,7 @@ impl L2capServer {
         let receive = unsafe { event.__bindgen_anon_1.receive };
         if !receive.sdu_rx.is_null() {
           (server.on_data_received)(os_mbuf_into_slice(receive.sdu_rx));
-          unsafe { esp_idf_sys::os_mbuf_free(receive.sdu_rx) };
+          unsafe { os_mbuf_free(receive.sdu_rx) };
         }
         server.ble_l2cap_recv_ready(receive.chan);
         0

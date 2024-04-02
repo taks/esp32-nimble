@@ -1,6 +1,13 @@
+use crate::{ble, BLEError};
 use alloc::vec::Vec;
 
-use crate::{ble, utilities::os_mbuf_get_pkthdr, BLEError};
+#[cfg(not(esp_idf_soc_esp_nimble_controller))]
+use esp_idf_sys::{os_mbuf_get_pkthdr, os_mbuf_pool_init, os_mempool_init};
+#[cfg(esp_idf_soc_esp_nimble_controller)]
+use esp_idf_sys::{
+  r_os_mbuf_get_pkthdr as os_mbuf_get_pkthdr, r_os_mbuf_pool_init as os_mbuf_pool_init,
+  r_os_mempool_init as os_mempool_init,
+};
 
 #[derive(Default)]
 pub struct L2cap {
@@ -15,9 +22,8 @@ impl L2cap {
       .coc_memory
       .reserve_exact(os_mempool_size(coc_buf_count as _, mtu as _));
 
-    #[cfg(not(esp_idf_soc_esp_nimble_controller))]
     unsafe {
-      ble!(esp_idf_sys::os_mempool_init(
+      ble!(os_mempool_init(
         &mut self.mempool,
         coc_buf_count,
         mtu as _,
@@ -25,29 +31,11 @@ impl L2cap {
         c"coc_sdu_pool".as_ptr()
       ))?;
 
-      ble!(esp_idf_sys::os_mbuf_pool_init(
+      ble!(os_mbuf_pool_init(
         &mut self.mbuf_pool as _,
         &mut self.mempool as _,
         mtu,
         coc_buf_count
-      ))?;
-    }
-
-    #[cfg(esp_idf_soc_esp_nimble_controller)]
-    unsafe {
-      ble!(esp_idf_sys::r_os_mempool_init(
-        &mut self.mempool,
-        buf_blocks,
-        L2CAP_BUF_BLOCK_SIZE as _,
-        self.coc_memory.as_mut_ptr() as _,
-        c"coc_sdu_pool".as_ptr()
-      ))?;
-
-      ble!(esp_idf_sys::r_os_mbuf_pool_init(
-        &mut self.mbuf_pool as _,
-        &mut self.mempool as _,
-        L2CAP_BUF_BLOCK_SIZE as _,
-        buf_blocks as _
       ))?;
     }
 
@@ -56,7 +44,7 @@ impl L2cap {
 
   pub fn sdu_rx(&mut self) -> *mut esp_idf_sys::os_mbuf {
     loop {
-      let ret = os_mbuf_get_pkthdr(&mut self.mbuf_pool, 0);
+      let ret = unsafe { os_mbuf_get_pkthdr(&mut self.mbuf_pool, 0) };
       if !ret.is_null() {
         return ret;
       }

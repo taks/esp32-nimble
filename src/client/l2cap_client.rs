@@ -52,10 +52,30 @@ impl L2capClient {
   }
 
   pub fn send(&mut self, data: &[u8]) -> Result<(), BLEError> {
-    let sdu_rx = self.l2cap.sdu_rx();
-    os_mbuf_append(sdu_rx, data);
+    let mtu = L2cap::get_chan_info(self.coc_chan).peer_l2cap_mtu as usize;
+    let mut data = data;
 
-    ble!(unsafe { esp_idf_sys::ble_l2cap_send(self.coc_chan, sdu_rx) })
+    while !data.is_empty() {
+      let sdu_rx = self.l2cap.sdu_rx();
+      let (data0, data1) = data.split_at(if data.len() < mtu { data.len() } else { mtu });
+
+      let rc = os_mbuf_append(sdu_rx, data0);
+      assert_eq!(rc, 0);
+
+      loop {
+        let rc = unsafe { esp_idf_sys::ble_l2cap_send(self.coc_chan, sdu_rx) };
+        match rc as _ {
+          0 | esp_idf_sys::BLE_HS_ESTALLED => break,
+          esp_idf_sys::BLE_HS_EBUSY => {}
+          rc => return BLEError::convert(rc),
+        }
+        unsafe { esp_idf_sys::vPortYield() };
+      }
+
+      data = data1;
+    }
+
+    Ok(())
   }
 
   pub(crate) extern "C" fn blecent_l2cap_coc_event_cb(
@@ -74,10 +94,6 @@ impl L2capClient {
 
           return 0;
         }
-
-        // let mut chan_info = esp_idf_sys::ble_l2cap_chan_info::default();
-        // let rc = unsafe { esp_idf_sys::ble_l2cap_get_chan_info(connect.chan, &mut chan_info as _) };
-        // assert_eq!(rc, 0);
 
         client.coc_chan = connect.chan;
         client.signal.signal(0);

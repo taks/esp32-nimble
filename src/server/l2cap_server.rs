@@ -1,5 +1,4 @@
 use alloc::boxed::Box;
-use core::cell::RefCell;
 
 #[cfg(not(esp_idf_soc_esp_nimble_controller))]
 use esp_idf_sys::os_mbuf_free;
@@ -8,19 +7,12 @@ use esp_idf_sys::r_os_mbuf_free as os_mbuf_free;
 
 use crate::{
   ble,
-  utilities::{os_mbuf_into_slice, voidp_to_ref, L2cap},
+  utilities::{mutex::Mutex, os_mbuf_into_slice, voidp_to_ref, L2cap},
   BLEError,
 };
 
 const N: usize = esp_idf_sys::CONFIG_BT_NIMBLE_L2CAP_COC_MAX_NUM as usize;
-struct L2capServerList {
-  list: RefCell<heapless::Vec<L2capServer, N>>,
-}
-unsafe impl Sync for L2capServerList {}
-
-static SERVER_LIST: L2capServerList = L2capServerList {
-  list: RefCell::new(heapless::Vec::new()),
-};
+static SERVER_LIST: Mutex<heapless::Vec<L2capServer, N>> = Mutex::new(heapless::Vec::new());
 
 #[allow(clippy::type_complexity)]
 pub struct L2capServer {
@@ -35,7 +27,7 @@ impl L2capServer {
     mtu: u16,
     on_data_received: impl FnMut(&[u8]) + Send + Sync + 'static,
   ) -> Result<(), BLEError> {
-    let mut list = SERVER_LIST.list.borrow_mut();
+    let mut list = SERVER_LIST.lock();
     list
       .push(L2capServer {
         l2cap: Default::default(),
@@ -100,3 +92,5 @@ impl L2capServer {
     unsafe { esp_idf_sys::ble_l2cap_recv_ready(chan, sdu_rx) }
   }
 }
+
+unsafe impl Send for L2capServer {}

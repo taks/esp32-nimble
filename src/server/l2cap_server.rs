@@ -73,9 +73,6 @@ impl L2capServer {
           return 0;
         }
 
-        // let mut chan_info = esp_idf_sys::ble_l2cap_chan_info::default();
-        // let rc = unsafe { esp_idf_sys::ble_l2cap_get_chan_info(connect.chan, &mut chan_info as _) };
-
         0
       }
       esp_idf_sys::BLE_L2CAP_EVENT_COC_ACCEPT => {

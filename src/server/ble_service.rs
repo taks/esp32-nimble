@@ -91,6 +91,14 @@ impl BLEService {
     self.characteristics.push(characteristic.clone());
     characteristic
   }
+
+  /// Get the characteristic object for the UUID.
+  pub async fn get_characteristic(&self, uuid: BleUuid) -> Option<&Arc<Mutex<BLECharacteristic>>> {
+    self
+      .characteristics
+      .iter()
+      .find(|x| unsafe { x.raw() }.uuid() == uuid)
+  }
 }
 
 unsafe impl Send for BLEService {}

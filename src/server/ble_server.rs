@@ -186,6 +186,14 @@ impl BLEServer {
     service
   }
 
+  /// Get the service object for the UUID.
+  pub async fn get_service(&self, uuid: BleUuid) -> Option<&Arc<Mutex<BLEService>>> {
+    self
+      .services
+      .iter()
+      .find(|x| unsafe { x.raw() }.uuid() == uuid)
+  }
+
   /// Set the server to automatically start advertising when a client disconnects.
   pub fn advertise_on_disconnect(&mut self, value: bool) -> &mut Self {
     self.advertise_on_disconnect = value;

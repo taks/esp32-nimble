@@ -52,6 +52,11 @@ impl<T> Mutex<T> {
   pub fn lock(&self) -> MutexGuard<'_, T> {
     MutexGuard::new(self)
   }
+
+  #[inline]
+  pub(crate) unsafe fn raw(&self) -> &'_ T {
+    self.1.get().as_mut().unwrap()
+  }
 }
 
 unsafe impl<T> Sync for Mutex<T> where T: Send {}

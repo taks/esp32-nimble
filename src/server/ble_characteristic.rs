@@ -134,6 +134,10 @@ impl BLECharacteristic {
     }
   }
 
+  pub fn uuid(&self) -> BleUuid {
+    BleUuid::from(self.uuid)
+  }
+
   pub fn set_value(&mut self, value: &[u8]) -> &mut Self {
     self.value.set_value(value);
     self

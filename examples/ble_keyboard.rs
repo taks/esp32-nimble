@@ -309,13 +309,6 @@ fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
-  // WDT OFF
-  unsafe {
-    esp_idf_sys::esp_task_wdt_delete(esp_idf_sys::xTaskGetIdleTaskHandleForCPU(
-      esp_idf_hal::cpu::core() as u32,
-    ));
-  };
-
   let mut keyboard = Keyboard::new();
 
   loop {

@@ -1,5 +1,8 @@
 use alloc::{ffi::CString, vec::Vec};
-use core::ffi::c_void;
+use core::{
+  ffi::c_void,
+  sync::atomic::{AtomicBool, Ordering},
+};
 use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 
@@ -40,8 +43,8 @@ static BLE_ADVERTISING: Lazy<Mutex<BLEAdvertising>> =
   Lazy::new(|| Mutex::new(BLEAdvertising::new()));
 
 pub static mut OWN_ADDR_TYPE: OwnAddrType = OwnAddrType::Public;
-static mut INITIALIZED: bool = false;
-static mut SYNCED: bool = false;
+static INITIALIZED: AtomicBool = AtomicBool::new(false);
+static SYNCED: AtomicBool = AtomicBool::new(false);
 
 pub struct BLEDevice {
   security: BLESecurity,
@@ -51,7 +54,8 @@ impl BLEDevice {
   pub fn init() {
     // NVS initialisation.
     unsafe {
-      if !INITIALIZED {
+      let initialized = INITIALIZED.load(Ordering::Acquire);
+      if !initialized {
         let result = esp_idf_sys::nvs_flash_init();
         if result == esp_idf_sys::ESP_ERR_NVS_NO_FREE_PAGES
           || result == esp_idf_sys::ESP_ERR_NVS_NEW_VERSION_FOUND
@@ -87,11 +91,15 @@ impl BLEDevice {
         esp_idf_sys::nimble_port_freertos_init(Some(Self::blecent_host_task));
       }
 
-      while !SYNCED {
+      loop {
+        let syncd = SYNCED.load(Ordering::Acquire);
+        if syncd {
+          break;
+        }
         esp_idf_sys::vPortYield();
       }
 
-      INITIALIZED = true;
+      INITIALIZED.store(true, Ordering::Release);
     }
   }
 
@@ -113,8 +121,8 @@ impl BLEDevice {
       #[cfg(not(esp_idf_version_major = "4"))]
       esp!(esp_idf_sys::nimble_port_deinit())?;
 
-      INITIALIZED = false;
-      SYNCED = false;
+      INITIALIZED.store(false, Ordering::Release);
+      SYNCED.store(false, Ordering::Release);
 
       if let Some(server) = Lazy::get_mut(&mut BLE_SERVER) {
         server.started = false;
@@ -299,7 +307,7 @@ impl BLEDevice {
         addr[0]
       );
 
-      SYNCED = true;
+      SYNCED.store(true, Ordering::Release);
     }
   }
 

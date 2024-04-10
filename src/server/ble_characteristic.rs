@@ -12,7 +12,7 @@ use crate::cpfd::Cpfd;
 
 use crate::{
   utilities::{
-    as_mut_ptr, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
+    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
     voidp_to_ref, BleUuid,
   },
   AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
@@ -206,8 +206,8 @@ impl BLECharacteristic {
     }
     self.svc_def_descriptors.clear();
 
-    for dsc in &self.descriptors {
-      let arg = unsafe { as_mut_ptr(Arc::into_raw(dsc.clone())) };
+    for dsc in &mut self.descriptors {
+      let arg = unsafe { Arc::get_mut_unchecked(dsc) } as *mut Mutex<BLEDescriptor>;
       let dsc = dsc.lock();
       self
         .svc_def_descriptors

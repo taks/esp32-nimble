@@ -3,7 +3,7 @@ use esp_idf_sys::ble_uuid_any_t;
 
 use crate::{
   ble,
-  utilities::{as_mut_ptr, mutex::Mutex, BleUuid},
+  utilities::{mutex::Mutex, BleUuid},
   BLECharacteristic, BLEError,
 };
 
@@ -43,10 +43,9 @@ impl BLEService {
 
       if self.characteristics.is_empty() {
       } else {
-        for chr in &self.characteristics {
-          let arg = unsafe { as_mut_ptr(Arc::into_raw(chr.clone())) };
+        for chr in &mut self.characteristics {
+          let arg = unsafe { Arc::get_mut_unchecked(chr) } as *mut Mutex<BLECharacteristic>;
           let mut chr = chr.lock();
-
           self
             .svc_def_characteristics
             .push(esp_idf_sys::ble_gatt_chr_def {

@@ -3,6 +3,7 @@
 #![allow(clippy::single_match)]
 #![allow(static_mut_refs)]
 #![feature(decl_macro)]
+#![feature(get_mut_unchecked)]
 #![doc = include_str!("../README.md")]
 extern crate alloc;
 

@@ -52,6 +52,11 @@ impl L2cap {
     }
   }
 
+  pub(crate) fn ble_l2cap_recv_ready(&mut self, chan: *mut esp_idf_sys::ble_l2cap_chan) -> i32 {
+    let sdu_rx = self.sdu_rx();
+    unsafe { esp_idf_sys::ble_l2cap_recv_ready(chan, sdu_rx) }
+  }
+
   pub(crate) fn get_chan_info(
     chan: *mut esp_idf_sys::ble_l2cap_chan,
   ) -> esp_idf_sys::ble_l2cap_chan_info {

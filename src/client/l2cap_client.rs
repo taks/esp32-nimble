@@ -2,16 +2,23 @@ use alloc::boxed::Box;
 use core::borrow::BorrowMut;
 use esp_idf_hal::task::block_on;
 
+#[cfg(not(esp_idf_soc_esp_nimble_controller))]
+use esp_idf_sys::os_mbuf_free;
+#[cfg(esp_idf_soc_esp_nimble_controller)]
+use esp_idf_sys::r_os_mbuf_free as os_mbuf_free;
+
 use crate::{
   ble,
-  utilities::{os_mbuf_append, voidp_to_ref, L2cap},
+  utilities::{os_mbuf_append, os_mbuf_into_slice, voidp_to_ref, L2cap},
   BLEClient, BLEError, Signal,
 };
 
+#[allow(clippy::type_complexity)]
 pub struct L2capClient {
   l2cap: L2cap,
   coc_chan: *mut esp_idf_sys::ble_l2cap_chan,
   signal: Signal<u32>,
+  on_data_received: Option<Box<dyn FnMut(&[u8]) + Send + Sync>>,
 }
 
 impl L2capClient {
@@ -20,6 +27,7 @@ impl L2capClient {
       l2cap: Default::default(),
       coc_chan: core::ptr::null_mut(),
       signal: Signal::new(),
+      on_data_received: None,
     });
 
     ret.l2cap.init(mtu, 3)?;
@@ -78,6 +86,14 @@ impl L2capClient {
     Ok(())
   }
 
+  pub fn on_data_received(
+    &mut self,
+    callback: impl FnMut(&[u8]) + Send + Sync + 'static,
+  ) -> &mut Self {
+    self.on_data_received = Some(Box::new(callback));
+    self
+  }
+
   pub(crate) extern "C" fn blecent_l2cap_coc_event_cb(
     _event: *mut esp_idf_sys::ble_l2cap_event,
     arg: *mut core::ffi::c_void,
@@ -104,6 +120,17 @@ impl L2capClient {
         ::log::debug!("LE CoC disconnected: {:?}", disconnect.chan);
         client.coc_chan = core::ptr::null_mut();
         client.signal.signal(0);
+        0
+      }
+      esp_idf_sys::BLE_L2CAP_EVENT_COC_DATA_RECEIVED => {
+        let receive = unsafe { event.__bindgen_anon_1.receive };
+        if !receive.sdu_rx.is_null() {
+          if let Some(callback) = &mut client.on_data_received {
+            callback(os_mbuf_into_slice(receive.sdu_rx));
+          }
+          unsafe { os_mbuf_free(receive.sdu_rx) };
+        }
+        client.l2cap.ble_l2cap_recv_ready(receive.chan);
         0
       }
       _ => 0,

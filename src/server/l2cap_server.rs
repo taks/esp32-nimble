@@ -70,7 +70,7 @@ impl L2capServer {
       esp_idf_sys::BLE_L2CAP_EVENT_COC_ACCEPT => {
         let accept = unsafe { event.__bindgen_anon_1.accept };
         server.peer_sdu_size = accept.peer_sdu_size;
-        server.ble_l2cap_recv_ready(accept.chan);
+        server.l2cap.ble_l2cap_recv_ready(accept.chan);
         0
       }
       esp_idf_sys::BLE_L2CAP_EVENT_COC_DATA_RECEIVED => {
@@ -79,7 +79,7 @@ impl L2capServer {
           (server.on_data_received)(os_mbuf_into_slice(receive.sdu_rx));
           unsafe { os_mbuf_free(receive.sdu_rx) };
         }
-        server.ble_l2cap_recv_ready(receive.chan);
+        server.l2cap.ble_l2cap_recv_ready(receive.chan);
         0
       }
 
@@ -87,10 +87,7 @@ impl L2capServer {
     }
   }
 
-  fn ble_l2cap_recv_ready(&mut self, chan: *mut esp_idf_sys::ble_l2cap_chan) -> i32 {
-    let sdu_rx = self.l2cap.sdu_rx();
-    unsafe { esp_idf_sys::ble_l2cap_recv_ready(chan, sdu_rx) }
-  }
+
 }
 
 unsafe impl Send for L2capServer {}

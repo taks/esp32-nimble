@@ -86,8 +86,6 @@ impl L2capServer {
       _ => 0,
     }
   }
-
-
 }
 
 unsafe impl Send for L2capServer {}

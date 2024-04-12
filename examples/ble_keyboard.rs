@@ -229,7 +229,8 @@ impl Keyboard {
     device
       .security()
       .set_auth(AuthReq::all())
-      .set_io_cap(SecurityIOCap::NoInputNoOutput);
+      .set_io_cap(SecurityIOCap::NoInputNoOutput)
+      .resolve_rpa();
 
     let server = device.get_server();
     let mut hid = BLEHIDDevice::new(server);
@@ -308,13 +309,6 @@ impl Keyboard {
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
-
-  // WDT OFF
-  unsafe {
-    esp_idf_sys::esp_task_wdt_delete(esp_idf_sys::xTaskGetIdleTaskHandleForCPU(
-      esp_idf_hal::cpu::core() as u32,
-    ));
-  };
 
   let mut keyboard = Keyboard::new();
 

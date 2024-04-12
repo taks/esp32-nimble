@@ -7,9 +7,10 @@ use esp_idf_sys::os_mbuf_free;
 #[cfg(esp_idf_soc_esp_nimble_controller)]
 use esp_idf_sys::r_os_mbuf_free as os_mbuf_free;
 
+use super::{L2cap, OnDataReceived};
 use crate::{
   ble,
-  utilities::{os_mbuf_append, os_mbuf_into_slice, voidp_to_ref, L2cap},
+  utilities::{os_mbuf_append, voidp_to_ref},
   BLEClient, BLEError, Signal,
 };
 
@@ -18,7 +19,7 @@ pub struct L2capClient {
   l2cap: L2cap,
   coc_chan: *mut esp_idf_sys::ble_l2cap_chan,
   signal: Signal<u32>,
-  on_data_received: Option<Box<dyn FnMut(&[u8]) + Send + Sync>>,
+  on_data_received: Option<Box<dyn FnMut(OnDataReceived) + Send + Sync>>,
 }
 
 impl L2capClient {
@@ -88,7 +89,7 @@ impl L2capClient {
 
   pub fn on_data_received(
     &mut self,
-    callback: impl FnMut(&[u8]) + Send + Sync + 'static,
+    callback: impl FnMut(OnDataReceived) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_data_received = Some(Box::new(callback));
     self
@@ -126,9 +127,10 @@ impl L2capClient {
         let receive = unsafe { event.__bindgen_anon_1.receive };
         if !receive.sdu_rx.is_null() {
           if let Some(callback) = &mut client.on_data_received {
-            callback(os_mbuf_into_slice(receive.sdu_rx));
+            callback(OnDataReceived::from_raw(receive));
+          } else {
+            unsafe { os_mbuf_free(receive.sdu_rx) };
           }
-          unsafe { os_mbuf_free(receive.sdu_rx) };
         }
         client.l2cap.ble_l2cap_recv_ready(receive.chan);
         0

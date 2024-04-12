@@ -37,6 +37,8 @@ pub use self::client::*;
 mod server;
 pub use self::server::*;
 
+pub mod l2cap;
+
 pub mod utilities;
 
 #[allow(unused)]

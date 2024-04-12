@@ -5,9 +5,10 @@ use esp_idf_sys::os_mbuf_free;
 #[cfg(esp_idf_soc_esp_nimble_controller)]
 use esp_idf_sys::r_os_mbuf_free as os_mbuf_free;
 
+use super::{L2cap, OnDataReceived};
 use crate::{
   ble,
-  utilities::{mutex::Mutex, os_mbuf_into_slice, voidp_to_ref, L2cap},
+  utilities::{mutex::Mutex, voidp_to_ref},
   BLEError,
 };
 
@@ -18,14 +19,14 @@ static SERVER_LIST: Mutex<heapless::Vec<L2capServer, N>> = Mutex::new(heapless::
 pub struct L2capServer {
   l2cap: L2cap,
   peer_sdu_size: u16,
-  on_data_received: Box<dyn FnMut(&[u8]) + Send + Sync>,
+  on_data_received: Box<dyn FnMut(OnDataReceived) + Send + Sync>,
 }
 
 impl L2capServer {
   pub fn create(
     psm: u16,
     mtu: u16,
-    on_data_received: impl FnMut(&[u8]) + Send + Sync + 'static,
+    on_data_received: impl FnMut(OnDataReceived) + Send + Sync + 'static,
   ) -> Result<(), BLEError> {
     let mut list = SERVER_LIST.lock();
     list
@@ -76,7 +77,7 @@ impl L2capServer {
       esp_idf_sys::BLE_L2CAP_EVENT_COC_DATA_RECEIVED => {
         let receive = unsafe { event.__bindgen_anon_1.receive };
         if !receive.sdu_rx.is_null() {
-          (server.on_data_received)(os_mbuf_into_slice(receive.sdu_rx));
+          (server.on_data_received)(OnDataReceived::from_raw(receive));
           unsafe { os_mbuf_free(receive.sdu_rx) };
         }
         server.l2cap.ble_l2cap_recv_ready(receive.chan);

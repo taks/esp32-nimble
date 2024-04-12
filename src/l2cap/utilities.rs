@@ -1,12 +1,12 @@
-use crate::{ble, BLEError};
+use crate::{ble, utilities::os_mbuf_into_slice, BLEError};
 use alloc::vec::Vec;
 
 #[cfg(not(esp_idf_soc_esp_nimble_controller))]
-use esp_idf_sys::{os_mbuf_get_pkthdr, os_mbuf_pool_init, os_mempool_init};
+use esp_idf_sys::{os_mbuf_free, os_mbuf_get_pkthdr, os_mbuf_pool_init, os_mempool_init};
 #[cfg(esp_idf_soc_esp_nimble_controller)]
 use esp_idf_sys::{
-  r_os_mbuf_get_pkthdr as os_mbuf_get_pkthdr, r_os_mbuf_pool_init as os_mbuf_pool_init,
-  r_os_mempool_init as os_mempool_init,
+  r_os_mbuf_free as os_mbuf_free, r_os_mbuf_get_pkthdr as os_mbuf_get_pkthdr,
+  r_os_mbuf_pool_init as os_mbuf_pool_init, r_os_mempool_init as os_mempool_init,
 };
 
 #[derive(Default)]
@@ -71,4 +71,26 @@ impl L2cap {
 const fn os_mempool_size(n: usize, blksize: usize) -> usize {
   let size = core::mem::size_of::<esp_idf_sys::os_membuf_t>();
   blksize.div_ceil(size) * n
+}
+
+pub struct OnDataReceived {
+  raw: esp_idf_sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4,
+}
+
+impl OnDataReceived {
+  #[inline]
+  pub(crate) fn from_raw(raw: esp_idf_sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4) -> Self {
+    Self { raw }
+  }
+
+  #[inline]
+  pub fn sdu_rx(&self) -> &[u8] {
+    os_mbuf_into_slice(self.raw.sdu_rx)
+  }
+}
+
+impl Drop for OnDataReceived {
+  fn drop(&mut self) {
+    unsafe { os_mbuf_free(self.raw.sdu_rx) };
+  }
 }

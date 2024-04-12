@@ -1,15 +1,11 @@
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEClient, BLEDevice, L2capClient};
-use esp_idf_hal::prelude::Peripherals;
+use esp32_nimble::{l2cap::L2capClient, BLEClient, BLEDevice};
 use esp_idf_hal::task::block_on;
-use esp_idf_hal::timer::{TimerConfig, TimerDriver};
 use esp_idf_sys as _;
 
 fn main() {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
-
-  let peripherals = Peripherals::take().unwrap();
 
   block_on(async {
     let ble_device = BLEDevice::take();
@@ -28,10 +24,10 @@ fn main() {
 
       let mut l2cap = L2capClient::connect(&client, 0x1002, 512).await.unwrap();
       for i in 0..4 {
-        l2cap.send(b"test").unwrap();
+        l2cap.send(format!("test{}", i).as_bytes()).unwrap();
         esp_idf_hal::delay::FreeRtos::delay_ms(1000);
       }
-      l2cap.disconnect();
+      l2cap.disconnect().await.unwrap();
 
       client.disconnect().unwrap();
     }

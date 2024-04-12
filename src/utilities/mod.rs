@@ -15,9 +15,6 @@ pub(crate) use nimble_npl_os::*;
 mod os_mbuf;
 pub(crate) use os_mbuf::*;
 
-mod l2cap;
-pub use l2cap::L2cap;
-
 #[inline]
 #[allow(unused)]
 pub(crate) unsafe fn extend_lifetime_mut<'a, 'b: 'a, T: ?Sized>(r: &'a mut T) -> &'b mut T {

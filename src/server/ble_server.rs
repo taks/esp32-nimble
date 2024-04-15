@@ -7,6 +7,7 @@ use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
+const MAX_CONNECTIONS: usize = esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _;
 
 #[allow(clippy::type_complexity)]
 pub struct BLEServer {
@@ -14,8 +15,8 @@ pub struct BLEServer {
   advertise_on_disconnect: bool,
   services: Vec<Arc<Mutex<BLEService>>>,
   notify_characteristic: Vec<&'static mut BLECharacteristic>,
-  connections: Vec<u16>,
-  indicate_wait: [u16; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
+  connections: heapless::Vec<u16, MAX_CONNECTIONS>,
+  indicate_wait: [u16; MAX_CONNECTIONS],
 
   on_connect: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
@@ -31,8 +32,8 @@ impl BLEServer {
       advertise_on_disconnect: true,
       services: Vec::new(),
       notify_characteristic: Vec::new(),
-      connections: Vec::new(),
-      indicate_wait: [BLE_HS_CONN_HANDLE_NONE; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
+      connections: heapless::Vec::new(),
+      indicate_wait: [BLE_HS_CONN_HANDLE_NONE; MAX_CONNECTIONS],
       on_connect: None,
       on_disconnect: None,
       on_passkey_request: None,
@@ -251,7 +252,7 @@ impl BLEServer {
       esp_idf_sys::BLE_GAP_EVENT_CONNECT => {
         let connect = unsafe { &event.__bindgen_anon_1.connect };
         if connect.status == 0 {
-          server.connections.push(connect.conn_handle);
+          server.connections.push(connect.conn_handle).unwrap();
 
           if let Ok(desc) = ble_gap_conn_find(connect.conn_handle) {
             let server = UnsafeCell::new(server);

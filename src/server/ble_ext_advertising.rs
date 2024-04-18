@@ -1,15 +1,20 @@
-use core::ffi::c_void;
-use once_cell::sync::Lazy;
-
 use alloc::vec;
 use alloc::vec::Vec;
+use core::ffi::c_void;
+use once_cell::sync::Lazy;
 
 use crate::{
   ble,
   enums::*,
-  utilities::{os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
+  utilities::{os_mbuf_append, voidp_to_ref, BleUuid},
   BLEAddress, BLEError, BLEServer,
 };
+
+#[cfg(not(esp_idf_soc_esp_nimble_controller))]
+use esp_idf_sys::os_msys_get_pkthdr;
+
+#[cfg(esp_idf_soc_esp_nimble_controller)]
+use esp_idf_sys::r_os_msys_get_pkthdr as os_msys_get_pkthdr;
 
 pub struct BLEExtAdvertisement {
   payload: Vec<u8>,

@@ -37,4 +37,21 @@ pub use self::client::*;
 mod server;
 pub use self::server::*;
 
+pub mod l2cap;
+
 pub mod utilities;
+
+#[allow(unused)]
+macro_rules! dbg {
+  ($val:expr) => {
+    match $val {
+      tmp => {
+        ::log::info!("{} = {:#?}", stringify!($val), &tmp);
+        tmp
+      }
+    }
+  };
+}
+
+#[allow(unused)]
+pub(crate) use dbg;

@@ -31,6 +31,17 @@ impl BLEError {
   }
 }
 
+impl core::fmt::Display for BLEError {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    match return_code_to_string(self.0.get()) {
+      Some(text) => write!(f, "{text}")?,
+      None => write!(f, "0x{:X}", self.0)?,
+    };
+
+    Ok(())
+  }
+}
+
 impl core::fmt::Debug for BLEError {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match return_code_to_string(self.0.get()) {
@@ -41,6 +52,9 @@ impl core::fmt::Debug for BLEError {
     Ok(())
   }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for BLEError {}
 
 pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
   let rc = rc as u32;

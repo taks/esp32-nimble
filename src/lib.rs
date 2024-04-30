@@ -5,6 +5,12 @@
 #![feature(decl_macro)]
 #![feature(get_mut_unchecked)]
 #![doc = include_str!("../README.md")]
+
+#[cfg(feature = "std")]
+#[allow(unused_imports)]
+#[macro_use]
+extern crate std;
+
 extern crate alloc;
 
 #[doc(hidden)]

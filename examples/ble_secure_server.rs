@@ -3,7 +3,7 @@ use esp32_nimble::{
 };
 use esp_idf_sys as _;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
@@ -56,17 +56,14 @@ fn main() {
   ble_advertising.lock().on_complete(|_| {
     ble_advertising.lock().start().unwrap();
   });
-  ble_advertising
-    .lock()
-    .set_data(
-      BLEAdvertisementData::new()
-        .name("ESP32-GATT-Server")
-        .add_service_uuid(BleUuid::Uuid16(0xABCD)),
-    )
-    .unwrap();
-  ble_advertising.lock().start().unwrap();
+  ble_advertising.lock().set_data(
+    BLEAdvertisementData::new()
+      .name("ESP32-GATT-Server")
+      .add_service_uuid(BleUuid::Uuid16(0xABCD)),
+  )?;
+  ble_advertising.lock().start()?;
 
-  ::log::info!("bonded_addresses: {:?}", device.bonded_addresses().unwrap());
+  ::log::info!("bonded_addresses: {:?}", device.bonded_addresses());
 
   loop {
     esp_idf_hal::delay::FreeRtos::delay_ms(1000);

@@ -6,7 +6,7 @@ use esp32_nimble::{
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
 
-fn main() {
+fn main() -> anyhow::Result<()> {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
@@ -47,18 +47,12 @@ fn main() {
 
   {
     let mut advertising = ble_device.get_advertising().lock();
-    advertising
-      .set_instance_data(0, &mut ext_scannable)
-      .unwrap();
-    advertising
-      .set_instance_data(1, &mut legacy_connectable)
-      .unwrap();
-    advertising
-      .set_scan_response_data(1, &mut legacy_scan_response)
-      .unwrap();
+    advertising.set_instance_data(0, &mut ext_scannable)?;
+    advertising.set_instance_data(1, &mut legacy_connectable)?;
+    advertising.set_scan_response_data(1, &mut legacy_scan_response)?;
 
-    advertising.start(0).unwrap();
-    advertising.start(1).unwrap();
+    advertising.start(0)?;
+    advertising.start(1)?;
   }
 
   loop {

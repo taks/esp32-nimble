@@ -2,7 +2,7 @@ use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
 use esp_idf_sys as _;
 use std::format;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
   esp_idf_sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
@@ -63,15 +63,12 @@ fn main() {
       );
     });
 
-  ble_advertising
-    .lock()
-    .set_data(
-      BLEAdvertisementData::new()
-        .name("ESP32-GATT-Server")
-        .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
-    )
-    .unwrap();
-  ble_advertising.lock().start().unwrap();
+  ble_advertising.lock().set_data(
+    BLEAdvertisementData::new()
+      .name("ESP32-GATT-Server")
+      .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
+  )?;
+  ble_advertising.lock().start()?;
 
   server.ble_gatts_show_local();
 

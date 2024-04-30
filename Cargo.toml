@@ -42,8 +42,9 @@ once_cell = { version = "1.19.0", default-features = false }
 uuid = { version = "1", default-features = false, features = ["macro-diagnostics"] }
 
 [dev-dependencies]
+anyhow = "1"
 esp-idf-sys = { version = "0.34", default-features = false, features = ["binstart", "alloc_handler"] }
 
 [build-dependencies]
+anyhow = "1"
 embuild = "0.31.0"
-anyhow = "1.0.58"

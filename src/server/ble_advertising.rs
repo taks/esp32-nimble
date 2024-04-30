@@ -1,6 +1,11 @@
 use core::ffi::{c_int, c_void};
 
-use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisementData, BLEError, BLEServer};
+use crate::{
+  ble,
+  enums::*,
+  utilities::{as_void_ptr, voidp_to_ref},
+  BLEAdvertisementData, BLEError, BLEServer,
+};
 use alloc::boxed::Box;
 use once_cell::sync::Lazy;
 
@@ -191,7 +196,7 @@ impl BLEAdvertising {
         duration_ms,
         &self.adv_params,
         Some(handle_gap_event),
-        self as *mut Self as _,
+        as_void_ptr(self),
       ))?;
     }
 

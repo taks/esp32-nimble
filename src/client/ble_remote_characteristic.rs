@@ -4,7 +4,7 @@ use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
 use crate::{
   ble,
-  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
+  utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLEError, BLERemoteDescriptor, Signal,
 };
 use crate::{BLEAttribute, BLEClient};
@@ -106,7 +106,7 @@ impl BLERemoteCharacteristic {
             self.state.handle,
             self.state.service.upgrade().unwrap().end_handle,
             Some(Self::next_char_cb),
-            self as *mut Self as _,
+            as_void_ptr(self),
           ))?;
         }
 
@@ -120,7 +120,7 @@ impl BLERemoteCharacteristic {
             self.state.handle,
             self.state.end_handle,
             Some(Self::descriptor_disc_cb),
-            self as *mut Self as _,
+            as_void_ptr(self),
           ))?;
         }
         ble!(self.state.signal.wait().await)?;

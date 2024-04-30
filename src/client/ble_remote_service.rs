@@ -1,7 +1,7 @@
 use super::ble_client::BLEClientState;
 use crate::{
   ble,
-  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
+  utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLEAttribute, BLEClient, BLEError, BLERemoteCharacteristic, Signal,
 };
 use alloc::vec::Vec;
@@ -60,7 +60,7 @@ impl BLERemoteService {
           self.state.start_handle,
           self.state.end_handle,
           Some(Self::characteristic_disc_cb),
-          self as *mut Self as _,
+          as_void_ptr(self),
         ))?;
       }
       ble!(self.state.signal.wait().await)?;

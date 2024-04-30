@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use crate::{
   ble,
   enums::*,
-  utilities::{os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
+  utilities::{as_void_ptr, os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
   BLEAddress, BLEError, BLEServer,
 };
 
@@ -256,7 +256,7 @@ impl BLEExtAdvertising {
         &adv.params,
         core::ptr::null_mut(),
         Some(handle_gap_event),
-        self as *mut Self as _
+        as_void_ptr(self),
       ))?;
 
       let buf = os_msys_get_pkthdr(adv.payload.len() as _, 0);

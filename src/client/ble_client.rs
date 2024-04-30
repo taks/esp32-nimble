@@ -2,7 +2,7 @@ use crate::{
   ble,
   ble_device::OWN_ADDR_TYPE,
   ble_error::return_code_to_string,
-  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid},
+  utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid},
   BLEAddress, BLEDevice, BLEError, BLERemoteService, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
@@ -101,7 +101,7 @@ impl BLEClient {
         self.state.connect_timeout_ms as _,
         &self.state.ble_gap_conn_params,
         Some(Self::handle_gap_event),
-        self as *mut Self as _,
+        as_void_ptr(self),
       ))?;
     }
 
@@ -232,7 +232,7 @@ impl BLEClient {
         esp_idf_sys::ble_gattc_disc_all_svcs(
           self.state.conn_handle,
           Some(Self::service_discovered_cb),
-          self as *mut Self as _,
+          as_void_ptr(self),
         );
       }
       ble!(self.state.signal.wait().await)?;

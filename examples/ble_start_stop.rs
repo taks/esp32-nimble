@@ -70,13 +70,11 @@ fn main() -> anyhow::Result<()> {
       );
     });
 
-  ble_advertising
-    .lock()
-    .set_data(
-      BLEAdvertisementData::new()
-        .name("ESP32-GATT-Server")
-        .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
-    )?;
+  ble_advertising.lock().set_data(
+    BLEAdvertisementData::new()
+      .name("ESP32-GATT-Server")
+      .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
+  )?;
   ble_advertising.lock().start()?;
 
   let mut buf = [0_u8; 10];

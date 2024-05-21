@@ -1,9 +1,11 @@
-## [0.6.1]
+## [0.6.1] - 2024-05-21
 - Added BLECharacteristic.cpfd ([#114](https://github.com/taks/esp32-nimble/pull/114))
 - Added Accessor Functions ([#118](https://github.com/taks/esp32-nimble/pull/118))
 - Add resolve_rpa to keyboard example ([#120](https://github.com/taks/esp32-nimble/pull/120))
+- Fix memory leak ([#121](https://github.com/taks/esp32-nimble/pull/121))
+- Impl std::error::Error for BLEError ([#124](https://github.com/taks/esp32-nimble/pull/124))
 
-## [0.6.0]- 2024-03-07
+## [0.6.0] - 2024-03-07
 - Implement Display and Debug traits for BLERemoteCharacteristic & BLERemoteService ([#66](https://github.com/taks/esp32-nimble/pull/66))
 - Added `BLEAdvertising::on_complete`
 - Added `OnWriteArgs::notify::notify` ([#75](https://github.com/taks/esp32-nimble/pull/75))

@@ -74,6 +74,10 @@ impl BLEAdvertisedDevice {
     self.rssi
   }
 
+  pub(crate) fn update_rssi(&mut self, rssi: i8) {
+    self.rssi = rssi as i32;
+  }
+
   pub fn get_service_uuids(&self) -> core::slice::Iter<'_, BleUuid> {
     self.service_uuids.iter()
   }

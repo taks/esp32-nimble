@@ -28,14 +28,14 @@ debug = []
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-sys = { version = "0.34", default-features = false }
-esp-idf-hal = { version = "0.43", default-features = false, features = ["embassy-sync"] }
-esp-idf-svc = { version = "0.48", default-features = false, features = ["alloc"] }
-embedded-svc = { version = "0.27", default-features = false }
+esp-idf-sys = { version = "0.35", default-features = false }
+esp-idf-hal = { version = "0.44", default-features = false, features = ["embassy-sync"] }
+esp-idf-svc = { version = "0.49", default-features = false, features = ["alloc"] }
+embedded-svc = { version = "0.28", default-features = false }
 
 bitflags = { version = "2.4.1" }
 bstr = { version = "1.8.0", default-features = false }
-embassy-sync = { version = "0.5.0" }
+embassy-sync = { version = "0.6" }
 heapless = "0.8.0"
 num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
@@ -43,8 +43,8 @@ uuid = { version = "1", default-features = false, features = ["macro-diagnostics
 
 [dev-dependencies]
 anyhow = "1"
-esp-idf-sys = { version = "0.34", default-features = false, features = ["binstart", "alloc_handler"] }
+esp-idf-sys = { version = "0.35", default-features = false, features = ["binstart", "alloc_handler"] }
 
 [build-dependencies]
 anyhow = "1"
-embuild = "0.31.0"
+embuild = "0.32"

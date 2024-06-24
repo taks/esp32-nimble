@@ -209,6 +209,8 @@ impl BLEScan {
         ::log::debug!("DATA: {:X?}", data);
         advertised_device.parse_advertisement(data);
 
+        advertised_device.update_rssi(disc.rssi);
+
         if let Some(callback) = on_result {
           if scan.scan_params.passive() != 0
             || (advertised_device.adv_type() != AdvType::Ind

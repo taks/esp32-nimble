@@ -1,8 +1,7 @@
+use alloc::{vec, vec::Vec};
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 use once_cell::sync::Lazy;
-
-use alloc::vec;
-use alloc::vec::Vec;
 
 use crate::{
   ble,

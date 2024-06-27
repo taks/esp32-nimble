@@ -1,3 +1,4 @@
+use esp_idf_svc::sys as esp_idf_sys;
 use num_enum::IntoPrimitive;
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, IntoPrimitive)]

@@ -1,6 +1,7 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use bstr::{BStr, BString};
+use esp_idf_svc::sys as esp_idf_sys;
 
 use crate::enums::{AdvFlag, AdvType};
 use crate::utilities::BleUuid;

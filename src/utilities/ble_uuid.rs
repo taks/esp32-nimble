@@ -1,6 +1,7 @@
 // Originally: https://github.com/pulse-loop/bluedroid/blob/develop/src/utilities/ble_uuid.rs
 
 use alloc::string::String;
+use esp_idf_svc::sys as esp_idf_sys;
 
 /// A Bluetooth UUID.
 #[derive(Copy, Clone)]

@@ -11,6 +11,7 @@ use crate::{BLEAttribute, BLEClient};
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 
 bitflags! {
   #[repr(transparent)]

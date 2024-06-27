@@ -22,16 +22,13 @@ opt-level = "z"
 [features]
 default = ["std"]
 
-std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std", "bstr/std"]
-no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section", "bstr/alloc"]
+std = ["esp-idf-svc/std", "once_cell/std", "bstr/std"]
+no_std = ["once_cell/critical-section", "esp-idf-svc/critical-section", "bstr/alloc"]
 debug = []
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-sys = { version = "0.35", default-features = false }
-esp-idf-hal = { version = "0.44", default-features = false, features = ["embassy-sync"] }
-esp-idf-svc = { version = "0.49", default-features = false, features = ["alloc"] }
-embedded-svc = { version = "0.28", default-features = false }
+esp-idf-svc = { version = "0.49", default-features = false, features = ["alloc", "embassy-sync"] }
 
 bitflags = { version = "2.4.1" }
 bstr = { version = "1.8.0", default-features = false }
@@ -43,7 +40,7 @@ uuid = { version = "1", default-features = false, features = ["macro-diagnostics
 
 [dev-dependencies]
 anyhow = "1"
-esp-idf-sys = { version = "0.35", default-features = false, features = ["binstart", "alloc_handler"] }
+esp-idf-svc = "0.49"
 
 [build-dependencies]
 anyhow = "1"

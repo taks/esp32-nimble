@@ -1,4 +1,4 @@
-use esp_idf_sys::{BLE_HCI_LE_PHY_1M, BLE_HCI_LE_PHY_CODED};
+use esp_idf_svc::sys::{BLE_HCI_LE_PHY_1M, BLE_HCI_LE_PHY_CODED};
 
 use esp32_nimble::{
   utilities::BleUuid, BLEAddress, BLEAddressType, BLEDevice, BLEExtAdvertisement, NimbleProperties,
@@ -7,7 +7,7 @@ use esp32_nimble::{
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
 
 fn main() -> anyhow::Result<()> {
-  esp_idf_sys::link_patches();
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
   let ble_device = BLEDevice::take();
@@ -56,6 +56,6 @@ fn main() -> anyhow::Result<()> {
   }
 
   loop {
-    esp_idf_hal::delay::FreeRtos::delay_ms(5000);
+    esp_idf_svc::hal::delay::FreeRtos::delay_ms(5000);
   }
 }

@@ -1,4 +1,4 @@
-use esp_idf_sys::*;
+use esp_idf_svc::sys::*;
 
 #[inline]
 #[allow(unused)]

@@ -6,6 +6,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 
 pub struct BLERemoteServiceState {
   client: WeakUnsafeCell<BLEClientState>,

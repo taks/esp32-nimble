@@ -3,6 +3,7 @@ use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEErro
 use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 
 pub struct BLEScan {
   #[allow(clippy::type_complexity)]

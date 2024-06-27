@@ -6,6 +6,7 @@ use crate::{
   utilities::{BleUuid, WeakUnsafeCell},
   BLEError,
 };
+use esp_idf_svc::sys as esp_idf_sys;
 
 #[derive(Clone)]
 pub struct BLERemoteDescriptor {

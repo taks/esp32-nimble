@@ -1,4 +1,4 @@
-use esp_idf_sys::*;
+use esp_idf_svc::sys::*;
 use num_enum::TryFromPrimitive;
 
 /// Bluetooth Device address type
@@ -14,13 +14,13 @@ pub enum BLEAddressType {
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct BLEAddress {
-  pub(crate) value: esp_idf_sys::ble_addr_t,
+  pub(crate) value: ble_addr_t,
 }
 
 impl BLEAddress {
   pub fn new(val: [u8; 6], addr_type: BLEAddressType) -> Self {
     let mut ret = Self {
-      value: esp_idf_sys::ble_addr_t {
+      value: ble_addr_t {
         val,
         type_: addr_type as _,
       },
@@ -61,8 +61,8 @@ impl BLEAddress {
   }
 }
 
-impl From<esp_idf_sys::ble_addr_t> for BLEAddress {
-  fn from(value: esp_idf_sys::ble_addr_t) -> Self {
+impl From<ble_addr_t> for BLEAddress {
+  fn from(value: ble_addr_t) -> Self {
     Self { value }
   }
 }

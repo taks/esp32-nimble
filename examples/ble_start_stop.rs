@@ -1,12 +1,8 @@
 use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
-use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_hal::uart::*;
-use esp_idf_hal::units::Hertz;
-use esp_idf_hal::{delay::*, gpio};
-use esp_idf_sys as _;
+use esp_idf_svc::hal::{delay::*, gpio, peripherals::Peripherals, uart::*, units::Hertz};
 
 fn main() -> anyhow::Result<()> {
-  esp_idf_sys::link_patches();
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
   let peripherals = Peripherals::take()?;
@@ -80,7 +76,7 @@ fn main() -> anyhow::Result<()> {
   let mut buf = [0_u8; 10];
   let mut initialized = true;
   loop {
-    esp_idf_hal::delay::FreeRtos::delay_ms(1000);
+    esp_idf_svc::hal::delay::FreeRtos::delay_ms(1000);
     let len = uart.read(&mut buf, NON_BLOCK)?;
     if (buf[..len]).contains(&b's') {
       if initialized {

@@ -1,5 +1,6 @@
 use crate::{enums::PowerType, utilities::BleUuid, BLEDevice};
 use alloc::{string::String, vec::Vec};
+use esp_idf_svc::sys as esp_idf_sys;
 
 pub struct BLEAdvertisementData {
   // 0x01 - Flags

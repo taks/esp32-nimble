@@ -5,6 +5,7 @@ use crate::{
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
+use esp_idf_svc::sys as esp_idf_sys;
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 const MAX_CONNECTIONS: usize = esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _;

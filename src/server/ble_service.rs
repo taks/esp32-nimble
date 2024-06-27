@@ -1,4 +1,5 @@
 use alloc::{sync::Arc, vec::Vec};
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::ble_uuid_any_t;
 
 use crate::{

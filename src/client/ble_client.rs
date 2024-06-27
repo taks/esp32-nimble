@@ -7,6 +7,7 @@ use crate::{
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::*;
 
 #[allow(clippy::type_complexity)]

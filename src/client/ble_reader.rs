@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 
 use crate::{ble, utilities::voidp_to_ref, BLEError, Signal};
 

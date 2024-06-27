@@ -1,12 +1,11 @@
 use esp32_nimble::{enums::*, utilities::BleUuid, BLEClient, BLEDevice};
-use esp_idf_hal::task::block_on;
-use esp_idf_sys as _;
+use esp_idf_svc::hal::task::block_on;
 use log::*;
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
 
 fn main() -> anyhow::Result<()> {
-  esp_idf_sys::link_patches();
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
   block_on(async {

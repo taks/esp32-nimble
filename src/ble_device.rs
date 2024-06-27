@@ -3,6 +3,7 @@ use core::{
   ffi::c_void,
   sync::atomic::{AtomicBool, Ordering},
 };
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 

@@ -1,4 +1,5 @@
 use core::ffi::c_int;
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::os_mbuf;
 
 /// Allocate a packet header structure from the MSYS pool. See os_msys_register() for a description of MSYS.

@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use esp_idf_sys::*;
+use esp_idf_svc::sys::*;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[repr(u8)]
@@ -85,21 +85,21 @@ pub enum PowerType {
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum OwnAddrType {
-  Public = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _,
-  Random = esp_idf_sys::BLE_OWN_ADDR_RANDOM as _,
-  RpaPublicDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT as _,
-  RpaRandomDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
+  Public = BLE_OWN_ADDR_PUBLIC as _,
+  Random = BLE_OWN_ADDR_RANDOM as _,
+  RpaPublicDefault = BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT as _,
+  RpaRandomDefault = BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
 }
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum ConnMode {
   /// non-connectable (3.C.9.3.2)
-  Non = esp_idf_sys::BLE_GAP_CONN_MODE_NON as _,
+  Non = BLE_GAP_CONN_MODE_NON as _,
   /// directed-connectable (3.C.9.3.3)
-  Dir = esp_idf_sys::BLE_GAP_CONN_MODE_DIR as _,
+  Dir = BLE_GAP_CONN_MODE_DIR as _,
   /// undirected-connectable (3.C.9.3.4)
-  Und = esp_idf_sys::BLE_GAP_CONN_MODE_UND as _,
+  Und = BLE_GAP_CONN_MODE_UND as _,
 }
 
 #[repr(u8)]
@@ -143,13 +143,13 @@ bitflags! {
 #[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive)]
 pub enum AdvType {
   /// indirect advertising
-  Ind = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _,
+  Ind = BLE_HCI_ADV_TYPE_ADV_IND as _,
   /// direct advertising
-  DirectInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD as _,
+  DirectInd = BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD as _,
   /// indirect scan response
-  ScanInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_SCAN_IND as _,
+  ScanInd = BLE_HCI_ADV_TYPE_ADV_SCAN_IND as _,
   /// indirect advertising - not connectable
-  NonconnInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_NONCONN_IND as _,
+  NonconnInd = BLE_HCI_ADV_TYPE_ADV_NONCONN_IND as _,
   // DirectIndLd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD as _,
 }
 
@@ -158,11 +158,11 @@ bitflags! {
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct AdvFlag: u8 {
     /// LE Limited Discoverable Mode
-    const DiscLimited = esp_idf_sys::BLE_HS_ADV_F_DISC_LTD as _;
+    const DiscLimited = BLE_HS_ADV_F_DISC_LTD as _;
     /// LE General Discoverable Mode
-    const DiscGeneral = esp_idf_sys::BLE_HS_ADV_F_DISC_GEN as _;
+    const DiscGeneral = BLE_HS_ADV_F_DISC_GEN as _;
     /// BR/EDR Not Supported
-    const BrEdrUnsupported = esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP as _;
+    const BrEdrUnsupported = BLE_HS_ADV_F_BREDR_UNSUP as _;
     /// Simultaneous LE and BR/EDR to Same Device Capable (Controller)
     const SimultaneousController = 0b01000;
     /// Simultaneous LE and BR/EDR to Same Device Capable (Host)

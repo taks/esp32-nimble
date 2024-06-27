@@ -1,4 +1,5 @@
 use crate::enums;
+use esp_idf_svc::sys as esp_idf_sys;
 
 pub struct BLESecurity {
   passkey: u32,

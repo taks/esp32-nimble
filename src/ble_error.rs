@@ -1,4 +1,5 @@
 use core::num::NonZeroI32;
+use esp_idf_svc::sys as esp_idf_sys;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct BLEError(NonZeroI32);

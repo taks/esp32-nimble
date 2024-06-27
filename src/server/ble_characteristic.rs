@@ -1,6 +1,7 @@
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 #[cfg(all(

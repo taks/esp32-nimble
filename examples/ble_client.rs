@@ -1,12 +1,13 @@
 use bstr::ByteSlice;
 use esp32_nimble::{uuid128, BLEClient, BLEDevice};
-use esp_idf_hal::prelude::Peripherals;
-use esp_idf_hal::task::block_on;
-use esp_idf_hal::timer::{TimerConfig, TimerDriver};
-use esp_idf_sys as _;
+use esp_idf_svc::hal::{
+  prelude::Peripherals,
+  task::block_on,
+  timer::{TimerConfig, TimerDriver},
+};
 
 fn main() -> anyhow::Result<()> {
-  esp_idf_sys::link_patches();
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
   let peripherals = Peripherals::take()?;

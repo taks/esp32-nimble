@@ -25,17 +25,29 @@ bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct NimbleProperties: u16 {
+    /// Read Access Permitted
     const READ = esp_idf_sys::BLE_GATT_CHR_F_READ as _;
+    /// Read Requires Encryption
     const READ_ENC = esp_idf_sys::BLE_GATT_CHR_F_READ_ENC as _;
+    /// Read requires Authentication
     const READ_AUTHEN = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHEN as _;
+    /// Read requires Authorization
     const READ_AUTHOR = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHOR as _;
+    /// Write Permited
     const WRITE = esp_idf_sys::BLE_GATT_CHR_F_WRITE as _;
+    /// Write with no Ack Response
     const WRITE_NO_RSP = esp_idf_sys::BLE_GATT_CHR_F_WRITE_NO_RSP as _;
+    /// Write Requires Encryption
     const WRITE_ENC = esp_idf_sys::BLE_GATT_CHR_F_WRITE_ENC as _;
+    /// Write requires Authentication
     const WRITE_AUTHEN = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHEN as _;
+    /// Write requires Authorization
     const WRITE_AUTHOR = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHOR as _;
+    /// Broadcasts are included in the advertising data
     const BROADCAST = esp_idf_sys::BLE_GATT_CHR_F_BROADCAST as _;
+    /// Notifications are Sent from Server to Client with no Response
     const NOTIFY = esp_idf_sys::BLE_GATT_CHR_F_NOTIFY as _;
+    /// Indications are Sent from Server to Client where Server expects a Response
     const INDICATE = esp_idf_sys::BLE_GATT_CHR_F_INDICATE as _;
   }
 }

@@ -19,6 +19,15 @@ CONFIG_BT_NIMBLE_ENABLED=y
 - To enable Extended advertising, additionally append `CONFIG_BT_NIMBLE_EXT_ADV=y`.<br>
   (For use with ESP32C3, ESP32S3, ESP32H2 ONLY)
 
+### Increasing esp-ble task stack size for heavier compute loads
+In case you're computing large(-ish) values to return via bluetooth le or if you're running complicated / deeply nested code, you may have to increase the `esp-ble` task's stack size.
+To do so, add the below setting to your project's `sdconfig.defaults`
+```
+CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE=7000 
+```
+The default is defined in [The ESP-IDf documentation](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/kconfig.html#config-bt-nimble-host-task-stack-size) and may vary between 4096 or 5120, depending on your settings.
+
+
 ### Configuring for iOS Auto-Reconnection
 
 To enable seamless auto-reconnection of iOS devices with your ESP32 BLE server, you need to adjust settings in both the `sdkconfig` file and your Rust code.

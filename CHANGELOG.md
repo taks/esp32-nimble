@@ -1,3 +1,9 @@
+## [0.7.0] - 2024-07-11
+- Upgraded to `esp-idf-svc` 0.49
+- Fix: Update RSSI Field in BLEAdvertisedDevice Structure During Discovery ([#127](https://github.com/taks/esp32-nimble/pull/127))
+- Reflect new build args propagation in build.rs ([#129](https://github.com/taks/esp32-nimble/pull/129))
+- Update README.md to include tips on increasing esp-ble task stack size ([#131](https://github.com/taks/esp32-nimble/pull/131))
+
 ## [0.6.1] - 2024-05-21
 - Added BLECharacteristic.cpfd ([#114](https://github.com/taks/esp32-nimble/pull/114))
 - Added Accessor Functions ([#118](https://github.com/taks/esp32-nimble/pull/118))

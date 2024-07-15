@@ -93,6 +93,7 @@ impl core::fmt::Debug for BLEConnDesc {
       .field("bonded", &self.bonded())
       .field("encrypted", &self.encrypted())
       .field("authenticated", &self.authenticated())
+      .field("mtu", &self.mtu())
       .finish()
   }
 }

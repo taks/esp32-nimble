@@ -3,7 +3,7 @@ use crate::{
   ble_device::OWN_ADDR_TYPE,
   ble_error::return_code_to_string,
   utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid},
-  BLEAddress, BLEDevice, BLEError, BLERemoteService, Signal,
+  BLEAddress, BLEConnDesc, BLEDevice, BLEError, BLERemoteService, Signal,
 };
 use alloc::{boxed::Box, string::ToString, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
@@ -209,6 +209,10 @@ impl BLEClient {
         &params
       ))
     }
+  }
+
+  pub fn desc(&self) -> Result<BLEConnDesc, crate::BLEError> {
+    crate::utilities::ble_gap_conn_find(self.conn_handle())
   }
 
   /// Retrieves the most-recently measured RSSI.

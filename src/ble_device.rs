@@ -183,6 +183,23 @@ impl BLEDevice {
     unsafe { core::mem::transmute(esp_idf_sys::esp_ble_tx_power_get(power_type as _)) }
   }
 
+  /// Sets the preferred ATT MTU; the device will indicate this value in all subsequent ATT MTU exchanges.
+  /// The ATT MTU of a connection is equal to the lower of the two peers’preferred MTU values.
+  /// The ATT MTU is what dictates the maximum size of any message sent during a GATT procedure.
+  ///
+  /// The specified MTU must be within the following range: [23, BLE_ATT_MTU_MAX].
+  /// 23 is a minimum imposed by the Bluetooth specification;
+  /// BLE_ATT_MTU_MAX is a NimBLE compile-time setting.
+  pub fn set_preferred_mtu(&self, mtu: u16) -> Result<(), BLEError> {
+    unsafe { ble!(esp_idf_sys::ble_att_set_preferred_mtu(mtu)) }
+  }
+
+  /// Retrieves the preferred ATT MTU.
+  /// This is the value indicated by the device during an ATT MTU exchange.
+  pub fn get_preferred_mtu(&self) -> u16 {
+    unsafe { esp_idf_sys::ble_att_preferred_mtu() }
+  }
+
   /// Get the addresses of all bonded peer device.
   pub fn bonded_addresses(&self) -> Result<Vec<BLEAddress>, BLEError> {
     let mut peer_id_addrs =

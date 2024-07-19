@@ -1,12 +1,11 @@
 use crate::{
   ble,
   ble_device::OWN_ADDR_TYPE,
-  ble_error::return_code_to_string,
   utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid},
   BLEAddress, BLEConnDesc, BLEDevice, BLEError, BLERemoteService, Signal,
 };
-use alloc::{boxed::Box, string::ToString, vec::Vec};
-use core::{cell::UnsafeCell, ffi::c_void};
+use alloc::{boxed::Box, vec::Vec};
+use core::{cell::UnsafeCell, ffi::c_void, ptr};
 use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::*;
 
@@ -284,9 +283,8 @@ impl BLEClient {
         client.state.conn_handle = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 
         ::log::info!(
-          "Disconnected: {}",
-          return_code_to_string(disconnect.reason as _)
-            .map_or_else(|| disconnect.reason.to_string(), |x| x.to_string())
+          "Disconnected: {:?}",
+          BLEError::convert(disconnect.reason as _)
         );
 
         if let Some(callback) = &client.state.on_disconnect {
@@ -438,5 +436,15 @@ impl BLEClient {
 
     client.state.signal.signal(ret);
     ret as _
+  }
+}
+
+impl Drop for BLEClient {
+  fn drop(&mut self) {
+    if self.connected() {
+      unsafe {
+        esp_idf_sys::ble_gap_set_event_cb(self.conn_handle(), None, ptr::null_mut());
+      }
+    }
   }
 }

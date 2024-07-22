@@ -86,6 +86,7 @@ macro_rules! SM_US_ERR {
 }
 
 /// Error base for remote (peer) Security Manager errors (BLE_HS_ERR_SM_PEER_BASE : 0x500)
+#[allow(unused)]
 macro_rules! SM_PEER_ERR {
   ($x:expr) => {
     const { sys::BLE_HS_ERR_SM_PEER_BASE + $x }
@@ -93,6 +94,7 @@ macro_rules! SM_PEER_ERR {
 }
 
 /// hardware errors (BLE_HS_ERR_HW_BASE : 0x600)
+#[allow(unused)]
 macro_rules! HW_ERR {
   ($x:expr) => {
     const { sys::BLE_HS_ERR_HW_BASE + $x }

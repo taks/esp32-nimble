@@ -61,7 +61,7 @@ jobs:
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check
-        run: cargo clippy --target ${{ matrix.target }} -- -D clippy::all
+        run: cargo clippy --target ${{ matrix.target }} -- -D clippy::all -D warnings
       - name: Build
         run: cargo build --target ${{ matrix.target }}
       - name: Build | no_std

@@ -108,18 +108,17 @@ impl BLEScan {
     duration_ms: i32,
     callback: impl Fn(&BLEAdvertisedDevice) -> bool + Send + Sync,
   ) -> Result<Option<BLEAdvertisedDevice>, BLEError> {
-    let result = Arc::new(Mutex::new(Result::Ok(None)));
+    let result = Mutex::new(Result::Ok(None));
 
-    let result_clone = result.clone();
-    let mut on_result = move |scan: &mut Self, device: &BLEAdvertisedDevice| {
+    let mut on_result = |scan: &mut Self, device: &BLEAdvertisedDevice| {
       if callback(device) {
-        *result_clone.lock() = scan.stop().and(Ok(Some(device.clone())));
+        *result.lock() = scan.stop().and(Ok(Some(device.clone())));
       }
     };
 
     self.start_core(duration_ms, Some(&mut on_result)).await?;
-    let result = &*result.lock();
-    result.clone()
+
+    result.into_innter()
   }
 
   pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEError> {

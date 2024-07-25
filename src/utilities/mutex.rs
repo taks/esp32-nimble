@@ -53,6 +53,11 @@ impl<T> Mutex<T> {
     MutexGuard::new(self)
   }
 
+  #[inline(always)]
+  pub(crate) fn into_innter(self) -> T {
+    self.1.into_inner()
+  }
+
   #[inline]
   pub(crate) unsafe fn raw(&self) -> &'_ T {
     self.1.get().as_mut().unwrap()

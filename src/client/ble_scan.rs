@@ -1,6 +1,5 @@
 use crate::utilities::mutex::Mutex;
 use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEError, Signal};
-use alloc::sync::Arc;
 use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
 use esp_idf_svc::sys as esp_idf_sys;

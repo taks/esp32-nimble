@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
 
   let mut legacy_connectable =
     BLEExtAdvertisement::new(BLE_HCI_LE_PHY_1M as _, BLE_HCI_LE_PHY_1M as _);
-  legacy_connectable.address(&BLEAddress::new(
+  legacy_connectable.address(&BLEAddress::from_be_bytes(
     [0xDE, 0xAD, 0xBE, 0xEF, 0xBA, 0xAD],
     BLEAddressType::Random,
   ));

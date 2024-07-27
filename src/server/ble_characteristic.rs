@@ -410,7 +410,7 @@ impl BLECharacteristic {
   /// Do not call `lock` on this characteristic inside the callback, use the first input instead.
   /// In the future, this characteristic could be locked while the callback executes.
   /// * `callback` - Function to call when a subscription event is recieved, including subscribe and unsubscribe events
-  /// see [`crate::NimbleSub`] for event type
+  ///   see [`crate::NimbleSub`] for event type
   pub fn on_subscribe(
     &mut self,
     callback: impl FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync + 'static,

@@ -64,7 +64,7 @@ impl BLEServer {
 
   /// Set a callback fn for generating a passkey if required by the connection
   /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
-  /// will require the user to provide '001234'
+  ///   will require the user to provide '001234'
   /// * a static passkey can also be set by [`crate::BLESecurity::set_passkey`]
   pub fn on_passkey_request(
     &mut self,
@@ -97,8 +97,8 @@ impl BLEServer {
   /// The callback function is called when the pairing procedure is complete.
   /// * callback first parameter: A reference to a `BLEConnDesc` instance.
   /// * callback second parameter: Indicates the result of the encryption state change attempt;
-  /// o 0: the encrypted state was successfully updated;
-  /// o BLE host error code: the encryption state change attempt failed for the specified reason.
+  ///   o 0: the encrypted state was successfully updated;
+  ///   o BLE host error code: the encryption state change attempt failed for the specified reason.
   pub fn on_authentication_complete(
     &mut self,
     callback: impl Fn(&BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,

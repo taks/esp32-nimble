@@ -1,3 +1,10 @@
+## [0.8.0]
+- Added `BLEClient::desc`
+- Added `BLEDevice::set_preferred_mtu`, `BLEDevice::get_preferred_mtu`
+- Fixed corruption of read data
+- Fix Guru Meditation Error ([#133](https://github.com/taks/esp32-nimble/pull/133))
+- BleAddress LE and BE functions (breaking change) ([#137](https://github.com/taks/esp32-nimble/pull/137))
+
 ## [0.7.0] - 2024-07-11
 - Upgraded to `esp-idf-svc` 0.49
 - Fix: Update RSSI Field in BLEAdvertisedDevice Structure During Discovery ([#127](https://github.com/taks/esp32-nimble/pull/127))

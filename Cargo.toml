@@ -48,4 +48,4 @@ embuild = "0.32"
 
 [patch.crates-io]
 # see: https://github.com/esp-rs/espup/issues/440
-clang-sys = { git = "https://github.com/taks/clang-sys.git", branch = "load_with_flags_test"}
+clang-sys = { git = "https://github.com/taks/clang-sys.git", branch = "load_with_flags"}

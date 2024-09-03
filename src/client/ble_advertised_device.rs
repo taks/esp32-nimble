@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use bstr::{BStr, BString};
 use esp_idf_svc::sys as esp_idf_sys;
 
-use crate::enums::{AdvFlag, AdvType};
+use crate::enums::*;
 use crate::utilities::BleUuid;
 use crate::BLEAddress;
 
@@ -34,17 +34,50 @@ pub struct BLEAdvertisedDevice {
   service_data_list: Vec<BLEServiceData>,
   tx_power: Option<u8>,
   manufacture_data: Option<Vec<u8>>,
+
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  is_legacy_adv: bool,
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  sid: u8,
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  prim_phy: PrimPhy,
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  sec_phy: Option<SecPhy>,
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  periodic_itvl: u16,
 }
 
 impl BLEAdvertisedDevice {
-  pub(crate) fn new(param: &esp_idf_sys::ble_gap_disc_desc) -> Self {
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  pub(crate) fn new(disc: &esp_idf_sys::ble_gap_ext_disc_desc, event_type: u8) -> Self {
     Self {
-      addr: param.addr.into(),
-      adv_type: AdvType::try_from(param.event_type).unwrap(),
+      addr: disc.addr.into(),
+      adv_type: AdvType::try_from(event_type).unwrap(),
       adv_flags: None,
       appearance: None,
       name: BString::default(),
-      rssi: param.rssi as _,
+      rssi: disc.rssi as _,
+      service_uuids: Vec::new(),
+      service_data_list: Vec::new(),
+      tx_power: None,
+      manufacture_data: None,
+      is_legacy_adv: (disc.props & (esp_idf_sys::BLE_HCI_ADV_LEGACY_MASK as u8)) != 0,
+      sid: disc.sid,
+      prim_phy: PrimPhy::try_from(disc.prim_phy).unwrap(),
+      sec_phy: SecPhy::try_from(disc.sec_phy).ok(),
+      periodic_itvl: disc.periodic_adv_itvl,
+    }
+  }
+
+  #[cfg(not(esp_idf_bt_nimble_ext_adv))]
+  pub(crate) fn new(disc: &esp_idf_sys::ble_gap_disc_desc, _event_type: u8) -> Self {
+    Self {
+      addr: disc.addr.into(),
+      adv_type: AdvType::try_from(disc.event_type).unwrap(),
+      adv_flags: None,
+      appearance: None,
+      name: BString::default(),
+      rssi: disc.rssi as _,
       service_uuids: Vec::new(),
       service_data_list: Vec::new(),
       tx_power: None,
@@ -97,6 +130,36 @@ impl BLEAdvertisedDevice {
 
   pub fn get_manufacture_data(&self) -> Option<&[u8]> {
     self.manufacture_data.as_deref()
+  }
+
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  /// Check if this advertisement is a legacy or extended type
+  pub fn is_legacy_advertisement(&self) -> bool {
+    self.is_legacy_adv
+  }
+
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  /// Get the set ID of the extended advertisement.
+  pub fn sid(&self) -> u8 {
+    self.sid
+  }
+
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  /// Get the primary PHY used by this advertisement.
+  pub fn prim_phy(&self) -> PrimPhy {
+    self.prim_phy
+  }
+
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  /// Get the secondary PHY used by this advertisement.
+  pub fn sec_phy(&self) -> Option<SecPhy> {
+    self.sec_phy
+  }
+
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  /// Get the periodic interval of the advertisement.
+  pub fn periodic_itvl(&self) -> u16 {
+    self.periodic_itvl
   }
 
   pub(crate) fn parse_advertisement(&mut self, payload: &[u8]) {

@@ -20,7 +20,7 @@ fn main() -> anyhow::Result<()> {
     .create_characteristic(BleUuid::Uuid16(0x1234), NimbleProperties::READ);
   characteristic.lock().set_value("Hello, world!".as_bytes());
 
-  let mut ext_scannable = BLEExtAdvertisement::new(PrimPhy::PhyCoded, SecPhy::Phy1M);
+  let mut ext_scannable = BLEExtAdvertisement::new(PrimPhy::Coded, SecPhy::Phy1M);
   ext_scannable.scannable(true);
   ext_scannable.connectable(false);
 

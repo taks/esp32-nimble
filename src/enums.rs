@@ -199,3 +199,23 @@ pub enum AdvFilterPolicy {
   /// only allow scan/connections from those on the white list.
   Both = BLE_HCI_ADV_FILT_BOTH as _,
 }
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive, IntoPrimitive)]
+pub enum PrimPhy {
+  /// 1Mbps phy
+  Phy1M = BLE_HCI_LE_PHY_1M as _,
+  /// Coded phy
+  Coded = BLE_HCI_LE_PHY_CODED as _,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive, IntoPrimitive)]
+pub enum SecPhy {
+  /// 1Mbps phy
+  Phy1M = BLE_HCI_LE_PHY_1M as _,
+  /// 2Mbps phy
+  Phy2M = BLE_HCI_LE_PHY_2M as _,
+  /// Coded phy
+  Coded = BLE_HCI_LE_PHY_CODED as _,
+}

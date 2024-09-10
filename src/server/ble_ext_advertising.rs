@@ -17,13 +17,13 @@ pub struct BLEExtAdvertisement {
 }
 
 impl BLEExtAdvertisement {
-  pub fn new(primary_phy: u8, secondary_phy: u8) -> Self {
+  pub fn new(primary_phy: PrimPhy, secondary_phy: SecPhy) -> Self {
     Self {
       payload: Vec::new(),
       params: esp_idf_sys::ble_gap_ext_adv_params {
         own_addr_type: unsafe { crate::ble_device::OWN_ADDR_TYPE as _ },
-        primary_phy,
-        secondary_phy,
+        primary_phy: primary_phy.into(),
+        secondary_phy: secondary_phy.into(),
         tx_power: 127,
         ..Default::default()
       },

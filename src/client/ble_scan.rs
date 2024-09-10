@@ -28,8 +28,7 @@ impl BLEScan {
         itvl: 0,
         window: 0,
         filter_policy: esp_idf_sys::BLE_HCI_SCAN_FILT_NO_WL as _,
-        _bitfield_align_1: [0; 0],
-        _bitfield_1: esp_idf_sys::__BindgenBitfieldUnit::new([0; 1]),
+        ..Default::default()
       },
       stopped: true,
       scan_results: Vec::new(),
@@ -136,6 +135,32 @@ impl BLEScan {
     callback: Option<&mut (dyn FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync)>,
   ) -> Result<(), BLEError> {
     let cb_arg = (self, callback);
+
+    #[cfg(esp_idf_bt_nimble_ext_adv)]
+    {
+      let mut scan_params = esp_idf_sys::ble_gap_ext_disc_params {
+        itvl: cb_arg.0.scan_params.itvl,
+        window: cb_arg.0.scan_params.window,
+        ..Default::default()
+      };
+      scan_params.set_passive(cb_arg.0.scan_params.passive());
+      unsafe {
+        ble!(esp_idf_sys::ble_gap_ext_disc(
+          crate::ble_device::OWN_ADDR_TYPE as _,
+          (duration_ms / 10) as _,
+          0,
+          cb_arg.0.scan_params.filter_duplicates(),
+          cb_arg.0.scan_params.filter_policy,
+          cb_arg.0.scan_params.limited(),
+          &scan_params,
+          &scan_params,
+          Some(Self::handle_gap_event),
+          core::ptr::addr_of!(cb_arg) as _,
+        ))?;
+      }
+    }
+
+    #[cfg(not(esp_idf_bt_nimble_ext_adv))]
     unsafe {
       ble!(esp_idf_sys::ble_gap_disc(
         crate::ble_device::OWN_ADDR_TYPE as _,
@@ -145,8 +170,8 @@ impl BLEScan {
         core::ptr::addr_of!(cb_arg) as _,
       ))?;
     }
-    cb_arg.0.stopped = false;
 
+    cb_arg.0.stopped = false;
     cb_arg.0.signal.wait().await;
     Ok(())
   }
@@ -185,7 +210,23 @@ impl BLEScan {
 
     match event.type_ as u32 {
       esp_idf_sys::BLE_GAP_EVENT_EXT_DISC | esp_idf_sys::BLE_GAP_EVENT_DISC => {
+        #[cfg(esp_idf_bt_nimble_ext_adv)]
+        let disc = unsafe { &event.__bindgen_anon_1.ext_disc };
+        #[cfg(esp_idf_bt_nimble_ext_adv)]
+        let is_legacy_adv = (disc.props & (esp_idf_sys::BLE_HCI_ADV_LEGACY_MASK as u8)) != 0;
+        #[cfg(esp_idf_bt_nimble_ext_adv)]
+        let event_type = if is_legacy_adv {
+          disc.legacy_event_type
+        } else {
+          disc.props
+        };
+
+        #[cfg(not(esp_idf_bt_nimble_ext_adv))]
         let disc = unsafe { &event.__bindgen_anon_1.disc };
+        #[cfg(not(esp_idf_bt_nimble_ext_adv))]
+        let is_legacy_adv = true;
+        #[cfg(not(esp_idf_bt_nimble_ext_adv))]
+        let event_type = disc.event_type;
 
         let mut advertised_device = scan
           .scan_results
@@ -193,15 +234,14 @@ impl BLEScan {
           .find(|x| x.addr().value.val == disc.addr.val);
 
         if advertised_device.is_none() {
-          if disc.event_type != esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {
-            let device = BLEAdvertisedDevice::new(disc);
+          if !is_legacy_adv || event_type != esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {
+            let device = BLEAdvertisedDevice::new(disc, event_type);
             scan.scan_results.push(device);
             advertised_device = scan.scan_results.last_mut();
           } else {
             return 0;
           }
         }
-
         let advertised_device = advertised_device.unwrap();
 
         let data = unsafe { core::slice::from_raw_parts(disc.data, disc.length_data as _) };
@@ -212,9 +252,10 @@ impl BLEScan {
 
         if let Some(callback) = on_result {
           if scan.scan_params.passive() != 0
+            || !is_legacy_adv
             || (advertised_device.adv_type() != AdvType::Ind
               && advertised_device.adv_type() != AdvType::ScanInd)
-            || disc.event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
+            || event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
           {
             let (scan, _) = unsafe { voidp_to_ref::<CbArgType>(arg) };
             callback(scan, advertised_device);

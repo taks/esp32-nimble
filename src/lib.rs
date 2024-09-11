@@ -5,6 +5,7 @@
 #![feature(decl_macro)]
 #![feature(get_mut_unchecked)]
 #![feature(inline_const_pat)]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 
 #[cfg(feature = "std")]

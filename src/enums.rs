@@ -139,18 +139,32 @@ bitflags! {
   }
 }
 
-#[repr(u8)]
-#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum AdvType {
   /// indirect advertising
-  Ind = BLE_HCI_ADV_TYPE_ADV_IND as _,
+  Ind,
   /// direct advertising
-  DirectInd = BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD as _,
+  DirectInd,
   /// indirect scan response
-  ScanInd = BLE_HCI_ADV_TYPE_ADV_SCAN_IND as _,
+  ScanInd,
   /// indirect advertising - not connectable
-  NonconnInd = BLE_HCI_ADV_TYPE_ADV_NONCONN_IND as _,
-  // DirectIndLd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD as _,
+  NonconnInd,
+  ScanResponse,
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  Extended(u8),
+}
+
+impl AdvType {
+  pub(crate) fn from_event_type(event_type: u8) -> Self {
+    match event_type as u32 {
+      BLE_HCI_ADV_RPT_EVTYPE_ADV_IND => AdvType::Ind,
+      BLE_HCI_ADV_RPT_EVTYPE_DIR_IND => AdvType::DirectInd,
+      BLE_HCI_ADV_RPT_EVTYPE_SCAN_IND => AdvType::ScanInd,
+      BLE_HCI_ADV_RPT_EVTYPE_NONCONN_IND => AdvType::NonconnInd,
+      BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP => AdvType::ScanResponse,
+      5.. => unreachable!(),
+    }
+  }
 }
 
 bitflags! {

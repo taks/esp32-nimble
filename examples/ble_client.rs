@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEClient, BLEDevice};
+use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEScan};
 use esp_idf_svc::hal::{
   prelude::Peripherals,
   task::block_on,
@@ -15,12 +15,19 @@ fn main() -> anyhow::Result<()> {
 
   block_on(async {
     let ble_device = BLEDevice::take();
-    let ble_scan = ble_device.get_scan();
+    let mut ble_scan = BLEScan::new();
     let device = ble_scan
       .active_scan(true)
       .interval(100)
       .window(99)
-      .find_device(10000, |device| device.name().contains_str("ESP32"))
+      .start(ble_device, 10000, |device, data| {
+        if let Some(name) = data.name() {
+          if name.contains_str("ESP32") {
+            return Some(*device);
+          }
+        }
+        None
+      })
       .await?;
 
     if let Some(device) = device {
@@ -28,7 +35,7 @@ fn main() -> anyhow::Result<()> {
       client.on_connect(|client| {
         client.update_conn_params(120, 120, 0, 60).unwrap();
       });
-      client.connect(device.addr()).await?;
+      client.connect(&device.addr()).await?;
 
       let service = client
         .get_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"))

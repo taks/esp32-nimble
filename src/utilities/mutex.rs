@@ -42,6 +42,7 @@ unsafe impl Send for RawMutex {}
 
 pub struct Mutex<T>(RawMutex, UnsafeCell<T>);
 
+#[allow(dead_code)]
 impl<T> Mutex<T> {
   #[inline(always)]
   pub const fn new(data: T) -> Self {

@@ -1,37 +1,27 @@
-use crate::utilities::mutex::Mutex;
 use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEError, Signal};
-use alloc::{boxed::Box, vec::Vec};
+use crate::{BLEAdvertisedData, BLEDevice};
 use core::ffi::c_void;
-use esp_idf_svc::sys as esp_idf_sys;
+use esp_idf_svc::sys;
 
 pub struct BLEScan {
-  #[allow(clippy::type_complexity)]
-  on_result: Option<Box<dyn FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync>>,
-  on_completed: Option<Box<dyn FnMut() + Send + Sync>>,
-  scan_params: esp_idf_sys::ble_gap_disc_params,
-  stopped: bool,
-  scan_results: Vec<BLEAdvertisedDevice>,
+  scan_params: sys::ble_gap_disc_params,
   signal: Signal<()>,
 }
 
 type CbArgType<'a> = (
   &'a mut BLEScan,
-  Option<&'a mut (dyn FnMut(&mut BLEScan, &BLEAdvertisedDevice) + Send + Sync)>,
+  &'a mut (dyn FnMut(&mut BLEScan, &BLEAdvertisedDevice, BLEAdvertisedData<&[u8]>)),
 );
 
 impl BLEScan {
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     let mut ret = Self {
-      on_result: None,
-      on_completed: None,
-      scan_params: esp_idf_sys::ble_gap_disc_params {
+      scan_params: sys::ble_gap_disc_params {
         itvl: 0,
         window: 0,
-        filter_policy: esp_idf_sys::BLE_HCI_SCAN_FILT_NO_WL as _,
+        filter_policy: sys::BLE_HCI_SCAN_FILT_NO_WL as _,
         ..Default::default()
       },
-      stopped: true,
-      scan_results: Vec::new(),
       signal: Signal::new(),
     };
     ret.limited(false);
@@ -75,77 +65,59 @@ impl BLEScan {
     self
   }
 
-  /// Set a callback to be called when a new scan result is detected.
-  /// * callback first parameter: The reference to `Self`
-  /// * callback second parameter: Newly found device
-  pub fn on_result(
-    &mut self,
-    callback: impl FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync + 'static,
-  ) -> &mut Self {
-    self.on_result = Some(Box::new(callback));
-    self
-  }
-
-  pub fn on_completed(&mut self, callback: impl FnMut() + Send + Sync + 'static) -> &mut Self {
-    self.on_completed = Some(Box::new(callback));
-    self
-  }
-
-  /// Asynchronously finds a device.
-  ///
   /// # Examples
   ///
   /// ```
-  /// let ble_device = BLEDevice::take().unwrap();
-  /// let ble_scan = ble_device.get_scan();
+  /// let ble_device = BLEDevice::take();
+  /// let ble_scan = BLEScan::new();
   /// let name = "Device Name To Be Found";
-  /// let device = ble_scan.find_device(10000, |device| device.name() == name).await.unwrap();
+  /// let device = ble_scan
+  ///   .start(ble_device, 10000, |device, data| {
+  ///     if let Some(device_name) = data.name() {
+  ///       if device_name == name {
+  ///         return Some(*device);
+  ///       }
+  ///     }
+  ///     None
+  ///   })
+  ///   .await
+  ///   .unwrap();
   /// ```
-  pub async fn find_device(
+  pub async fn start<F, R>(
     &mut self,
+    _ble_device: &BLEDevice,
     duration_ms: i32,
-    callback: impl Fn(&BLEAdvertisedDevice) -> bool + Send + Sync,
-  ) -> Result<Option<BLEAdvertisedDevice>, BLEError> {
-    let result = Mutex::new(Result::Ok(None));
+    mut callback: F,
+  ) -> Result<Option<R>, BLEError>
+  where
+    F: FnMut(&BLEAdvertisedDevice, BLEAdvertisedData<&[u8]>) -> Option<R>,
+  {
+    let mut result: Option<R> = None;
 
-    let mut on_result = |scan: &mut Self, device: &BLEAdvertisedDevice| {
-      if callback(device) {
-        *result.lock() = scan.stop().and(Ok(Some(device.clone())));
-      }
-    };
+    let mut on_result =
+      |scan: &mut Self, device: &BLEAdvertisedDevice, data: BLEAdvertisedData<&[u8]>| {
+        if let Some(res) = callback(device, data) {
+          result = Some(res);
 
-    self.start_core(duration_ms, Some(&mut on_result)).await?;
+          if let Err(err) = Self::stop() {
+            ::log::warn!("scan stop err: {:?}", err);
+          }
+          scan.signal.signal(());
+        }
+      };
 
-    result.into_innter()
-  }
-
-  pub async fn start(&mut self, duration_ms: i32) -> Result<(), BLEError> {
-    unsafe {
-      let scan = self as *mut Self;
-
-      let callback = (*scan).on_result.as_deref_mut(); // .as_ref().map(|x| x.deref_mut());
-      (*scan).start_core(duration_ms, callback).await
-    }
-  }
-
-  #[allow(clippy::type_complexity)]
-  async fn start_core(
-    &mut self,
-    duration_ms: i32,
-    callback: Option<&mut (dyn FnMut(&mut Self, &BLEAdvertisedDevice) + Send + Sync)>,
-  ) -> Result<(), BLEError> {
-    let cb_arg = (self, callback);
+    let cb_arg: CbArgType = (self, &mut on_result);
 
     #[cfg(esp_idf_bt_nimble_ext_adv)]
     {
-      let mut scan_params = esp_idf_sys::ble_gap_ext_disc_params {
+      let mut scan_params = sys::ble_gap_ext_disc_params {
         itvl: cb_arg.0.scan_params.itvl,
         window: cb_arg.0.scan_params.window,
         ..Default::default()
       };
       scan_params.set_passive(cb_arg.0.scan_params.passive());
       unsafe {
-        ble!(esp_idf_sys::ble_gap_ext_disc(
+        ble!(sys::ble_gap_ext_disc(
           crate::ble_device::OWN_ADDR_TYPE as _,
           (duration_ms / 10) as _,
           0,
@@ -162,7 +134,7 @@ impl BLEScan {
 
     #[cfg(not(esp_idf_bt_nimble_ext_adv))]
     unsafe {
-      ble!(esp_idf_sys::ble_gap_disc(
+      ble!(sys::ble_gap_disc(
         crate::ble_device::OWN_ADDR_TYPE as _,
         duration_ms,
         &cb_arg.0.scan_params,
@@ -171,101 +143,41 @@ impl BLEScan {
       ))?;
     }
 
-    cb_arg.0.stopped = false;
     cb_arg.0.signal.wait().await;
-    Ok(())
+
+    Ok(result)
   }
 
-  pub fn stop(&mut self) -> Result<(), BLEError> {
-    self.stopped = true;
-    let rc = unsafe { esp_idf_sys::ble_gap_disc_cancel() };
-    if rc != 0 && rc != (esp_idf_sys::BLE_HS_EALREADY as _) {
+  fn stop() -> Result<(), BLEError> {
+    let rc = unsafe { sys::ble_gap_disc_cancel() };
+    if rc != 0 && rc != (sys::BLE_HS_EALREADY as _) {
       return BLEError::convert(rc as _);
     }
 
-    if let Some(callback) = self.on_completed.as_mut() {
-      callback();
-    }
-    self.signal.signal(());
-
     Ok(())
   }
 
-  pub fn get_results(&mut self) -> core::slice::Iter<'_, BLEAdvertisedDevice> {
-    self.scan_results.iter()
-  }
-
-  pub fn clear_results(&mut self) {
-    self.scan_results.clear();
-  }
-
-  pub(crate) fn reset(&mut self) {
-    self.on_result = None;
-    self.on_completed = None;
-  }
-
-  extern "C" fn handle_gap_event(event: *mut esp_idf_sys::ble_gap_event, arg: *mut c_void) -> i32 {
+  extern "C" fn handle_gap_event(event: *mut sys::ble_gap_event, arg: *mut c_void) -> i32 {
     let event = unsafe { &*event };
     let (scan, on_result) = unsafe { voidp_to_ref::<CbArgType>(arg) };
 
     match event.type_ as u32 {
-      esp_idf_sys::BLE_GAP_EVENT_EXT_DISC | esp_idf_sys::BLE_GAP_EVENT_DISC => {
+      sys::BLE_GAP_EVENT_EXT_DISC | sys::BLE_GAP_EVENT_DISC => {
         #[cfg(esp_idf_bt_nimble_ext_adv)]
         let disc = unsafe { &event.__bindgen_anon_1.ext_disc };
-        #[cfg(esp_idf_bt_nimble_ext_adv)]
-        let is_legacy_adv = (disc.props & (esp_idf_sys::BLE_HCI_ADV_LEGACY_MASK as u8)) != 0;
-        #[cfg(esp_idf_bt_nimble_ext_adv)]
-        let event_type = if is_legacy_adv {
-          disc.legacy_event_type
-        } else {
-          disc.props
-        };
 
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]
         let disc = unsafe { &event.__bindgen_anon_1.disc };
-        #[cfg(not(esp_idf_bt_nimble_ext_adv))]
-        let is_legacy_adv = true;
-        #[cfg(not(esp_idf_bt_nimble_ext_adv))]
-        let event_type = disc.event_type;
 
-        let mut advertised_device = scan
-          .scan_results
-          .iter_mut()
-          .find(|x| x.addr().value.val == disc.addr.val);
+        let data = BLEAdvertisedData::new(unsafe {
+          core::slice::from_raw_parts(disc.data, disc.length_data as _)
+        });
 
-        if advertised_device.is_none() {
-          if !is_legacy_adv || event_type != esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _ {
-            let device = BLEAdvertisedDevice::new(disc, event_type);
-            scan.scan_results.push(device);
-            advertised_device = scan.scan_results.last_mut();
-          } else {
-            return 0;
-          }
-        }
-        let advertised_device = advertised_device.unwrap();
+        let advertised_device: &BLEAdvertisedDevice = unsafe { core::mem::transmute(disc) };
 
-        let data = unsafe { core::slice::from_raw_parts(disc.data, disc.length_data as _) };
-        ::log::debug!("DATA: {:X?}", data);
-        advertised_device.parse_advertisement(data);
-
-        advertised_device.update_rssi(disc.rssi);
-
-        if let Some(callback) = on_result {
-          if scan.scan_params.passive() != 0
-            || !is_legacy_adv
-            || (advertised_device.adv_type() != AdvType::Ind
-              && advertised_device.adv_type() != AdvType::ScanInd)
-            || event_type == esp_idf_sys::BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP as _
-          {
-            let (scan, _) = unsafe { voidp_to_ref::<CbArgType>(arg) };
-            callback(scan, advertised_device);
-          }
-        }
+        on_result(scan, advertised_device, data);
       }
-      esp_idf_sys::BLE_GAP_EVENT_DISC_COMPLETE => {
-        if let Some(callback) = scan.on_completed.as_mut() {
-          callback();
-        }
+      sys::BLE_GAP_EVENT_DISC_COMPLETE => {
         scan.signal.signal(());
       }
       _ => {}

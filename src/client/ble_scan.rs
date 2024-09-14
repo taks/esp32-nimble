@@ -3,6 +3,26 @@ use crate::{BLEAdvertisedData, BLEDevice};
 use core::ffi::c_void;
 use esp_idf_svc::sys;
 
+  /// Scan for ble devices.
+  ///
+  /// # Examples
+  ///
+  /// ```
+  /// let ble_device = BLEDevice::take();
+  /// let ble_scan = BLEScan::new();
+  /// let name = "Device Name To Be Found";
+  /// let device = ble_scan
+  ///   .start(ble_device, 10000, |device, data| {
+  ///     if let Some(device_name) = data.name() {
+  ///       if device_name == name {
+  ///         return Some(*device);
+  ///       }
+  ///     }
+  ///     None
+  ///   })
+  ///   .await
+  ///   .unwrap();
+  /// ```
 pub struct BLEScan {
   scan_params: sys::ble_gap_disc_params,
   signal: Signal<()>,
@@ -65,24 +85,9 @@ impl BLEScan {
     self
   }
 
-  /// # Examples
-  ///
-  /// ```
-  /// let ble_device = BLEDevice::take();
-  /// let ble_scan = BLEScan::new();
-  /// let name = "Device Name To Be Found";
-  /// let device = ble_scan
-  ///   .start(ble_device, 10000, |device, data| {
-  ///     if let Some(device_name) = data.name() {
-  ///       if device_name == name {
-  ///         return Some(*device);
-  ///       }
-  ///     }
-  ///     None
-  ///   })
-  ///   .await
-  ///   .unwrap();
-  /// ```
+  /// The callback function must return Option type.
+  /// If it returns None, the scan continues.
+  /// If Some(r) is returned, the scan stops and the start function returns the return value of the callback.
   pub async fn start<F, R>(
     &mut self,
     _ble_device: &BLEDevice,

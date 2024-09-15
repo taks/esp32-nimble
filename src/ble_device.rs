@@ -7,10 +7,7 @@ use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 
-use crate::{
-  ble, client::BLEScan, enums::*, utilities::mutex::Mutex, BLEAddress, BLEError, BLESecurity,
-  BLEServer,
-};
+use crate::{ble, enums::*, utilities::mutex::Mutex, BLEAddress, BLEError, BLESecurity, BLEServer};
 
 #[cfg(not(esp_idf_bt_nimble_ext_adv))]
 type BLEAdvertising = crate::BLEAdvertising;
@@ -38,7 +35,6 @@ static mut BLE_DEVICE: Lazy<BLEDevice> = Lazy::new(|| {
     security: BLESecurity::new(),
   }
 });
-static mut BLE_SCAN: Lazy<BLEScan> = Lazy::new(BLEScan::new);
 pub static mut BLE_SERVER: Lazy<BLEServer> = Lazy::new(BLEServer::new);
 static BLE_ADVERTISING: Lazy<Mutex<BLEAdvertising>> =
   Lazy::new(|| Mutex::new(BLEAdvertising::new()));
@@ -146,16 +142,8 @@ impl BLEDevice {
       if let Some(server) = Lazy::get_mut(&mut BLE_SERVER) {
         server.reset();
       }
-
-      if let Some(scan) = Lazy::get_mut(&mut BLE_SCAN) {
-        scan.reset();
-      }
     }
     Ok(())
-  }
-
-  pub fn get_scan(&self) -> &'static mut BLEScan {
-    unsafe { Lazy::force_mut(&mut BLE_SCAN) }
   }
 
   pub fn get_server(&self) -> &'static mut BLEServer {

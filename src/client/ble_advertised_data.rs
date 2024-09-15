@@ -35,42 +35,15 @@ impl<T: AsRef<[u8]>> BLEAdvertisedData<T> {
     AdvFlag::from_bits(*ad_flag)
   }
 
-  #[allow(unused_variables)]
   pub fn is_advertising_service(&self, uuid: &BleUuid) -> bool {
-    todo!()
+    self.service_uuids().any(|x| &x == uuid)
   }
 
-  pub fn service_uuids(&self) -> Vec<BleUuid> {
-    let mut ret = Vec::new();
-    self.decode().for_each(|x| match x.ty as u32 {
-      sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS16 | sys::BLE_HS_ADV_TYPE_COMP_UUIDS16 => {
-        let mut data = x.data;
-        while data.len() >= 2 {
-          let (uuid, data_) = data.split_at(2);
-          ret.push(BleUuid::from_uuid16(u16::from_le_bytes(
-            uuid.try_into().unwrap(),
-          )));
-          data = data_;
-        }
-      }
-      sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS32 | sys::BLE_HS_ADV_TYPE_COMP_UUIDS32 => {
-        let mut data = x.data;
-        while data.len() >= 4 {
-          let (uuid, data_) = data.split_at(4);
-          ret.push(BleUuid::from_uuid32(u32::from_le_bytes(
-            uuid.try_into().unwrap(),
-          )));
-          data = data_;
-        }
-      }
-      sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS128 | sys::BLE_HS_ADV_TYPE_COMP_UUIDS128 => {
-        if let Ok(data) = x.data.try_into() {
-          ret.push(BleUuid::Uuid128(data));
-        }
-      }
-      _ => {}
-    });
-    ret
+  pub fn service_uuids(&self) -> impl Iterator<Item = BleUuid> + '_ {
+    ServiceUuidsIter {
+      iter: self.decode(),
+      current: None,
+    }
   }
 
   pub fn name(&self) -> Option<&BStr> {
@@ -134,10 +107,6 @@ impl<T: AsRef<[u8]>> BLEAdvertisedData<T> {
     })
   }
 
-  pub fn test(&self) -> impl Iterator<Item = &u8> {
-    self.payload().iter().filter(|x| (**x) != 2)
-  }
-
   fn decode(&self) -> AdStructureIter<'_> {
     AdStructureIter {
       payload: self.payload(),
@@ -148,7 +117,10 @@ impl<T: AsRef<[u8]>> BLEAdvertisedData<T> {
 impl<T: AsRef<[u8]>> core::fmt::Debug for BLEAdvertisedData<T> {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     let mut f = f.debug_struct("BLEAdvertisedData");
-    // f.field("types", &self.decode().map(|x| x.ty).collect::<Vec<_>>());
+
+    #[cfg(feature = "debug")]
+    f.field("types", &self.decode().map(|x| x.ty).collect::<Vec<_>>());
+
     if let Some(adv_flags) = self.adv_flags() {
       f.field("adv_flags", &adv_flags);
     }
@@ -161,7 +133,7 @@ impl<T: AsRef<[u8]>> core::fmt::Debug for BLEAdvertisedData<T> {
     if let Some(manufacture_data) = self.manufacture_data() {
       f.field("manufacture_data", &manufacture_data);
     }
-    let service_uuids = self.service_uuids();
+    let service_uuids: Vec<BleUuid> = self.service_uuids().collect();
     if !service_uuids.is_empty() {
       f.field("service_uuids", &service_uuids);
     }
@@ -207,5 +179,73 @@ impl<'d> Iterator for AdStructureIter<'d> {
       ty: unsafe { *data.get_unchecked(1) },
       data: data.get(2..(length + 1)).unwrap(),
     });
+  }
+}
+
+struct ServiceUuidsIter<'d> {
+  iter: AdStructureIter<'d>,
+  current: Option<AdData<'d>>,
+}
+
+impl<'d> Iterator for ServiceUuidsIter<'d> {
+  type Item = BleUuid;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.current.is_none() {
+      loop {
+        self.current = self.iter.next();
+        if let Some(current) = &self.current {
+          if matches!(
+            current.ty as u32,
+            sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS16
+              | sys::BLE_HS_ADV_TYPE_COMP_UUIDS16
+              | sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS32
+              | sys::BLE_HS_ADV_TYPE_COMP_UUIDS32
+              | sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS128
+              | sys::BLE_HS_ADV_TYPE_COMP_UUIDS128
+          ) {
+            break;
+          }
+        } else {
+          return None;
+        }
+      }
+    }
+
+    let current = self.current.as_mut().unwrap();
+    match current.ty as u32 {
+      sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS16 | sys::BLE_HS_ADV_TYPE_COMP_UUIDS16 => {
+        if let Some((uuid, next)) = current.data.split_at_checked(2) {
+          current.data = next;
+          Some(BleUuid::from_uuid16(u16::from_le_bytes(
+            uuid.try_into().unwrap(),
+          )))
+        } else {
+          self.current = None;
+          self.next()
+        }
+      }
+      sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS32 | sys::BLE_HS_ADV_TYPE_COMP_UUIDS32 => {
+        if let Some((uuid, next)) = current.data.split_at_checked(4) {
+          current.data = next;
+          Some(BleUuid::from_uuid32(u32::from_le_bytes(
+            uuid.try_into().unwrap(),
+          )))
+        } else {
+          self.current = None;
+          self.next()
+        }
+      }
+      sys::BLE_HS_ADV_TYPE_INCOMP_UUIDS128 | sys::BLE_HS_ADV_TYPE_COMP_UUIDS128 => {
+        if let Ok(data) = current.data.try_into() {
+          self.current = None;
+          Some(BleUuid::Uuid128(data))
+        } else {
+          self.current = None;
+          self.next()
+        }
+      }
+      _ => unreachable!(),
+    }
   }
 }

@@ -59,7 +59,7 @@ impl BLESecurity {
 
   /// Set up for pairing in RPA(Resolvable Private Address).
   ///
-  /// ( see: https://github.com/taks/esp32-nimble/issues/24 )
+  /// ( see: <https://github.com/taks/esp32-nimble/issues/24> )
   pub fn resolve_rpa(&mut self) -> &mut Self {
     self
       .set_security_init_key(enums::PairKeyDist::ENC | enums::PairKeyDist::ID)

@@ -17,6 +17,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ESP_IDF_SDKCONFIG_DEFAULTS: "${{ github.workspace }}/.github/configs/sdkconfig.defaults"
 
 jobs:
   build:
@@ -31,7 +32,7 @@ jobs:
           default: true
           ldproxy: true
       - name: Build Documentation
-        run: cargo doc --no-deps --target xtensa-esp32-espidf -p esp-idf-sys -p esp32-nimble
+        run: cargo doc --no-deps --target xtensa-esp32s3-espidf -p esp-idf-sys -p esp32-nimble
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

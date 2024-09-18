@@ -1,4 +1,4 @@
-## [0.8.0]
+## [0.8.0] - 2024-09-18
 - Added `BLEClient::desc`
 - Added `BLEDevice::set_preferred_mtu`, `BLEDevice::get_preferred_mtu`
 - Fixed corruption of read data

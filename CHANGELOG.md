@@ -4,6 +4,9 @@
 - Fixed corruption of read data
 - Fix Guru Meditation Error ([#133](https://github.com/taks/esp32-nimble/pull/133))
 - BleAddress LE and BE functions (breaking change) ([#137](https://github.com/taks/esp32-nimble/pull/137))
+- Added extended advertising scan support ([#141](https://github.com/taks/esp32-nimble/pull/141))
+- Changed scan API (breaking change) ([#142](https://github.com/taks/esp32-nimble/pull/142))
+- Add member docs to NimbleProperties ([#103](https://github.com/taks/esp32-nimble/pull/103))
 
 ## [0.7.0] - 2024-07-11
 - Upgraded to `esp-idf-svc` 0.49

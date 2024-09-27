@@ -20,27 +20,28 @@ jobs:
       matrix:
         include:
           - target: riscv32imc-esp-espidf
-            idf-version: release/v4.4
-            rustflags: "-C default-linker-libraries"
-          - target: riscv32imc-esp-espidf
             idf-version: v5.1.3
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
             ble5-example: true
           - target: riscv32imc-esp-espidf
             idf-version: v5.2.1
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
+          - target: riscv32imc-esp-espidf
+            idf-version: v5.2.3
+            rustflags: "-C default-linker-libraries --cfg espidf_time64"
           - target: riscv32imac-esp-espidf
             idf-version: v5.1.3
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
             mcu: esp32c6
-          - target: xtensa-esp32-espidf
-            idf-version: release/v4.4
           - target: xtensa-esp32-espidf
             idf-version: v5.1.3
             rustflags: "--cfg espidf_time64"
             ble-example: true
           - target: xtensa-esp32-espidf
             idf-version: v5.2.1
+            rustflags: "--cfg espidf_time64"
+          - target: xtensa-esp32-espidf
+            idf-version: v5.2.3
             rustflags: "--cfg espidf_time64"
 
     steps:

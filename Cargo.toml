@@ -38,6 +38,8 @@ num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 uuid = { version = "1", default-features = false, features = ["macro-diagnostics"] }
 
+cfg-if = "1.0"
+
 [dev-dependencies]
 anyhow = "1"
 esp-idf-svc = "0.49"

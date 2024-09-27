@@ -19,6 +19,20 @@ use crate::{
   AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
 };
 
+cfg_if::cfg_if! {
+  if #[cfg(all(
+    esp_idf_version_major = "5",
+    esp_idf_version_minor = "2",
+    not(any(esp_idf_version_patch = "0", esp_idf_version_patch = "1"))
+  ))] {
+    type NotifyTxType = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12;
+    type Subscribe = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_13;
+  } else {
+    type NotifyTxType = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_11;
+    type Subscribe = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12;
+  }
+}
+
 const NULL_HANDLE: u16 = 0xFFFF;
 
 bitflags! {
@@ -65,7 +79,7 @@ pub enum NotifyTxStatus {
 }
 
 pub struct NotifyTx<'a> {
-  pub(crate) notify_tx: &'a esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_11,
+  pub(crate) notify_tx: &'a NotifyTxType,
 }
 
 impl NotifyTx<'_> {
@@ -381,10 +395,7 @@ impl BLECharacteristic {
     }
   }
 
-  pub(super) fn subscribe(
-    &mut self,
-    subscribe: &esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12,
-  ) {
+  pub(super) fn subscribe(&mut self, subscribe: &Subscribe) {
     let Ok(desc) = crate::utilities::ble_gap_conn_find(subscribe.conn_handle) else {
       return;
     };

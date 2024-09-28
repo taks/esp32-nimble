@@ -1,13 +1,14 @@
 use core::borrow::Borrow;
 
+use super::ble_client::BLEClientState;
 use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
+use crate::BLEAttribute;
 use crate::{
   ble,
   utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLEError, BLERemoteDescriptor, Signal,
 };
-use crate::{BLEAttribute, BLEClient};
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use core::ffi::c_void;
@@ -41,7 +42,7 @@ pub struct BLERemoteCharacteristicState {
 }
 
 impl BLEAttribute for BLERemoteCharacteristicState {
-  fn get_client(&self) -> Option<BLEClient> {
+  fn get_client(&self) -> Option<ArcUnsafeCell<BLEClientState>> {
     match self.service.upgrade() {
       Some(x) => x.get_client(),
       None => None,

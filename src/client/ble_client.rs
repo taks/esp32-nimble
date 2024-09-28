@@ -12,7 +12,7 @@ use esp_idf_sys::*;
 #[allow(clippy::type_complexity)]
 pub(crate) struct BLEClientState {
   address: Option<BLEAddress>,
-  conn_handle: u16,
+  pub(crate) conn_handle: u16,
   services: Option<Vec<BLERemoteService>>,
   signal: Signal<u32>,
   connect_timeout_ms: u32,
@@ -52,10 +52,6 @@ impl BLEClient {
         on_connect: None,
       }),
     }
-  }
-
-  pub(crate) fn from_state(state: ArcUnsafeCell<BLEClientState>) -> Self {
-    Self { state }
   }
 
   pub(crate) fn conn_handle(&self) -> u16 {

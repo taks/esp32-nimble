@@ -1,3 +1,7 @@
+## [0.8.1] - 2024-09-28
+- Fixed BLEClient dropping multiple times (Fix #143) ([#144](https://github.com/taks/esp32-nimble/pull/144))
+- Support ESP-IDF v5.2.3
+
 ## [0.8.0] - 2024-09-18
 - Added `BLEClient::desc`
 - Added `BLEDevice::set_preferred_mtu`, `BLEDevice::get_preferred_mtu`

@@ -1,12 +1,11 @@
 #![feature(future_join)]
 
 use esp32_nimble::{l2cap::L2capServer, BLEAdvertisementData, BLEDevice};
-use esp_idf_hal::task::block_on;
-use esp_idf_sys as _;
+use esp_idf_svc::hal::task::block_on;
 use std::future::join;
 
 fn main() {
-  esp_idf_sys::link_patches();
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
   let ble_device = BLEDevice::take();

@@ -1,11 +1,12 @@
 use crate::{ble, utilities::os_mbuf_append, BLEError};
 use alloc::vec::Vec;
+use esp_idf_svc::sys;
 
 #[derive(Default)]
 pub struct L2cap {
-  mempool: esp_idf_sys::os_mempool,
-  mbuf_pool: esp_idf_sys::os_mbuf_pool,
-  coc_memory: Vec<esp_idf_sys::os_membuf_t>,
+  mempool: sys::os_mempool,
+  mbuf_pool: sys::os_mbuf_pool,
+  coc_memory: Vec<sys::os_membuf_t>,
 }
 
 impl L2cap {
@@ -34,11 +35,7 @@ impl L2cap {
     Ok(())
   }
 
-  pub fn tx(
-    &mut self,
-    chan: *mut esp_idf_sys::ble_l2cap_chan,
-    data: &[u8],
-  ) -> Result<(), BLEError> {
+  pub fn tx(&mut self, chan: *mut sys::ble_l2cap_chan, data: &[u8]) -> Result<(), BLEError> {
     let mtu = L2cap::get_chan_info(chan).peer_l2cap_mtu as usize;
     let mut data = data;
 
@@ -50,13 +47,13 @@ impl L2cap {
       assert_eq!(rc, 0);
 
       loop {
-        let rc = unsafe { esp_idf_sys::ble_l2cap_send(chan, sdu_rx) };
+        let rc = unsafe { sys::ble_l2cap_send(chan, sdu_rx) };
         match rc as _ {
-          0 | esp_idf_sys::BLE_HS_ESTALLED => break,
-          esp_idf_sys::BLE_HS_EBUSY => {}
+          0 | sys::BLE_HS_ESTALLED => break,
+          sys::BLE_HS_EBUSY => {}
           rc => return BLEError::convert(rc),
         }
-        unsafe { esp_idf_sys::vPortYield() };
+        unsafe { sys::vPortYield() };
       }
 
       data = data1;
@@ -65,26 +62,24 @@ impl L2cap {
     Ok(())
   }
 
-  pub fn sdu_rx(&mut self) -> *mut esp_idf_sys::os_mbuf {
+  pub fn sdu_rx(&mut self) -> *mut sys::os_mbuf {
     loop {
       let ret = unsafe { super::os_mbuf_get_pkthdr(&mut self.mbuf_pool, 0) };
       if !ret.is_null() {
         return ret;
       }
-      esp_idf_hal::delay::FreeRtos::delay_ms(10);
+      esp_idf_svc::hal::delay::FreeRtos::delay_ms(10);
     }
   }
 
-  pub(crate) fn ble_l2cap_recv_ready(&mut self, chan: *mut esp_idf_sys::ble_l2cap_chan) -> i32 {
+  pub(crate) fn ble_l2cap_recv_ready(&mut self, chan: *mut sys::ble_l2cap_chan) -> i32 {
     let sdu_rx = self.sdu_rx();
-    unsafe { esp_idf_sys::ble_l2cap_recv_ready(chan, sdu_rx) }
+    unsafe { sys::ble_l2cap_recv_ready(chan, sdu_rx) }
   }
 
-  pub(crate) fn get_chan_info(
-    chan: *mut esp_idf_sys::ble_l2cap_chan,
-  ) -> esp_idf_sys::ble_l2cap_chan_info {
-    let mut chan_info = esp_idf_sys::ble_l2cap_chan_info::default();
-    let rc = unsafe { esp_idf_sys::ble_l2cap_get_chan_info(chan, &mut chan_info as _) };
+  pub(crate) fn get_chan_info(chan: *mut sys::ble_l2cap_chan) -> sys::ble_l2cap_chan_info {
+    let mut chan_info = sys::ble_l2cap_chan_info::default();
+    let rc = unsafe { sys::ble_l2cap_get_chan_info(chan, &mut chan_info as _) };
     assert_eq!(rc, 0);
     chan_info
   }
@@ -92,6 +87,6 @@ impl L2cap {
 
 #[inline]
 const fn os_mempool_size(n: usize, blksize: usize) -> usize {
-  let size = core::mem::size_of::<esp_idf_sys::os_membuf_t>();
+  let size = core::mem::size_of::<sys::os_membuf_t>();
   blksize.div_ceil(size) * n
 }

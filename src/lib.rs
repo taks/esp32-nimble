@@ -2,7 +2,6 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::single_match)]
 #![allow(static_mut_refs)]
-#![allow(unexpected_cfgs)]
 #![feature(decl_macro)]
 #![feature(get_mut_unchecked)]
 #![feature(inline_const_pat)]

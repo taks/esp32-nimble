@@ -1,10 +1,11 @@
 use crate::utilities::os_mbuf_into_slice;
+use esp_idf_svc::sys;
 
-pub struct ReceivedData(esp_idf_sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4);
+pub struct ReceivedData(sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4);
 
 impl ReceivedData {
   #[inline]
-  pub(crate) fn from_raw(raw: esp_idf_sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4) -> Self {
+  pub(crate) fn from_raw(raw: sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4) -> Self {
     Self(raw)
   }
 

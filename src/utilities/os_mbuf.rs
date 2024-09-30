@@ -2,32 +2,20 @@ use core::ffi::c_int;
 use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::os_mbuf;
 
-/// Allocate a packet header structure from the MSYS pool. See os_msys_register() for a description of MSYS.
-#[inline]
-#[allow(unused)]
-pub(crate) fn os_msys_get_pkthdr(dsize: u16, user_hdr_len: u16) -> *mut os_mbuf {
-  #[cfg(not(esp_idf_soc_esp_nimble_controller))]
-  unsafe {
-    esp_idf_sys::os_msys_get_pkthdr(dsize, user_hdr_len)
-  }
+#[cfg(not(esp_idf_soc_esp_nimble_controller))]
+use esp_idf_sys::os_mbuf_append as _os_mbuf_append;
 
-  #[cfg(esp_idf_soc_esp_nimble_controller)]
-  unsafe {
-    esp_idf_sys::r_os_msys_get_pkthdr(dsize, user_hdr_len)
-  }
-}
+#[cfg(esp_idf_soc_esp_nimble_controller)]
+use esp_idf_sys::r_os_mbuf_append as _os_mbuf_append;
 
 /// Append data onto a mbuf
 #[inline]
 #[allow(unused)]
 pub(crate) fn os_mbuf_append(m: *mut os_mbuf, data: &[u8]) -> c_int {
-  #[cfg(not(esp_idf_soc_esp_nimble_controller))]
-  unsafe {
-    esp_idf_sys::os_mbuf_append(m, data.as_ptr() as _, data.len() as _)
-  }
+  unsafe { _os_mbuf_append(m, data.as_ptr() as _, data.len() as _) }
+}
 
-  #[cfg(esp_idf_soc_esp_nimble_controller)]
-  unsafe {
-    esp_idf_sys::r_os_mbuf_append(m, data.as_ptr() as _, data.len() as _)
-  }
+#[inline]
+pub(crate) fn os_mbuf_into_slice<'a>(m: *const os_mbuf) -> &'a [u8] {
+  unsafe { core::slice::from_raw_parts((*m).om_data, (*m).om_len as _) }
 }

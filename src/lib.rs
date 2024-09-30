@@ -2,6 +2,7 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::single_match)]
 #![allow(static_mut_refs)]
+#![allow(unexpected_cfgs)]
 #![feature(decl_macro)]
 #![feature(get_mut_unchecked)]
 #![feature(inline_const_pat)]
@@ -44,4 +45,21 @@ pub use self::client::*;
 mod server;
 pub use self::server::*;
 
+pub mod l2cap;
+
 pub mod utilities;
+
+#[allow(unused)]
+macro_rules! dbg {
+  ($val:expr) => {
+    match $val {
+      tmp => {
+        ::log::info!("{} = {:#?}", stringify!($val), &tmp);
+        tmp
+      }
+    }
+  };
+}
+
+#[allow(unused)]
+pub(crate) use dbg;

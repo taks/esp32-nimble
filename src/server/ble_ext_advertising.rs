@@ -10,6 +10,12 @@ use crate::{
   BLEAddress, BLEError, BLEServer,
 };
 
+#[cfg(not(esp_idf_soc_esp_nimble_controller))]
+use esp_idf_sys::os_msys_get_pkthdr;
+
+#[cfg(esp_idf_soc_esp_nimble_controller)]
+use esp_idf_sys::r_os_msys_get_pkthdr as os_msys_get_pkthdr;
+
 pub struct BLEExtAdvertisement {
   payload: Vec<u8>,
   params: esp_idf_sys::ble_gap_ext_adv_params,

@@ -1,5 +1,9 @@
+#![feature(future_join)]
+
 use esp32_nimble::{l2cap::L2capServer, BLEAdvertisementData, BLEDevice};
+use esp_idf_hal::task::block_on;
 use esp_idf_sys as _;
+use std::future::join;
 
 fn main() {
   esp_idf_sys::link_patches();
@@ -16,16 +20,18 @@ fn main() {
     .unwrap();
   ble_advertising.lock().start().unwrap();
 
-  L2capServer::create(0x1001, 512, |data| {
-    ::log::info!("Data received(0x1001): {:X?}", data.sdu_rx());
-  })
-  .unwrap();
-  L2capServer::create(0x1002, 512, |data| {
-    ::log::info!("Data received(0x1002): {:X?}", data.sdu_rx());
-  })
-  .unwrap();
+  let l2cap1 = L2capServer::create(0x1001, 512).unwrap();
+  let l2cap2 = L2capServer::create(0x1002, 512).unwrap();
 
+  block_on(async {
+    join!(run_callback(l2cap1), run_callback(l2cap2)).await;
+  });
+}
+
+async fn run_callback(server: &mut L2capServer) {
   loop {
-    esp_idf_hal::delay::FreeRtos::delay_ms(1000);
+    let recv = server.rx().await;
+    ::log::info!("< {:?}", recv.data());
+    server.tx(recv.data()).unwrap();
   }
 }

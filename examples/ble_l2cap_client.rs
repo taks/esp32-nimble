@@ -1,3 +1,5 @@
+use core::str;
+
 use bstr::ByteSlice;
 use esp32_nimble::{l2cap::L2capClient, BLEClient, BLEDevice};
 use esp_idf_hal::task::block_on;
@@ -24,7 +26,8 @@ fn main() {
 
       let mut l2cap = L2capClient::connect(&client, 0x1002, 512).await.unwrap();
       for i in 0..4 {
-        l2cap.send(format!("test{}", i).as_bytes()).unwrap();
+        l2cap.tx(format!("test{}", i).as_bytes()).unwrap();
+        ::log::info!("< {:?}", str::from_utf8(l2cap.rx().await.data()));
         esp_idf_hal::delay::FreeRtos::delay_ms(1000);
       }
       l2cap.disconnect().await.unwrap();

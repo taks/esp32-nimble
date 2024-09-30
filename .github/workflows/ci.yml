@@ -20,25 +20,28 @@ jobs:
       matrix:
         include:
           - target: riscv32imc-esp-espidf
-            idf-version: release/v4.4
-            rustflags: "-C default-linker-libraries"
-          - target: riscv32imc-esp-espidf
             idf-version: v5.1.3
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
+            ble5-example: true
           - target: riscv32imc-esp-espidf
             idf-version: v5.2.1
+            rustflags: "-C default-linker-libraries --cfg espidf_time64"
+          - target: riscv32imc-esp-espidf
+            idf-version: v5.2.3
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
           - target: riscv32imac-esp-espidf
             idf-version: v5.1.3
             rustflags: "-C default-linker-libraries --cfg espidf_time64"
             mcu: esp32c6
           - target: xtensa-esp32-espidf
-            idf-version: release/v4.4
-          - target: xtensa-esp32-espidf
             idf-version: v5.1.3
             rustflags: "--cfg espidf_time64"
+            ble-example: true
           - target: xtensa-esp32-espidf
             idf-version: v5.2.1
+            rustflags: "--cfg espidf_time64"
+          - target: xtensa-esp32-espidf
+            idf-version: v5.2.3
             rustflags: "--cfg espidf_time64"
 
     steps:
@@ -59,14 +62,14 @@ jobs:
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check
-        run: cargo clippy --target ${{ matrix.target }} -- -D clippy::all
+        run: cargo clippy --target ${{ matrix.target }} -- -D clippy::all -D warnings
       - name: Build
         run: cargo build --target ${{ matrix.target }}
       - name: Build | no_std
         run: cargo build --target ${{ matrix.target }} --no-default-features --features no_std
       - name: Build | Examples
-        if: ${{ (matrix.target == 'xtensa-esp32-espidf') && (matrix.idf-version == 'v5.1.1') }}
+        if: matrix.ble-example
         run: cargo build --target ${{ matrix.target }} --example ble_*
       - name: Build | Examples(ble5)
-        if: ${{ (matrix.target == 'riscv32imc-esp-espidf') && (matrix.idf-version == 'v5.1.1') }}
+        if: matrix.ble5-example
         run: cargo build --target ${{ matrix.target }} --example ble5_*

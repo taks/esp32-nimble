@@ -5,8 +5,10 @@ use crate::{
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
+use esp_idf_svc::sys as esp_idf_sys;
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
+const MAX_CONNECTIONS: usize = esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _;
 
 #[allow(clippy::type_complexity)]
 pub struct BLEServer {
@@ -14,8 +16,8 @@ pub struct BLEServer {
   advertise_on_disconnect: bool,
   services: Vec<Arc<Mutex<BLEService>>>,
   notify_characteristic: Vec<&'static mut BLECharacteristic>,
-  connections: Vec<u16>,
-  indicate_wait: [u16; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
+  connections: heapless::Vec<u16, MAX_CONNECTIONS>,
+  indicate_wait: [u16; MAX_CONNECTIONS],
 
   on_connect: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
@@ -31,8 +33,8 @@ impl BLEServer {
       advertise_on_disconnect: true,
       services: Vec::new(),
       notify_characteristic: Vec::new(),
-      connections: Vec::new(),
-      indicate_wait: [BLE_HS_CONN_HANDLE_NONE; esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _],
+      connections: heapless::Vec::new(),
+      indicate_wait: [BLE_HS_CONN_HANDLE_NONE; MAX_CONNECTIONS],
       on_connect: None,
       on_disconnect: None,
       on_passkey_request: None,
@@ -62,7 +64,7 @@ impl BLEServer {
 
   /// Set a callback fn for generating a passkey if required by the connection
   /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
-  /// will require the user to provide '001234'
+  ///   will require the user to provide '001234'
   /// * a static passkey can also be set by [`crate::BLESecurity::set_passkey`]
   pub fn on_passkey_request(
     &mut self,
@@ -95,8 +97,8 @@ impl BLEServer {
   /// The callback function is called when the pairing procedure is complete.
   /// * callback first parameter: A reference to a `BLEConnDesc` instance.
   /// * callback second parameter: Indicates the result of the encryption state change attempt;
-  /// o 0: the encrypted state was successfully updated;
-  /// o BLE host error code: the encryption state change attempt failed for the specified reason.
+  ///   o 0: the encrypted state was successfully updated;
+  ///   o BLE host error code: the encryption state change attempt failed for the specified reason.
   pub fn on_authentication_complete(
     &mut self,
     callback: impl Fn(&BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
@@ -251,7 +253,7 @@ impl BLEServer {
       esp_idf_sys::BLE_GAP_EVENT_CONNECT => {
         let connect = unsafe { &event.__bindgen_anon_1.connect };
         if connect.status == 0 {
-          server.connections.push(connect.conn_handle);
+          server.connections.push(connect.conn_handle).unwrap();
 
           if let Ok(desc) = ble_gap_conn_find(connect.conn_handle) {
             let server = UnsafeCell::new(server);

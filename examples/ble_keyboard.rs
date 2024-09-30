@@ -5,7 +5,6 @@ use esp32_nimble::{
   enums::*, hid::*, utilities::mutex::Mutex, BLEAdvertisementData, BLECharacteristic, BLEDevice,
   BLEHIDDevice, BLEServer,
 };
-use esp_idf_sys as _;
 use std::sync::Arc;
 
 const KEYBOARD_ID: u8 = 0x01;
@@ -224,7 +223,7 @@ struct Keyboard {
 }
 
 impl Keyboard {
-  fn new() -> Self {
+  fn new() -> anyhow::Result<Self> {
     let device = BLEDevice::take();
     device
       .security()
@@ -248,19 +247,15 @@ impl Keyboard {
     hid.set_battery_level(100);
 
     let ble_advertising = device.get_advertising();
-    ble_advertising
-      .lock()
-      .scan_response(false)
-      .set_data(
-        BLEAdvertisementData::new()
-          .name("ESP32 Keyboard")
-          .appearance(0x03C1)
-          .add_service_uuid(hid.hid_service().lock().uuid()),
-      )
-      .unwrap();
-    ble_advertising.lock().start().unwrap();
+    ble_advertising.lock().scan_response(false).set_data(
+      BLEAdvertisementData::new()
+        .name("ESP32 Keyboard")
+        .appearance(0x03C1)
+        .add_service_uuid(hid.hid_service().lock().uuid()),
+    )?;
+    ble_advertising.lock().start()?;
 
-    Self {
+    Ok(Self {
       server,
       input_keyboard,
       output_keyboard,
@@ -270,7 +265,7 @@ impl Keyboard {
         reserved: 0,
         keys: [0; 6],
       },
-    }
+    })
   }
 
   fn connected(&self) -> bool {
@@ -302,21 +297,21 @@ impl Keyboard {
 
   fn send_report(&self, keys: &KeyReport) {
     self.input_keyboard.lock().set_from(keys).notify();
-    esp_idf_hal::delay::Ets::delay_ms(7);
+    esp_idf_svc::hal::delay::Ets::delay_ms(7);
   }
 }
 
-fn main() {
-  esp_idf_sys::link_patches();
+fn main() -> anyhow::Result<()> {
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
-  let mut keyboard = Keyboard::new();
+  let mut keyboard = Keyboard::new()?;
 
   loop {
     if keyboard.connected() {
       ::log::info!("Sending 'Hello world'...");
       keyboard.write("Hello world\n");
     }
-    esp_idf_hal::delay::FreeRtos::delay_ms(5000);
+    esp_idf_svc::hal::delay::FreeRtos::delay_ms(5000);
   }
 }

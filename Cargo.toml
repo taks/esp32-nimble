@@ -1,6 +1,6 @@
 [package]
 name = "esp32-nimble"
-version = "0.6.0"
+version = "0.8.1"
 authors = ["taks <857tn859@gmail.com>"]
 edition = "2021"
 resolver = "2"
@@ -22,28 +22,32 @@ opt-level = "z"
 [features]
 default = ["std"]
 
-std = ["esp-idf-svc/std", "esp-idf-hal/std", "once_cell/std", "bstr/std"]
-no_std = ["once_cell/critical-section", "esp-idf-hal/critical-section", "bstr/alloc"]
+std = ["esp-idf-svc/std", "once_cell/std", "bstr/std"]
+no_std = ["once_cell/critical-section", "esp-idf-svc/critical-section", "bstr/alloc"]
 debug = []
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-sys = { version = "0.34", default-features = false }
-esp-idf-hal = { version = "0.43", default-features = false, features = ["embassy-sync"] }
-esp-idf-svc = { version = "0.48", default-features = false, features = ["alloc"] }
-embedded-svc = { version = "0.27", default-features = false }
+esp-idf-svc = { version = "0.49", default-features = false, features = ["alloc", "embassy-sync"] }
 
 bitflags = { version = "2.4.1" }
 bstr = { version = "1.8.0", default-features = false }
-embassy-sync = { version = "0.5.0" }
+embassy-sync = { version = "0.6" }
 heapless = "0.8.0"
 num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 uuid = { version = "1", default-features = false, features = ["macro-diagnostics"] }
 
+cfg-if = "1.0"
+
 [dev-dependencies]
-esp-idf-sys = { version = "0.34", default-features = false, features = ["binstart", "alloc_handler"] }
+anyhow = "1"
+esp-idf-svc = "0.49"
 
 [build-dependencies]
-embuild = "0.31.0"
-anyhow = "1.0.58"
+anyhow = "1"
+embuild = "0.32"
+
+[patch.crates-io]
+# see: https://github.com/esp-rs/espup/issues/440
+clang-sys = { git = "https://github.com/taks/clang-sys.git", branch = "load_with_flags"}

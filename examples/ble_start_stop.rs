@@ -1,15 +1,11 @@
 use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
-use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_hal::uart::*;
-use esp_idf_hal::units::Hertz;
-use esp_idf_hal::{delay::*, gpio};
-use esp_idf_sys as _;
+use esp_idf_svc::hal::{delay::*, gpio, peripherals::Peripherals, uart::*, units::Hertz};
 
-fn main() {
-  esp_idf_sys::link_patches();
+fn main() -> anyhow::Result<()> {
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
-  let peripherals = Peripherals::take().unwrap();
+  let peripherals = Peripherals::take()?;
   let config = config::Config::new().baudrate(Hertz(115_200));
   let uart = UartDriver::new(
     peripherals.uart0,
@@ -18,8 +14,7 @@ fn main() {
     Option::<gpio::Gpio0>::None,
     Option::<gpio::Gpio1>::None,
     &config,
-  )
-  .unwrap();
+  )?;
 
   let ble_device = BLEDevice::take();
   let ble_advertising = ble_device.get_advertising();
@@ -71,29 +66,26 @@ fn main() {
       );
     });
 
-  ble_advertising
-    .lock()
-    .set_data(
-      BLEAdvertisementData::new()
-        .name("ESP32-GATT-Server")
-        .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
-    )
-    .unwrap();
-  ble_advertising.lock().start().unwrap();
+  ble_advertising.lock().set_data(
+    BLEAdvertisementData::new()
+      .name("ESP32-GATT-Server")
+      .add_service_uuid(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa")),
+  )?;
+  ble_advertising.lock().start()?;
 
   let mut buf = [0_u8; 10];
   let mut initialized = true;
   loop {
-    esp_idf_hal::delay::FreeRtos::delay_ms(1000);
-    let len = uart.read(&mut buf, NON_BLOCK).unwrap();
+    esp_idf_svc::hal::delay::FreeRtos::delay_ms(1000);
+    let len = uart.read(&mut buf, NON_BLOCK)?;
     if (buf[..len]).contains(&b's') {
       if initialized {
         ::log::info!("stop BLE");
-        BLEDevice::deinit().unwrap();
+        BLEDevice::deinit()?;
       } else {
         ::log::info!("start BLE");
         BLEDevice::init();
-        ble_advertising.lock().start().unwrap();
+        ble_advertising.lock().start()?;
       }
       initialized = !initialized;
     }

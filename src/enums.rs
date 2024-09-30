@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use esp_idf_sys::*;
+use esp_idf_svc::sys::*;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[repr(u8)]
@@ -85,21 +85,21 @@ pub enum PowerType {
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum OwnAddrType {
-  Public = esp_idf_sys::BLE_OWN_ADDR_PUBLIC as _,
-  Random = esp_idf_sys::BLE_OWN_ADDR_RANDOM as _,
-  RpaPublicDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT as _,
-  RpaRandomDefault = esp_idf_sys::BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
+  Public = BLE_OWN_ADDR_PUBLIC as _,
+  Random = BLE_OWN_ADDR_RANDOM as _,
+  RpaPublicDefault = BLE_OWN_ADDR_RPA_PUBLIC_DEFAULT as _,
+  RpaRandomDefault = BLE_OWN_ADDR_RPA_RANDOM_DEFAULT as _,
 }
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum ConnMode {
   /// non-connectable (3.C.9.3.2)
-  Non = esp_idf_sys::BLE_GAP_CONN_MODE_NON as _,
+  Non = BLE_GAP_CONN_MODE_NON as _,
   /// directed-connectable (3.C.9.3.3)
-  Dir = esp_idf_sys::BLE_GAP_CONN_MODE_DIR as _,
+  Dir = BLE_GAP_CONN_MODE_DIR as _,
   /// undirected-connectable (3.C.9.3.4)
-  Und = esp_idf_sys::BLE_GAP_CONN_MODE_UND as _,
+  Und = BLE_GAP_CONN_MODE_UND as _,
 }
 
 #[repr(u8)]
@@ -139,18 +139,32 @@ bitflags! {
   }
 }
 
-#[repr(u8)]
-#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum AdvType {
   /// indirect advertising
-  Ind = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_IND as _,
+  Ind,
   /// direct advertising
-  DirectInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_HD as _,
+  DirectInd,
   /// indirect scan response
-  ScanInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_SCAN_IND as _,
+  ScanInd,
   /// indirect advertising - not connectable
-  NonconnInd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_NONCONN_IND as _,
-  // DirectIndLd = esp_idf_sys::BLE_HCI_ADV_TYPE_ADV_DIRECT_IND_LD as _,
+  NonconnInd,
+  ScanResponse,
+  #[cfg(esp_idf_bt_nimble_ext_adv)]
+  Extended(u8),
+}
+
+impl AdvType {
+  pub(crate) fn from_event_type(event_type: u8) -> Self {
+    match event_type as u32 {
+      BLE_HCI_ADV_RPT_EVTYPE_ADV_IND => AdvType::Ind,
+      BLE_HCI_ADV_RPT_EVTYPE_DIR_IND => AdvType::DirectInd,
+      BLE_HCI_ADV_RPT_EVTYPE_SCAN_IND => AdvType::ScanInd,
+      BLE_HCI_ADV_RPT_EVTYPE_NONCONN_IND => AdvType::NonconnInd,
+      BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP => AdvType::ScanResponse,
+      5.. => unreachable!(),
+    }
+  }
 }
 
 bitflags! {
@@ -158,11 +172,11 @@ bitflags! {
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct AdvFlag: u8 {
     /// LE Limited Discoverable Mode
-    const DiscLimited = esp_idf_sys::BLE_HS_ADV_F_DISC_LTD as _;
+    const DiscLimited = BLE_HS_ADV_F_DISC_LTD as _;
     /// LE General Discoverable Mode
-    const DiscGeneral = esp_idf_sys::BLE_HS_ADV_F_DISC_GEN as _;
+    const DiscGeneral = BLE_HS_ADV_F_DISC_GEN as _;
     /// BR/EDR Not Supported
-    const BrEdrUnsupported = esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP as _;
+    const BrEdrUnsupported = BLE_HS_ADV_F_BREDR_UNSUP as _;
     /// Simultaneous LE and BR/EDR to Same Device Capable (Controller)
     const SimultaneousController = 0b01000;
     /// Simultaneous LE and BR/EDR to Same Device Capable (Host)
@@ -198,4 +212,24 @@ pub enum AdvFilterPolicy {
   Connect = BLE_HCI_ADV_FILT_CONN as _,
   /// only allow scan/connections from those on the white list.
   Both = BLE_HCI_ADV_FILT_BOTH as _,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive, IntoPrimitive)]
+pub enum PrimPhy {
+  /// 1Mbps phy
+  Phy1M = BLE_HCI_LE_PHY_1M as _,
+  /// Coded phy
+  Coded = BLE_HCI_LE_PHY_CODED as _,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive, IntoPrimitive)]
+pub enum SecPhy {
+  /// 1Mbps phy
+  Phy1M = BLE_HCI_LE_PHY_1M as _,
+  /// 2Mbps phy
+  Phy2M = BLE_HCI_LE_PHY_2M as _,
+  /// Coded phy
+  Coded = BLE_HCI_LE_PHY_CODED as _,
 }

@@ -1,4 +1,9 @@
-use crate::{ble, utilities::voidp_to_ref, BLEError, Signal};
+use crate::{
+  ble,
+  utilities::{as_void_ptr, voidp_to_ref},
+  BLEError, Signal,
+};
+use esp_idf_svc::sys as esp_idf_sys;
 
 pub struct BLEWriter {
   conn_handle: u16,
@@ -40,7 +45,7 @@ impl BLEWriter {
           data.as_ptr() as _,
           data.len() as _,
           Some(Self::on_write_cb),
-          self as *mut Self as _,
+          as_void_ptr(self),
         ))?;
       } else {
         let om = esp_idf_sys::ble_hs_mbuf_from_flat(data.as_ptr() as _, data.len() as _);
@@ -50,7 +55,7 @@ impl BLEWriter {
           0,
           om,
           Some(Self::on_write_cb),
-          self as *mut Self as _
+          as_void_ptr(self),
         ))?;
       }
 

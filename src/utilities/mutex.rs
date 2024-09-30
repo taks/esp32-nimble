@@ -2,7 +2,7 @@
 
 use core::cell::UnsafeCell;
 use core::ops::{Deref, DerefMut};
-use esp_idf_sys::*;
+use esp_idf_svc::sys::*;
 
 // NOTE: ESP-IDF-specific
 const PTHREAD_MUTEX_INITIALIZER: u32 = 0xFFFFFFFF;
@@ -42,6 +42,7 @@ unsafe impl Send for RawMutex {}
 
 pub struct Mutex<T>(RawMutex, UnsafeCell<T>);
 
+#[allow(dead_code)]
 impl<T> Mutex<T> {
   #[inline(always)]
   pub const fn new(data: T) -> Self {
@@ -51,6 +52,11 @@ impl<T> Mutex<T> {
   #[inline(always)]
   pub fn lock(&self) -> MutexGuard<'_, T> {
     MutexGuard::new(self)
+  }
+
+  #[inline(always)]
+  pub(crate) fn into_innter(self) -> T {
+    self.1.into_inner()
   }
 
   #[inline]

@@ -1,4 +1,5 @@
 use crate::enums;
+use esp_idf_svc::sys as esp_idf_sys;
 
 pub struct BLESecurity {
   passkey: u32,
@@ -27,7 +28,7 @@ impl BLESecurity {
 
   /// Set the passkey the server will ask for when pairing.
   /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
-  /// will require the user to provide '001234'
+  ///   will require the user to provide '001234'
   /// * a dynamic passkey can also be set by [`crate::BLEServer::on_passkey_request`]
   pub fn set_passkey(&mut self, passkey: u32) -> &mut Self {
     debug_assert!(
@@ -58,7 +59,7 @@ impl BLESecurity {
 
   /// Set up for pairing in RPA(Resolvable Private Address).
   ///
-  /// ( see: https://github.com/taks/esp32-nimble/issues/24 )
+  /// ( see: <https://github.com/taks/esp32-nimble/issues/24> )
   pub fn resolve_rpa(&mut self) -> &mut Self {
     self
       .set_security_init_key(enums::PairKeyDist::ENC | enums::PairKeyDist::ID)

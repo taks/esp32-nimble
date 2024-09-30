@@ -1,9 +1,31 @@
-## [0.6.1]
+## [0.8.1] - 2024-09-28
+- Fixed BLEClient dropping multiple times (Fix #143) ([#144](https://github.com/taks/esp32-nimble/pull/144))
+- Support ESP-IDF v5.2.3
+
+## [0.8.0] - 2024-09-18
+- Added `BLEClient::desc`
+- Added `BLEDevice::set_preferred_mtu`, `BLEDevice::get_preferred_mtu`
+- Fixed corruption of read data
+- Fix Guru Meditation Error ([#133](https://github.com/taks/esp32-nimble/pull/133))
+- BleAddress LE and BE functions (breaking change) ([#137](https://github.com/taks/esp32-nimble/pull/137))
+- Added extended advertising scan support ([#141](https://github.com/taks/esp32-nimble/pull/141))
+- Changed scan API (breaking change) ([#142](https://github.com/taks/esp32-nimble/pull/142))
+- Add member docs to NimbleProperties ([#103](https://github.com/taks/esp32-nimble/pull/103))
+
+## [0.7.0] - 2024-07-11
+- Upgraded to `esp-idf-svc` 0.49
+- Fix: Update RSSI Field in BLEAdvertisedDevice Structure During Discovery ([#127](https://github.com/taks/esp32-nimble/pull/127))
+- Reflect new build args propagation in build.rs ([#129](https://github.com/taks/esp32-nimble/pull/129))
+- Update README.md to include tips on increasing esp-ble task stack size ([#131](https://github.com/taks/esp32-nimble/pull/131))
+
+## [0.6.1] - 2024-05-21
 - Added BLECharacteristic.cpfd ([#114](https://github.com/taks/esp32-nimble/pull/114))
 - Added Accessor Functions ([#118](https://github.com/taks/esp32-nimble/pull/118))
 - Add resolve_rpa to keyboard example ([#120](https://github.com/taks/esp32-nimble/pull/120))
+- Fix memory leak ([#121](https://github.com/taks/esp32-nimble/pull/121))
+- Impl std::error::Error for BLEError ([#124](https://github.com/taks/esp32-nimble/pull/124))
 
-## [0.6.0]- 2024-03-07
+## [0.6.0] - 2024-03-07
 - Implement Display and Debug traits for BLERemoteCharacteristic & BLERemoteService ([#66](https://github.com/taks/esp32-nimble/pull/66))
 - Added `BLEAdvertising::on_complete`
 - Added `OnWriteArgs::notify::notify` ([#75](https://github.com/taks/esp32-nimble/pull/75))

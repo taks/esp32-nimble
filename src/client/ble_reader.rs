@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 
 use crate::{ble, utilities::voidp_to_ref, BLEError, Signal};
 
@@ -51,9 +52,13 @@ impl BLEReader {
 
     if error.status == 0 {
       if let Some(attr) = unsafe { attr.as_ref() } {
-        let om_data =
-          unsafe { core::slice::from_raw_parts((*attr.om).om_data, (*attr.om).om_len as _) };
-        data.extend_from_slice(om_data);
+        let mut om = attr.om;
+        while !om.is_null() {
+          let slice = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };
+          data.extend_from_slice(slice);
+          om = unsafe { (*om).om_next.sle_next };
+        }
+
         return 0;
       }
     }

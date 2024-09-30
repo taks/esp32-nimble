@@ -1,10 +1,9 @@
 use esp32_nimble::{
   enums::*, utilities::BleUuid, BLEAdvertisementData, BLEDevice, NimbleProperties,
 };
-use esp_idf_sys as _;
 
-fn main() {
-  esp_idf_sys::link_patches();
+fn main() -> anyhow::Result<()> {
+  esp_idf_svc::sys::link_patches();
   esp_idf_svc::log::EspLogger::initialize_default();
 
   let device = BLEDevice::take();
@@ -21,7 +20,7 @@ fn main() {
   server.on_connect(|server, desc| {
     ::log::info!("Client connected: {:?}", desc);
 
-    if server.connected_count() < (esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
+    if server.connected_count() < (esp_idf_svc::sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
       ::log::info!("Multi-connect support: start advertising");
       ble_advertising.lock().start().unwrap();
     }
@@ -56,19 +55,16 @@ fn main() {
   ble_advertising.lock().on_complete(|_| {
     ble_advertising.lock().start().unwrap();
   });
-  ble_advertising
-    .lock()
-    .set_data(
-      BLEAdvertisementData::new()
-        .name("ESP32-GATT-Server")
-        .add_service_uuid(BleUuid::Uuid16(0xABCD)),
-    )
-    .unwrap();
-  ble_advertising.lock().start().unwrap();
+  ble_advertising.lock().set_data(
+    BLEAdvertisementData::new()
+      .name("ESP32-GATT-Server")
+      .add_service_uuid(BleUuid::Uuid16(0xABCD)),
+  )?;
+  ble_advertising.lock().start()?;
 
-  ::log::info!("bonded_addresses: {:?}", device.bonded_addresses().unwrap());
+  ::log::info!("bonded_addresses: {:?}", device.bonded_addresses());
 
   loop {
-    esp_idf_hal::delay::FreeRtos::delay_ms(1000);
+    esp_idf_svc::hal::delay::FreeRtos::delay_ms(1000);
   }
 }

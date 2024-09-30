@@ -1,4 +1,5 @@
 use core::ffi::c_int;
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::os_mbuf;
 
 #[cfg(not(esp_idf_soc_esp_nimble_controller))]

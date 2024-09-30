@@ -1,16 +1,18 @@
 use core::borrow::Borrow;
 
+use super::ble_client::BLEClientState;
 use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
+use crate::BLEAttribute;
 use crate::{
   ble,
-  utilities::{voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
+  utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
   BLEError, BLERemoteDescriptor, Signal,
 };
-use crate::{BLEAttribute, BLEClient};
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 
 bitflags! {
   #[repr(transparent)]
@@ -40,7 +42,7 @@ pub struct BLERemoteCharacteristicState {
 }
 
 impl BLEAttribute for BLERemoteCharacteristicState {
-  fn get_client(&self) -> Option<BLEClient> {
+  fn get_client(&self) -> Option<ArcUnsafeCell<BLEClientState>> {
     match self.service.upgrade() {
       Some(x) => x.get_client(),
       None => None,
@@ -106,7 +108,7 @@ impl BLERemoteCharacteristic {
             self.state.handle,
             self.state.service.upgrade().unwrap().end_handle,
             Some(Self::next_char_cb),
-            self as *mut Self as _,
+            as_void_ptr(self),
           ))?;
         }
 
@@ -120,7 +122,7 @@ impl BLERemoteCharacteristic {
             self.state.handle,
             self.state.end_handle,
             Some(Self::descriptor_disc_cb),
-            self as *mut Self as _,
+            as_void_ptr(self),
           ))?;
         }
         ble!(self.state.signal.wait().await)?;

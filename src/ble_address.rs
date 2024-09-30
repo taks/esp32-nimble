@@ -1,4 +1,4 @@
-use esp_idf_sys::*;
+use esp_idf_svc::sys::*;
 use num_enum::TryFromPrimitive;
 
 /// Bluetooth Device address type
@@ -14,26 +14,29 @@ pub enum BLEAddressType {
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct BLEAddress {
-  pub(crate) value: esp_idf_sys::ble_addr_t,
+  pub(crate) value: ble_addr_t,
 }
 
 impl BLEAddress {
-  pub fn new(val: [u8; 6], addr_type: BLEAddressType) -> Self {
-    let mut ret = Self {
-      value: esp_idf_sys::ble_addr_t {
+  pub fn from_le_bytes(val: [u8; 6], addr_type: BLEAddressType) -> Self {
+    Self {
+      value: ble_addr_t {
         val,
         type_: addr_type as _,
       },
-    };
-    ret.value.val.reverse();
-    ret
+    }
+  }
+
+  pub fn from_be_bytes(mut val: [u8; 6], addr_type: BLEAddressType) -> Self {
+    val.reverse();
+    Self::from_le_bytes(val, addr_type)
   }
 
   pub fn from_str(input: &str, addr_type: BLEAddressType) -> Option<Self> {
     let mut val = [0u8; 6];
 
     let mut nth = 0;
-    for byte in input.split(|c| c == ':' || c == '-') {
+    for byte in input.split([':', '-']) {
       if nth == 6 {
         return None;
       }
@@ -47,12 +50,18 @@ impl BLEAddress {
       return None;
     }
 
-    Some(Self::new(val, addr_type))
+    Some(Self::from_be_bytes(val, addr_type))
   }
 
   /// Get the native representation of the address.
-  pub fn val(&self) -> [u8; 6] {
+  pub fn as_le_bytes(&self) -> [u8; 6] {
     self.value.val
+  }
+
+  pub fn as_be_bytes(&self) -> [u8; 6] {
+    let mut bytes = self.value.val;
+    bytes.reverse();
+    bytes
   }
 
   /// Get the address type.
@@ -61,8 +70,8 @@ impl BLEAddress {
   }
 }
 
-impl From<esp_idf_sys::ble_addr_t> for BLEAddress {
-  fn from(value: esp_idf_sys::ble_addr_t) -> Self {
+impl From<ble_addr_t> for BLEAddress {
+  fn from(value: ble_addr_t) -> Self {
     Self { value }
   }
 }

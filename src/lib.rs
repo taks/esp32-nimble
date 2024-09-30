@@ -5,7 +5,14 @@
 #![allow(unexpected_cfgs)]
 #![feature(decl_macro)]
 #![feature(get_mut_unchecked)]
+#![feature(inline_const_pat)]
 #![doc = include_str!("../README.md")]
+
+#[cfg(feature = "std")]
+#[allow(unused_imports)]
+#[macro_use]
+extern crate std;
+
 extern crate alloc;
 
 #[doc(hidden)]
@@ -15,10 +22,10 @@ mod ble_address;
 pub use self::ble_address::*;
 
 pub(crate) type Signal<T> =
-  embassy_sync::signal::Signal<esp_idf_hal::task::embassy_sync::EspRawMutex, T>;
+  embassy_sync::signal::Signal<esp_idf_svc::hal::task::embassy_sync::EspRawMutex, T>;
 #[allow(dead_code)]
 pub(crate) type Channel<T, const N: usize> =
-  embassy_sync::channel::Channel<esp_idf_hal::task::embassy_sync::EspRawMutex, T, N>;
+  embassy_sync::channel::Channel<esp_idf_svc::hal::task::embassy_sync::EspRawMutex, T, N>;
 
 mod ble_device;
 pub use self::ble_device::BLEDevice;

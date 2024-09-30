@@ -1,12 +1,12 @@
-use alloc::vec;
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use core::ffi::c_void;
+use esp_idf_svc::sys as esp_idf_sys;
 use once_cell::sync::Lazy;
 
 use crate::{
   ble,
   enums::*,
-  utilities::{os_mbuf_append, voidp_to_ref, BleUuid},
+  utilities::{as_void_ptr, os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
   BLEAddress, BLEError, BLEServer,
 };
 
@@ -23,13 +23,13 @@ pub struct BLEExtAdvertisement {
 }
 
 impl BLEExtAdvertisement {
-  pub fn new(primary_phy: u8, secondary_phy: u8) -> Self {
+  pub fn new(primary_phy: PrimPhy, secondary_phy: SecPhy) -> Self {
     Self {
       payload: Vec::new(),
       params: esp_idf_sys::ble_gap_ext_adv_params {
         own_addr_type: unsafe { crate::ble_device::OWN_ADDR_TYPE as _ },
-        primary_phy,
-        secondary_phy,
+        primary_phy: primary_phy.into(),
+        secondary_phy: secondary_phy.into(),
         tx_power: 127,
         ..Default::default()
       },
@@ -261,7 +261,7 @@ impl BLEExtAdvertising {
         &adv.params,
         core::ptr::null_mut(),
         Some(handle_gap_event),
-        self as *mut Self as _
+        as_void_ptr(self),
       ))?;
 
       let buf = os_msys_get_pkthdr(adv.payload.len() as _, 0);

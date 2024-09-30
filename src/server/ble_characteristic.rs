@@ -1,6 +1,7 @@
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
+use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 #[cfg(all(
@@ -18,23 +19,49 @@ use crate::{
   AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
 };
 
+cfg_if::cfg_if! {
+  if #[cfg(all(
+    esp_idf_version_major = "5",
+    esp_idf_version_minor = "2",
+    not(any(esp_idf_version_patch = "0", esp_idf_version_patch = "1"))
+  ))] {
+    type NotifyTxType = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12;
+    type Subscribe = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_13;
+  } else {
+    type NotifyTxType = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_11;
+    type Subscribe = esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12;
+  }
+}
+
 const NULL_HANDLE: u16 = 0xFFFF;
 
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
   pub struct NimbleProperties: u16 {
+    /// Read Access Permitted
     const READ = esp_idf_sys::BLE_GATT_CHR_F_READ as _;
+    /// Read Requires Encryption
     const READ_ENC = esp_idf_sys::BLE_GATT_CHR_F_READ_ENC as _;
+    /// Read requires Authentication
     const READ_AUTHEN = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHEN as _;
+    /// Read requires Authorization
     const READ_AUTHOR = esp_idf_sys::BLE_GATT_CHR_F_READ_AUTHOR as _;
+    /// Write Permited
     const WRITE = esp_idf_sys::BLE_GATT_CHR_F_WRITE as _;
+    /// Write with no Ack Response
     const WRITE_NO_RSP = esp_idf_sys::BLE_GATT_CHR_F_WRITE_NO_RSP as _;
+    /// Write Requires Encryption
     const WRITE_ENC = esp_idf_sys::BLE_GATT_CHR_F_WRITE_ENC as _;
+    /// Write requires Authentication
     const WRITE_AUTHEN = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHEN as _;
+    /// Write requires Authorization
     const WRITE_AUTHOR = esp_idf_sys::BLE_GATT_CHR_F_WRITE_AUTHOR as _;
+    /// Broadcasts are included in the advertising data
     const BROADCAST = esp_idf_sys::BLE_GATT_CHR_F_BROADCAST as _;
+    /// Notifications are Sent from Server to Client with no Response
     const NOTIFY = esp_idf_sys::BLE_GATT_CHR_F_NOTIFY as _;
+    /// Indications are Sent from Server to Client where Server expects a Response
     const INDICATE = esp_idf_sys::BLE_GATT_CHR_F_INDICATE as _;
   }
 }
@@ -52,7 +79,7 @@ pub enum NotifyTxStatus {
 }
 
 pub struct NotifyTx<'a> {
-  pub(crate) notify_tx: &'a esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_11,
+  pub(crate) notify_tx: &'a NotifyTxType,
 }
 
 impl NotifyTx<'_> {
@@ -368,10 +395,7 @@ impl BLECharacteristic {
     }
   }
 
-  pub(super) fn subscribe(
-    &mut self,
-    subscribe: &esp_idf_sys::ble_gap_event__bindgen_ty_1__bindgen_ty_12,
-  ) {
+  pub(super) fn subscribe(&mut self, subscribe: &Subscribe) {
     let Ok(desc) = crate::utilities::ble_gap_conn_find(subscribe.conn_handle) else {
       return;
     };
@@ -409,7 +433,7 @@ impl BLECharacteristic {
   /// Do not call `lock` on this characteristic inside the callback, use the first input instead.
   /// In the future, this characteristic could be locked while the callback executes.
   /// * `callback` - Function to call when a subscription event is recieved, including subscribe and unsubscribe events
-  /// see [`crate::NimbleSub`] for event type
+  ///   see [`crate::NimbleSub`] for event type
   pub fn on_subscribe(
     &mut self,
     callback: impl FnMut(&Self, &BLEConnDesc, NimbleSub) + Send + Sync + 'static,

@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 use crate::{
   ble,
   enums::*,
-  utilities::{as_void_ptr, os_mbuf_append, os_msys_get_pkthdr, voidp_to_ref, BleUuid},
+  utilities::{as_void_ptr, os_mbuf_append, voidp_to_ref, BleUuid},
   BLEAddress, BLEError, BLEServer,
 };
 

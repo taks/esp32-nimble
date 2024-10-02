@@ -7,7 +7,10 @@ use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 
-use crate::{ble, enums::*, utilities::mutex::Mutex, BLEAddress, BLEError, BLESecurity, BLEServer};
+use crate::{
+  ble, enums::*, utilities::mutex::Mutex, BLEAddress, BLEAddressType, BLEError, BLESecurity,
+  BLEServer,
+};
 
 #[cfg(not(esp_idf_bt_nimble_ext_adv))]
 type BLEAdvertising = crate::BLEAdvertising;
@@ -233,6 +236,25 @@ impl BLEDevice {
 
   pub fn security(&mut self) -> &mut BLESecurity {
     &mut self.security
+  }
+
+  pub fn get_addr(&self) -> Result<BLEAddress, BLEError> {
+    let mut addr = [0; 6];
+
+    unsafe {
+      ble!(esp_idf_sys::ble_hs_id_copy_addr(
+        OWN_ADDR_TYPE as _,
+        addr.as_mut_ptr(),
+        core::ptr::null_mut()
+      ))?;
+
+      let addr_type = match OWN_ADDR_TYPE {
+        OwnAddrType::Public => BLEAddressType::Public,
+        _ => BLEAddressType::Random,
+      };
+
+      Ok(BLEAddress::from_le_bytes(addr, addr_type))
+    }
   }
 
   /// Set the own address type.

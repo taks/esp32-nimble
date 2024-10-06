@@ -8,8 +8,8 @@ use esp_idf_sys::{esp, esp_nofail, EspError};
 use once_cell::sync::Lazy;
 
 use crate::{
-  ble, enums::*, utilities::mutex::Mutex, BLEAddress, BLEAddressType, BLEError, BLESecurity,
-  BLEServer,
+  ble, enums::*, utilities::mutex::Mutex, BLEAddress, BLEAddressType, BLEClient, BLEError,
+  BLESecurity, BLEServer,
 };
 
 #[cfg(not(esp_idf_bt_nimble_ext_adv))]
@@ -147,6 +147,10 @@ impl BLEDevice {
       }
     }
     Ok(())
+  }
+
+  pub fn new_client(&self) -> BLEClient {
+    BLEClient::new()
   }
 
   pub fn get_server(&self) -> &'static mut BLEServer {

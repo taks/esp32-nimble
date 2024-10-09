@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEClient, BLEDevice, BLEScan};
+use esp32_nimble::{uuid128, BLEDevice, BLEScan};
 use esp_idf_svc::hal::{
   prelude::Peripherals,
   task::block_on,
@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
       .await?;
 
     if let Some(device) = device {
-      let mut client = BLEClient::new();
+      let mut client = ble_device.new_client();
       client.on_connect(|client| {
         client.update_conn_params(120, 120, 0, 60).unwrap();
       });

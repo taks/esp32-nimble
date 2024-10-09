@@ -1,4 +1,4 @@
-use esp32_nimble::{enums::*, utilities::BleUuid, BLEClient, BLEDevice, BLEScan};
+use esp32_nimble::{enums::*, utilities::BleUuid, BLEDevice, BLEScan};
 use esp_idf_svc::hal::task::block_on;
 use log::*;
 
@@ -9,9 +9,9 @@ fn main() -> anyhow::Result<()> {
   esp_idf_svc::log::EspLogger::initialize_default();
 
   block_on(async {
-    let device = BLEDevice::take();
-    device.set_power(PowerType::Default, PowerLevel::P9)?;
-    device
+    let ble_device = BLEDevice::take();
+    ble_device.set_power(PowerType::Default, PowerLevel::P9)?;
+    ble_device
       .security()
       .set_auth(AuthReq::all())
       .set_io_cap(SecurityIOCap::KeyboardOnly);
@@ -22,7 +22,7 @@ fn main() -> anyhow::Result<()> {
       .active_scan(true)
       .interval(100)
       .window(99)
-      .start(device, 10000, |device, data| {
+      .start(ble_device, 10000, |device, data| {
         if data.is_advertising_service(&SERVICE_UUID) {
           return Some(*device);
         }
@@ -37,7 +37,7 @@ fn main() -> anyhow::Result<()> {
 
     info!("Advertised Device: {:?}", device);
 
-    let mut client = BLEClient::new();
+    let mut client = ble_device.new_client();
     client.connect(&device.addr()).await?;
     client.on_passkey_request(|| 123456);
     client.secure_connection().await?;

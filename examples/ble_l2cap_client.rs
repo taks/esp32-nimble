@@ -1,6 +1,6 @@
 use bstr::ByteSlice;
 use core::str;
-use esp32_nimble::{l2cap::L2capClient, BLEClient, BLEDevice, BLEScan};
+use esp32_nimble::{l2cap::L2capClient, BLEDevice, BLEScan};
 use esp_idf_svc::hal::task::block_on;
 
 fn main() -> anyhow::Result<()> {
@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
       .await?;
 
     if let Some(device) = device {
-      let mut client = BLEClient::new();
+      let mut client = ble_device.new_client();
       client.connect(&device.addr()).await.unwrap();
 
       let mut l2cap = L2capClient::connect(&client, 0x1002, 512).await.unwrap();

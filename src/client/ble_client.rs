@@ -28,7 +28,7 @@ pub struct BLEClient {
 }
 
 impl BLEClient {
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self {
       state: ArcUnsafeCell::new(BLEClientState {
         address: None,

@@ -1,3 +1,5 @@
+use core::fmt::Debug;
+
 use crate::utilities::os_mbuf_into_slice;
 use esp_idf_svc::sys;
 
@@ -17,6 +19,12 @@ impl ReceivedData {
   #[inline]
   pub fn data(&self) -> &[u8] {
     os_mbuf_into_slice(self.0.sdu_rx)
+  }
+}
+
+impl Debug for ReceivedData {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    write!(f, "{:X?}", self.data())
   }
 }
 

@@ -1,5 +1,6 @@
 use bstr::ByteSlice;
 use core::str;
+use embassy_time::Duration;
 use esp32_nimble::{l2cap::L2capClient, BLEDevice, BLEScan};
 use esp_idf_svc::hal::task::block_on;
 
@@ -31,11 +32,16 @@ fn main() -> anyhow::Result<()> {
       let mut l2cap = L2capClient::connect(&client, 0x1002, 512).await.unwrap();
       for i in 0..4 {
         l2cap.tx(format!("test{}", i).as_bytes()).unwrap();
-        ::log::info!("< {:?}", str::from_utf8(l2cap.rx().await.data()));
+
+        if let Ok(recv) = embassy_time::with_timeout(Duration::from_secs(1), l2cap.rx()).await {
+          ::log::info!("< {:?}", str::from_utf8(recv.data()));
+        } else {
+          ::log::info!("timeout");
+        }
+
         esp_idf_svc::hal::delay::FreeRtos::delay_ms(1000);
       }
       l2cap.disconnect().await.unwrap();
-
       client.disconnect().unwrap();
     }
 

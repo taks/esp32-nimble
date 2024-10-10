@@ -282,7 +282,7 @@ impl BLECharacteristic {
 
       let om = unsafe { sys::ble_hs_mbuf_from_flat(value.as_ptr() as _, value.len() as _) };
 
-      let rc = unsafe { sys::ble_gattc_indicate_custom(conn_handle, self.handle, om) };
+      let rc = unsafe { sys::ble_gatts_indicate_custom(conn_handle, self.handle, om) };
       if rc != 0 {
         server.clear_indicate_wait(conn_handle);
       }
@@ -290,7 +290,7 @@ impl BLECharacteristic {
     } else if flag.contains(NimbleSub::NOTIFY) && self.properties.contains(NimbleProperties::NOTIFY)
     {
       let om = unsafe { sys::ble_hs_mbuf_from_flat(value.as_ptr() as _, value.len() as _) };
-      ble!(unsafe { sys::ble_gattc_notify_custom(conn_handle, self.handle, om) })
+      ble!(unsafe { sys::ble_gatts_notify_custom(conn_handle, self.handle, om) })
     } else {
       BLEError::convert(sys::BLE_HS_EINVAL)
     }

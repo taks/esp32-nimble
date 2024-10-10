@@ -12,11 +12,13 @@ use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 use crate::cpfd::Cpfd;
 
 use crate::{
+  ble,
   utilities::{
     ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
     voidp_to_ref, BleUuid,
   },
-  AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, DescriptorProperties, OnWriteArgs, BLE2904,
+  AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
+  BLE2904,
 };
 
 cfg_if::cfg_if! {
@@ -252,48 +254,46 @@ impl BLECharacteristic {
     self.svc_def_descriptors.as_mut_ptr()
   }
 
-  pub fn notify(&self) {
-    if self.subscribed_list.is_empty() {
-      return;
+  pub fn notify_with(&self, value: &[u8], conn_handle: u16) -> Result<(), BLEError> {
+    if let Some((_, flag)) = self.subscribed_list.iter().find(|x| x.0 == conn_handle) {
+      self.send_value(value, conn_handle, *flag)
+    } else {
+      BLEError::fail()
     }
+  }
 
+  pub fn notify(&self) {
+    for it in &self.subscribed_list {
+      self.send_value(self.value.value(), it.0, it.1);
+    }
+  }
+
+  fn send_value(&self, value: &[u8], conn_handle: u16, flag: NimbleSub) -> Result<(), BLEError> {
+    let mtu = unsafe { esp_idf_sys::ble_att_mtu(conn_handle) - 3 };
+    if mtu == 0 || flag.is_empty() {
+      return BLEError::fail();
+    }
     let server = BLEDevice::take().get_server();
 
-    for it in &self.subscribed_list {
-      let _mtu = unsafe { esp_idf_sys::ble_att_mtu(it.0) - 3 };
-      if _mtu == 0 || it.1.is_empty() {
-        continue;
+    if flag.contains(NimbleSub::INDICATE) && self.properties.contains(NimbleProperties::INDICATE) {
+      if !server.set_indicate_wait(conn_handle) {
+        ::log::error!("prior Indication in progress");
+        return BLEError::fail();
       }
 
-      if it.1.contains(NimbleSub::INDICATE) && self.properties.contains(NimbleProperties::INDICATE)
-      {
-        if !server.set_indicate_wait(it.0) {
-          ::log::error!("prior Indication in progress");
-          continue;
-        }
+      let om = unsafe { esp_idf_sys::ble_hs_mbuf_from_flat(value.as_ptr() as _, value.len() as _) };
 
-        let om = unsafe {
-          esp_idf_sys::ble_hs_mbuf_from_flat(
-            self.value.value().as_ptr() as _,
-            self.value.len() as _,
-          )
-        };
-
-        let rc = unsafe { esp_idf_sys::ble_gattc_indicate_custom(it.0, self.handle, om) };
-        if rc != 0 {
-          server.clear_indicate_wait(it.0);
-        }
-      } else if it.1.contains(NimbleSub::NOTIFY)
-        && self.properties.contains(NimbleProperties::NOTIFY)
-      {
-        let om = unsafe {
-          esp_idf_sys::ble_hs_mbuf_from_flat(
-            self.value.value().as_ptr() as _,
-            self.value.len() as _,
-          )
-        };
-        unsafe { esp_idf_sys::ble_gattc_notify_custom(it.0, self.handle, om) };
+      let rc = unsafe { esp_idf_sys::ble_gattc_indicate_custom(conn_handle, self.handle, om) };
+      if rc != 0 {
+        server.clear_indicate_wait(conn_handle);
       }
+      BLEError::convert(rc as _)
+    } else if flag.contains(NimbleSub::NOTIFY) && self.properties.contains(NimbleProperties::NOTIFY)
+    {
+      let om = unsafe { esp_idf_sys::ble_hs_mbuf_from_flat(value.as_ptr() as _, value.len() as _) };
+      ble!(unsafe { esp_idf_sys::ble_gattc_notify_custom(conn_handle, self.handle, om) })
+    } else {
+      BLEError::fail()
     }
   }
 

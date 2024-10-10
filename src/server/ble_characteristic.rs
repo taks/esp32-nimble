@@ -264,7 +264,9 @@ impl BLECharacteristic {
 
   pub fn notify(&self) {
     for it in &self.subscribed_list {
-      self.send_value(self.value.value(), it.0, it.1);
+      if let Err(err) = self.send_value(self.value.value(), it.0, it.1) {
+        ::log::warn!("notify error({}): {:?}", it.0, err);
+      }
     }
   }
 

@@ -13,8 +13,8 @@ use crate::cpfd::Cpfd;
 use crate::{
   ble,
   utilities::{
-    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
-    voidp_to_ref, BleUuid,
+    ble_hs_mbuf_from_flat, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex,
+    os_mbuf_append, voidp_to_ref, BleUuid,
   },
   AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
   BLE2904,
@@ -280,7 +280,7 @@ impl BLECharacteristic {
         return BLEError::convert(sys::BLE_HS_EBUSY);
       }
 
-      let om = unsafe { sys::ble_hs_mbuf_from_flat(value.as_ptr() as _, value.len() as _) };
+      let om = ble_hs_mbuf_from_flat(value);
 
       let rc = unsafe { sys::ble_gatts_indicate_custom(conn_handle, self.handle, om) };
       if rc != 0 {
@@ -289,7 +289,7 @@ impl BLECharacteristic {
       BLEError::convert(rc as _)
     } else if flag.contains(NimbleSub::NOTIFY) && self.properties.contains(NimbleProperties::NOTIFY)
     {
-      let om = unsafe { sys::ble_hs_mbuf_from_flat(value.as_ptr() as _, value.len() as _) };
+      let om = ble_hs_mbuf_from_flat(value);
       ble!(unsafe { sys::ble_gatts_notify_custom(conn_handle, self.handle, om) })
     } else {
       BLEError::convert(sys::BLE_HS_EINVAL)

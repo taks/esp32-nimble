@@ -1,3 +1,6 @@
+## [0.8.2] - 2024-10-25
+- Fix ESP-IDF v5.2.2 build ([#148](https://github.com/taks/esp32-nimble/pull/148))
+
 ## [0.8.1] - 2024-09-28
 - Fixed BLEClient dropping multiple times (Fix #143) ([#144](https://github.com/taks/esp32-nimble/pull/144))
 - Support ESP-IDF v5.2.3

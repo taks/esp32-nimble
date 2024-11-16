@@ -76,6 +76,12 @@ impl From<ble_addr_t> for BLEAddress {
   }
 }
 
+impl From<BLEAddress> for ble_addr_t {
+  fn from(value: BLEAddress) -> Self {
+    value.value
+  }
+}
+
 impl core::fmt::Display for BLEAddress {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     write!(

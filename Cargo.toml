@@ -48,6 +48,7 @@ embassy-time = { version = "0.3.2", features = ["generic-queue"] }
 [build-dependencies]
 anyhow = "1"
 embuild = "0.32"
+cc = "=1.1.30" # Version "1.1.30" necessary until a new version of `esp-idf-sys` is released
 
 [patch.crates-io]
 # see: https://github.com/esp-rs/espup/issues/440

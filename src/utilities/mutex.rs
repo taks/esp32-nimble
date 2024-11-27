@@ -24,6 +24,12 @@ impl RawMutex {
 
   #[inline(always)]
   #[allow(clippy::missing_safety_doc)]
+  pub unsafe fn try_lock(&self) -> bool {
+    pthread_mutex_trylock(self.0.get()) == 0
+  }
+
+  #[inline(always)]
+  #[allow(clippy::missing_safety_doc)]
   pub unsafe fn unlock(&self) {
     let r = pthread_mutex_unlock(self.0.get());
     debug_assert_eq!(r, 0);
@@ -55,6 +61,11 @@ impl<T> Mutex<T> {
   }
 
   #[inline(always)]
+  pub fn try_lock(&self) -> Option<MutexGuard<'_, T>> {
+    MutexGuard::try_new(self)
+  }
+
+  #[inline(always)]
   pub(crate) fn into_innter(self) -> T {
     self.1.into_inner()
   }
@@ -78,6 +89,15 @@ impl<'a, T> MutexGuard<'a, T> {
     }
 
     Self(mutex)
+  }
+
+  #[inline(always)]
+  fn try_new(mutex: &'a Mutex<T>) -> Option<Self> {
+    if unsafe { mutex.0.try_lock() } {
+      Some(Self(mutex))
+    } else {
+      None
+    }
   }
 }
 

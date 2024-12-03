@@ -34,11 +34,7 @@ pub use self::ble_server::BLEServer;
 mod ble_service;
 pub use self::ble_service::BLEService;
 
-#[cfg(all(
-  esp_idf_version_major = "5",
-  esp_idf_version_minor = "2",
-  not(esp_idf_version_patch = "0")
-))]
+#[cfg(cpfd)]
 pub mod cpfd;
 
 pub mod hid;

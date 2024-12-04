@@ -175,10 +175,10 @@ impl<'d> Iterator for AdStructureIter<'d> {
     if length == 0 {
       return None;
     }
-    return Some(AdData {
+    Some(AdData {
       ty: unsafe { *data.get_unchecked(1) },
       data: data.get(2..(length + 1)).unwrap(),
-    });
+    })
   }
 }
 
@@ -187,7 +187,7 @@ struct ServiceUuidsIter<'d> {
   current: Option<AdData<'d>>,
 }
 
-impl<'d> Iterator for ServiceUuidsIter<'d> {
+impl Iterator for ServiceUuidsIter<'_> {
   type Item = BleUuid;
 
   fn next(&mut self) -> Option<Self::Item> {

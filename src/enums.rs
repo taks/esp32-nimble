@@ -18,7 +18,7 @@ pub enum SecurityIOCap {
 }
 
 #[repr(u32)]
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, TryFromPrimitive, IntoPrimitive)]
 pub enum PowerLevel {
   /// Corresponding to -12dbm
   N12 = esp_power_level_t_ESP_PWR_LVL_N12 as _,
@@ -54,7 +54,7 @@ impl PowerLevel {
 }
 
 #[repr(u32)]
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, IntoPrimitive)]
 pub enum PowerType {
   /// For connection handle 0
   ConnHdl0 = esp_ble_power_type_t_ESP_BLE_PWR_TYPE_CONN_HDL0 as _,

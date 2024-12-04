@@ -71,6 +71,6 @@ fn main() -> anyhow::Result<()> {
       client.disconnect()?;
     }
 
-    return anyhow::Ok(());
+    anyhow::Ok(())
   })
 }

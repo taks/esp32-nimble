@@ -1,3 +1,10 @@
+## [0.9.0]
+- Added L2CAP support ([#117](https://github.com/taks/esp32-nimble/pull/117))
+- Added `BLEDevice::get_addr`
+- Enforce BLEClient creation via BLEDevice instance ([#146](https://github.com/taks/esp32-nimble/pull/146))
+- Added `BLECharacteristic::notify_with`
+- Fix cpfd config attribute ([#153](https://github.com/taks/esp32-nimble/pull/153))
+
 ## [0.8.2] - 2024-10-25
 - Fix ESP-IDF v5.2.2 build ([#148](https://github.com/taks/esp32-nimble/pull/148))
 

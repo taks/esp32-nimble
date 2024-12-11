@@ -2,7 +2,6 @@ use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_svc::sys;
-use zerocopy::{Immutable, IntoBytes};
 
 #[cfg(cpfd)]
 use crate::cpfd::Cpfd;
@@ -160,7 +159,9 @@ impl BLECharacteristic {
     self
   }
 
-  pub fn set_from<T: IntoBytes + Immutable>(&mut self, value: &T) -> &mut Self {
+  #[deprecated(note = "Please use `set_value` + zerocopy::IntoBytes")]
+  pub fn set_from<T: Sized>(&mut self, value: &T) -> &mut Self {
+    #[allow(deprecated)]
     self.value.set_from(value);
     self
   }

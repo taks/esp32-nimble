@@ -1,4 +1,5 @@
 use alloc::sync::Arc;
+use zerocopy::IntoBytes;
 use zerocopy_derive::{Immutable, IntoBytes};
 
 use crate::{utilities::mutex::Mutex, BLEDescriptor};
@@ -51,13 +52,16 @@ pub struct BLE2904 {
 
 impl BLE2904 {
   pub(super) fn new(descriptor: Arc<Mutex<BLEDescriptor>>) -> Self {
-    descriptor.lock().set_from(&Data {
-      format: BLE2904Format::OPAQUE,
-      exponent: 0,
-      unit: 0,
-      namespace: 1,
-      description: 0,
-    });
+    descriptor.lock().set_value(
+      Data {
+        format: BLE2904Format::OPAQUE,
+        exponent: 0,
+        unit: 0,
+        namespace: 1,
+        description: 0,
+      }
+      .as_bytes(),
+    );
 
     Self { descriptor }
   }

@@ -1,5 +1,4 @@
 use alloc::vec::Vec;
-use zerocopy::{Immutable, IntoBytes};
 
 pub struct AttValue {
   value: Vec<u8>,
@@ -54,9 +53,13 @@ impl AttValue {
     self.value.extend_from_slice(value);
   }
 
+  #[deprecated(note = "Please use `set_value` + zerocopy::IntoBytes")]
   #[inline]
-  pub fn set_from<T: IntoBytes + Immutable>(&mut self, value: &T) {
-    self.set_value(value.as_bytes());
+  pub fn set_from<T: Sized>(&mut self, p: &T) {
+    let slice = unsafe {
+      ::core::slice::from_raw_parts((p as *const T) as *const u8, ::core::mem::size_of::<T>())
+    };
+    self.set_value(slice);
   }
 
   #[inline]

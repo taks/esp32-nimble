@@ -4,7 +4,6 @@ use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
-use zerocopy::{Immutable, IntoBytes};
 
 use crate::{
   utilities::{
@@ -53,7 +52,9 @@ impl BLEDescriptor {
     self
   }
 
-  pub fn set_from<T: IntoBytes + Immutable>(&mut self, value: &T) -> &mut Self {
+  #[deprecated(note = "Please use `set_value` + zerocopy::IntoBytes")]
+  pub fn set_from<T: Sized>(&mut self, value: &T) -> &mut Self {
+    #[allow(deprecated)]
     self.value.set_from(value);
     self
   }

@@ -6,6 +6,7 @@ use esp32_nimble::{
   BLEHIDDevice, BLEServer,
 };
 use std::sync::Arc;
+use zerocopy::IntoBytes;
 use zerocopy_derive::{Immutable, IntoBytes};
 
 const KEYBOARD_ID: u8 = 0x01;
@@ -298,7 +299,11 @@ impl Keyboard {
   }
 
   fn send_report(&self, keys: &KeyReport) {
-    self.input_keyboard.lock().set_from(keys).notify();
+    self
+      .input_keyboard
+      .lock()
+      .set_value(keys.as_bytes())
+      .notify();
     esp_idf_svc::hal::delay::Ets::delay_ms(7);
   }
 }

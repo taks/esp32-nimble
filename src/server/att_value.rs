@@ -10,7 +10,7 @@ impl AttValue {
   }
 
   #[inline]
-  pub fn value(&self) -> &[u8] {
+  pub fn as_slice(&self) -> &[u8] {
     &self.value
   }
 

@@ -6,6 +6,7 @@ use esp32_nimble::{
   BLEHIDDevice, BLEServer,
 };
 use std::sync::Arc;
+use zerocopy_derive::{Immutable, IntoBytes};
 
 const KEYBOARD_ID: u8 = 0x01;
 const MEDIA_KEYS_ID: u8 = 0x02;
@@ -207,6 +208,7 @@ const ASCII_MAP: &[u8] = &[
   0,            // DEL
 ];
 
+#[derive(IntoBytes, Immutable)]
 #[repr(packed)]
 struct KeyReport {
   modifiers: u8,

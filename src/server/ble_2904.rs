@@ -1,7 +1,9 @@
 use alloc::sync::Arc;
+use zerocopy_derive::{Immutable, IntoBytes};
 
 use crate::{utilities::mutex::Mutex, BLEDescriptor};
 
+#[derive(IntoBytes, Immutable)]
 #[repr(u8)]
 pub enum BLE2904Format {
   BOOLEAN = 1,
@@ -33,6 +35,7 @@ pub enum BLE2904Format {
   OPAQUE = 27,
 }
 
+#[derive(IntoBytes, Immutable)]
 #[repr(packed)]
 struct Data {
   format: BLE2904Format,

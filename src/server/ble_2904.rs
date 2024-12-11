@@ -1,10 +1,10 @@
 use alloc::sync::Arc;
-use zerocopy::IntoBytes;
-use zerocopy_derive::{Immutable, IntoBytes};
+use zerocopy::{IntoBytes, TryFromBytes};
+use zerocopy_derive::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 use crate::{utilities::mutex::Mutex, BLEDescriptor};
 
-#[derive(IntoBytes, Immutable)]
+#[derive(TryFromBytes, KnownLayout, IntoBytes, Immutable)]
 #[repr(u8)]
 pub enum BLE2904Format {
   BOOLEAN = 1,
@@ -36,7 +36,7 @@ pub enum BLE2904Format {
   OPAQUE = 27,
 }
 
-#[derive(IntoBytes, Immutable)]
+#[derive(TryFromBytes, KnownLayout, IntoBytes, Immutable)]
 #[repr(packed)]
 struct Data {
   format: BLE2904Format,
@@ -67,11 +67,7 @@ impl BLE2904 {
   }
 
   pub fn format(&mut self, value: BLE2904Format) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .format = value;
 
@@ -79,11 +75,7 @@ impl BLE2904 {
   }
 
   pub fn exponent(&mut self, value: u8) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .exponent = value;
 
@@ -91,11 +83,7 @@ impl BLE2904 {
   }
 
   pub fn unit(&mut self, value: u16) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .unit = value;
 
@@ -103,22 +91,14 @@ impl BLE2904 {
   }
 
   pub fn namespace(&mut self, value: u8) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .namespace = value;
 
     self
   }
   pub fn description(&mut self, value: u16) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .description = value;
 

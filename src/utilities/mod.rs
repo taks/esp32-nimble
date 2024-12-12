@@ -29,7 +29,7 @@ pub(crate) const unsafe fn as_mut_ptr<T>(ptr: *const T) -> *mut T {
 
 #[inline]
 pub(crate) unsafe fn as_void_ptr<T>(r: &mut T) -> *mut ::core::ffi::c_void {
-  (r as *mut T) as _
+  (r as *mut T).cast()
 }
 
 #[inline]

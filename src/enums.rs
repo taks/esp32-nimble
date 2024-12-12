@@ -3,7 +3,7 @@ use esp_idf_svc::sys::*;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 #[repr(u8)]
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, IntoPrimitive)]
 pub enum SecurityIOCap {
   /// DisplayOnly IO capability
   DisplayOnly = BLE_HS_IO_DISPLAY_ONLY as _,
@@ -83,7 +83,7 @@ pub enum PowerType {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, IntoPrimitive)]
 pub enum OwnAddrType {
   Public = BLE_OWN_ADDR_PUBLIC as _,
   Random = BLE_OWN_ADDR_RANDOM as _,

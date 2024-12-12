@@ -247,7 +247,7 @@ impl BLEDevice {
 
     unsafe {
       ble!(esp_idf_sys::ble_hs_id_copy_addr(
-        OWN_ADDR_TYPE as _,
+        OWN_ADDR_TYPE.into(),
         addr.as_mut_ptr(),
         core::ptr::null_mut()
       ))?;
@@ -325,7 +325,7 @@ impl BLEDevice {
 
       let mut addr = [0; 6];
       esp_nofail!(esp_idf_sys::ble_hs_id_copy_addr(
-        OWN_ADDR_TYPE as _,
+        OWN_ADDR_TYPE.into(),
         addr.as_mut_ptr(),
         core::ptr::null_mut()
       ));

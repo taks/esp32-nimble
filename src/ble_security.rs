@@ -13,9 +13,9 @@ impl BLESecurity {
   /// Set the authorization mode for this device.
   pub fn set_auth(&mut self, auth_req: enums::AuthReq) -> &mut Self {
     unsafe {
-      esp_idf_sys::ble_hs_cfg.set_sm_bonding(auth_req.contains(enums::AuthReq::Bond) as _);
-      esp_idf_sys::ble_hs_cfg.set_sm_mitm(auth_req.contains(enums::AuthReq::Mitm) as _);
-      esp_idf_sys::ble_hs_cfg.set_sm_sc(auth_req.contains(enums::AuthReq::Sc) as _);
+      esp_idf_sys::ble_hs_cfg.set_sm_bonding(auth_req.contains(enums::AuthReq::Bond).into());
+      esp_idf_sys::ble_hs_cfg.set_sm_mitm(auth_req.contains(enums::AuthReq::Mitm).into());
+      esp_idf_sys::ble_hs_cfg.set_sm_sc(auth_req.contains(enums::AuthReq::Sc).into());
     }
 
     self
@@ -41,7 +41,7 @@ impl BLESecurity {
 
   /// Set the Input/Output capabilities of this device.
   pub fn set_io_cap(&mut self, iocap: enums::SecurityIOCap) -> &mut Self {
-    unsafe { esp_idf_sys::ble_hs_cfg.sm_io_cap = iocap as _ };
+    unsafe { esp_idf_sys::ble_hs_cfg.sm_io_cap = iocap.into() };
     self
   }
 

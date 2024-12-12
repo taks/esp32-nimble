@@ -1,7 +1,7 @@
 use super::{L2cap, ReceivedData};
 use crate::{
   ble,
-  utilities::{extend_lifetime_mut, mutex::Mutex, voidp_to_ref},
+  utilities::{as_void_ptr, extend_lifetime_mut, mutex::Mutex, voidp_to_ref},
   BLEError, Channel,
 };
 use esp_idf_svc::sys;
@@ -37,7 +37,7 @@ impl L2capServer {
         psm,
         mtu,
         Some(Self::handle_l2cap_event),
-        server as *mut Self as _,
+        as_void_ptr(server),
       ))?;
     }
     Ok(unsafe { extend_lifetime_mut(server) })

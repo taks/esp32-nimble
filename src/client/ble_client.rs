@@ -427,7 +427,7 @@ impl BLEClient {
     let ret = if error.status == (esp_idf_sys::BLE_HS_EDONE as _) {
       0
     } else {
-      error.status as _
+      error.status.into()
     };
 
     client.state.signal.signal(ret);

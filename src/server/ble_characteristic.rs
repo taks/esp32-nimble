@@ -159,7 +159,9 @@ impl BLECharacteristic {
     self
   }
 
+  #[deprecated(note = "Please use `set_value` + zerocopy::IntoBytes")]
   pub fn set_from<T: Sized>(&mut self, value: &T) -> &mut Self {
+    #[allow(deprecated)]
     self.value.set_from(value);
     self
   }
@@ -249,7 +251,7 @@ impl BLECharacteristic {
 
   pub fn notify(&self) {
     for it in &self.subscribed_list {
-      if let Err(err) = self.send_value(self.value.value(), it.0, it.1) {
+      if let Err(err) = self.send_value(self.value.as_slice(), it.0, it.1) {
         ::log::warn!("notify error({}): {:?}", it.0, err);
       }
     }
@@ -328,7 +330,7 @@ impl BLECharacteristic {
         }
 
         ble_npl_hw_enter_critical();
-        let value = characteristic.value.value();
+        let value = characteristic.value.as_slice();
         let rc = os_mbuf_append(ctxt.om, value);
         ble_npl_hw_exit_critical();
         if rc == 0 {
@@ -353,7 +355,7 @@ impl BLECharacteristic {
           if let Some(callback) = &mut (*characteristic.get()).on_write {
             let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
             let mut arg = OnWriteArgs {
-              current_data: (*characteristic.get()).value.value(),
+              current_data: (*characteristic.get()).value.as_slice(),
               recv_data: &buf,
               desc: &desc,
               reject: false,

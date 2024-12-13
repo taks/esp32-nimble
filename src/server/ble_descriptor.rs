@@ -52,7 +52,9 @@ impl BLEDescriptor {
     self
   }
 
+  #[deprecated(note = "Please use `set_value` + zerocopy::IntoBytes")]
   pub fn set_from<T: Sized>(&mut self, value: &T) -> &mut Self {
+    #[allow(deprecated)]
     self.value.set_from(value);
     self
   }
@@ -106,7 +108,7 @@ impl BLEDescriptor {
         }
 
         ble_npl_hw_enter_critical();
-        let value = descriptor.value.value();
+        let value = descriptor.value.as_slice();
         let rc = os_mbuf_append(ctxt.om, value);
         ble_npl_hw_exit_critical();
         if rc == 0 {
@@ -129,7 +131,7 @@ impl BLEDescriptor {
           if let Some(callback) = &mut (*descriptor.get()).on_write {
             let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
             let mut arg = OnWriteDescriptorArgs {
-              current_data: (*descriptor.get()).value.value(),
+              current_data: (*descriptor.get()).value.as_slice(),
               recv_data: &buf,
               desc: &desc,
               reject: false,

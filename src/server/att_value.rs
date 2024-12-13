@@ -10,10 +10,16 @@ impl AttValue {
   }
 
   #[inline]
-  pub fn value(&self) -> &[u8] {
+  pub fn as_slice(&self) -> &[u8] {
     &self.value
   }
 
+  #[inline]
+  pub fn as_mut_slice(&mut self) -> &mut [u8] {
+    &mut self.value
+  }
+
+  #[deprecated(note = "Please use `as_slice` + zerocopy::FromBytes")]
   #[inline]
   pub fn as_ref<T: Sized>(&self) -> Option<&T> {
     if self.len() == core::mem::size_of::<T>() {
@@ -23,6 +29,7 @@ impl AttValue {
     }
   }
 
+  #[deprecated(note = "Please use `as_mut_slice` + zerocopy::FromBytes")]
   #[inline]
   pub fn as_mut<T: Sized>(&mut self) -> Option<&mut T> {
     if self.len() == core::mem::size_of::<T>() {
@@ -53,6 +60,7 @@ impl AttValue {
     self.value.extend_from_slice(value);
   }
 
+  #[deprecated(note = "Please use `set_value` + zerocopy::IntoBytes")]
   #[inline]
   pub fn set_from<T: Sized>(&mut self, p: &T) {
     let slice = unsafe {

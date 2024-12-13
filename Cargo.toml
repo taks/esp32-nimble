@@ -37,6 +37,8 @@ heapless = "0.8.0"
 num_enum = { version = "0.7", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 uuid = { version = "1", default-features = false, features = ["macro-diagnostics"] }
+zerocopy = "0.8"
+zerocopy-derive = "0.8"
 
 cfg-if = "1.0"
 

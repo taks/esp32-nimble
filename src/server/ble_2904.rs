@@ -1,7 +1,10 @@
 use alloc::sync::Arc;
+use zerocopy::{IntoBytes, TryFromBytes};
+use zerocopy_derive::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 use crate::{utilities::mutex::Mutex, BLEDescriptor};
 
+#[derive(TryFromBytes, KnownLayout, IntoBytes, Immutable)]
 #[repr(u8)]
 pub enum BLE2904Format {
   BOOLEAN = 1,
@@ -33,6 +36,7 @@ pub enum BLE2904Format {
   OPAQUE = 27,
 }
 
+#[derive(TryFromBytes, KnownLayout, IntoBytes, Immutable)]
 #[repr(packed)]
 struct Data {
   format: BLE2904Format,
@@ -48,23 +52,22 @@ pub struct BLE2904 {
 
 impl BLE2904 {
   pub(super) fn new(descriptor: Arc<Mutex<BLEDescriptor>>) -> Self {
-    descriptor.lock().set_from(&Data {
-      format: BLE2904Format::OPAQUE,
-      exponent: 0,
-      unit: 0,
-      namespace: 1,
-      description: 0,
-    });
+    descriptor.lock().set_value(
+      Data {
+        format: BLE2904Format::OPAQUE,
+        exponent: 0,
+        unit: 0,
+        namespace: 1,
+        description: 0,
+      }
+      .as_bytes(),
+    );
 
     Self { descriptor }
   }
 
   pub fn format(&mut self, value: BLE2904Format) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .format = value;
 
@@ -72,11 +75,7 @@ impl BLE2904 {
   }
 
   pub fn exponent(&mut self, value: u8) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .exponent = value;
 
@@ -84,11 +83,7 @@ impl BLE2904 {
   }
 
   pub fn unit(&mut self, value: u16) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .unit = value;
 
@@ -96,22 +91,14 @@ impl BLE2904 {
   }
 
   pub fn namespace(&mut self, value: u8) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .namespace = value;
 
     self
   }
   pub fn description(&mut self, value: u16) -> &mut Self {
-    self
-      .descriptor
-      .lock()
-      .value_mut()
-      .as_mut::<Data>()
+    Data::try_mut_from_bytes(self.descriptor.lock().value_mut().as_mut_slice())
       .unwrap()
       .description = value;
 

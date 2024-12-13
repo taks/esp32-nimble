@@ -1,9 +1,9 @@
 use alloc::sync::Arc;
 
 use crate::{
+  cpfd::*,
   utilities::{mutex::Mutex, BleUuid},
-  BLE2904Format, BLECharacteristic, BLEServer, BLEService, DescriptorProperties, NimbleProperties,
-  BLE2904,
+  BLECharacteristic, BLEServer, BLEService, DescriptorProperties, NimbleProperties,
 };
 
 const BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME: BleUuid = BleUuid::from_uuid16(0x2A29);
@@ -24,7 +24,6 @@ pub struct BLEHIDDevice {
 
   battery_service: Arc<Mutex<BLEService>>,
   battery_level_characteristic: Arc<Mutex<BLECharacteristic>>,
-  battery_level_descriptor: BLE2904,
 }
 
 impl BLEHIDDevice {
@@ -56,11 +55,13 @@ impl BLEHIDDevice {
       BLE_SVC_BAS_CHR_UUID16_BATTERY_LEVEL,
       NimbleProperties::READ | NimbleProperties::NOTIFY,
     );
-    let mut battery_level_descriptor = battery_level_characteristic.lock().create_2904_descriptor();
-    battery_level_descriptor
-      .format(BLE2904Format::UINT8)
-      .namespace(1)
-      .unit(0x27ad);
+    battery_level_characteristic.lock().cpfd(Cpfd {
+      format: ChrFormat::Uint8,
+      exponent: 0,
+      unit: ChrUnit::Percentage,
+      name_space: 1,
+      description: 0,
+    });
 
     Self {
       device_info_service,
@@ -73,7 +74,6 @@ impl BLEHIDDevice {
       protocol_mode_characteristic,
       battery_service,
       battery_level_characteristic,
-      battery_level_descriptor,
     }
   }
 

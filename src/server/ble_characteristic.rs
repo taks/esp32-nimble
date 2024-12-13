@@ -2,18 +2,17 @@ use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_svc::sys;
-
-#[cfg(cpfd)]
-use crate::cpfd::Cpfd;
+#[cfg(not(cpfd))]
+use zerocopy::IntoBytes;
 
 use crate::{
   ble,
+  cpfd::Cpfd,
   utilities::{
     ble_hs_mbuf_from_flat, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex,
     os_mbuf_append, voidp_to_ref, BleUuid,
   },
   AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
-  BLE2904,
 };
 
 cfg_if::cfg_if! {
@@ -209,15 +208,6 @@ impl BLECharacteristic {
     descriptor
   }
 
-  pub fn create_2904_descriptor(&mut self) -> BLE2904 {
-    let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(
-      BleUuid::Uuid16(0x2904),
-      DescriptorProperties::READ,
-    )));
-    self.descriptors.push(descriptor.clone());
-    BLE2904::new(descriptor)
-  }
-
   pub(crate) fn construct_svc_def_descriptors(&mut self) -> *mut sys::ble_gatt_dsc_def {
     if self.descriptors.is_empty() {
       return core::ptr::null_mut();
@@ -298,6 +288,17 @@ impl BLECharacteristic {
     self.cpfd[0].unit = cpfd.unit.into();
     self.cpfd[0].name_space = cpfd.name_space;
     self.cpfd[0].description = cpfd.description;
+  }
+
+  #[cfg(not(cpfd))]
+  /// Set the Characteristic Presentation Format.
+  pub fn cpfd(&mut self, cpfd: Cpfd) {
+    let descriptor = Arc::new(Mutex::new(BLEDescriptor::new(
+      BleUuid::Uuid16(0x2904),
+      DescriptorProperties::READ,
+    )));
+    descriptor.lock().set_value(cpfd.as_bytes());
+    self.descriptors.push(descriptor);
   }
 
   pub(super) extern "C" fn handle_gap_event(

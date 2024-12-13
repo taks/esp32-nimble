@@ -1,7 +1,17 @@
-use esp_idf_svc::sys as esp_idf_sys;
 use num_enum::IntoPrimitive;
+use zerocopy_derive::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, IntoPrimitive)]
+cfg_if::cfg_if! {
+  if #[cfg(cpfd)] {
+    use esp_idf_svc::sys as esp_idf_sys;
+  } else {
+    use super::cpfd_constants as esp_idf_sys;
+  }
+}
+
+#[derive(
+  Copy, Clone, PartialEq, Eq, Debug, IntoPrimitive, TryFromBytes, KnownLayout, IntoBytes, Immutable,
+)]
 #[repr(u8)]
 pub enum ChrFormat {
   Boolean = esp_idf_sys::BLE_GATT_CHR_FORMAT_BOOLEAN as _,
@@ -34,7 +44,9 @@ pub enum ChrFormat {
   Medasn1 = esp_idf_sys::BLE_GATT_CHR_FORMAT_MEDASN1 as _,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug, IntoPrimitive)]
+#[derive(
+  Copy, Clone, PartialEq, Eq, Debug, IntoPrimitive, TryFromBytes, KnownLayout, IntoBytes, Immutable,
+)]
 #[repr(u16)]
 pub enum ChrUnit {
   /// Unitless
@@ -295,6 +307,8 @@ pub enum ChrUnit {
   VoltAmpere = esp_idf_sys::BLE_GATT_CHR_UNIT_VOLT_AMPERE as _,
 }
 
+#[derive(TryFromBytes, KnownLayout, IntoBytes, Immutable)]
+#[repr(packed)]
 pub struct Cpfd {
   /// Format of the value of this characteristic.
   pub format: ChrFormat,

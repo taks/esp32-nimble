@@ -310,7 +310,9 @@ impl BLECharacteristic {
     let ctxt = unsafe { &*ctxt };
 
     let mutex = unsafe { voidp_to_ref::<Mutex<Self>>(arg) };
-    let mut characteristic = mutex.lock();
+    let Some(mut characteristic) = mutex.try_lock() else {
+      return sys::BLE_ATT_ERR_UNLIKELY as _;
+    };
 
     if unsafe { sys::ble_uuid_cmp((*ctxt.__bindgen_anon_1.chr).uuid, &characteristic.uuid.u) != 0 }
     {

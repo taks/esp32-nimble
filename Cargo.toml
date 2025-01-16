@@ -45,7 +45,7 @@ cfg-if = "1.0"
 [dev-dependencies]
 anyhow = "1"
 esp-idf-svc = { version = "0.51.0", features = ["embassy-time-driver", "critical-section"]}
-embassy-time = { version = "0.4.0" }
+embassy-time = { version = "0.4.0", features = ["generic-queue-8"] }
 
 [build-dependencies]
 anyhow = "1"

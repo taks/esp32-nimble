@@ -28,7 +28,7 @@ debug = []
 
 [dependencies]
 log = { version = "0.4", default-features = false }
-esp-idf-svc = { version = "0.50.1", default-features = false, features = ["alloc", "embassy-sync"] }
+esp-idf-svc = { version = "0.51.0", default-features = false, features = ["alloc", "embassy-sync"] }
 
 bitflags = { version = "2.4.1" }
 bstr = { version = "1.8.0", default-features = false }
@@ -44,8 +44,8 @@ cfg-if = "1.0"
 
 [dev-dependencies]
 anyhow = "1"
-esp-idf-svc = { version = "0.50.1", features = ["embassy-time-driver", "critical-section"]}
-embassy-time = { version = "0.3.2", features = ["generic-queue"] }
+esp-idf-svc = { version = "0.51.0", features = ["embassy-time-driver", "critical-section"]}
+embassy-time = { version = "0.4.0" }
 
 [build-dependencies]
 anyhow = "1"

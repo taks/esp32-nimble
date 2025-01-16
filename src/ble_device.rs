@@ -305,7 +305,7 @@ impl BLEDevice {
     unsafe { ble!(esp_idf_sys::ble_hs_id_set_rnd(addr.as_ptr())) }
   }
 
-  #[allow(temporary_cstring_as_ptr)]
+  #[allow(dangling_pointers_from_temporaries)]
   pub fn set_device_name(device_name: &str) -> Result<(), BLEError> {
     unsafe {
       ble!(esp_idf_sys::ble_svc_gap_device_name_set(

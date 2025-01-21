@@ -332,7 +332,7 @@ impl BLECharacteristic {
           if (*(ctxt.om)).om_pkthdr_len > 8 || characteristic.value.len() <= (desc.mtu() - 3) as _ {
             let characteristic = UnsafeCell::new(&mut characteristic);
             if let Some(callback) = &mut (*characteristic.get()).on_read {
-              callback(&mut (*characteristic.get()), &desc);
+              callback(*characteristic.get(), &desc);
             }
           }
         }

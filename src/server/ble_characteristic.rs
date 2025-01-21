@@ -124,7 +124,7 @@ pub struct BLECharacteristic {
   pub(crate) handle: u16,
   pub(crate) properties: NimbleProperties,
   value: AttValue,
-  on_read: Option<Box<dyn FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync>>,
+  on_read: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
   on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
   pub(crate) on_notify_tx: Option<Box<dyn FnMut(NotifyTx) + Send + Sync>>,
   descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
@@ -176,7 +176,7 @@ impl BLECharacteristic {
 
   pub fn on_read(
     &mut self,
-    callback: impl FnMut(&mut AttValue, &BLEConnDesc) + Send + Sync + 'static,
+    callback: impl FnMut(&mut Self, &BLEConnDesc) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_read = Some(Box::new(callback));
     self
@@ -332,7 +332,7 @@ impl BLECharacteristic {
           if (*(ctxt.om)).om_pkthdr_len > 8 || characteristic.value.len() <= (desc.mtu() - 3) as _ {
             let characteristic = UnsafeCell::new(&mut characteristic);
             if let Some(callback) = &mut (*characteristic.get()).on_read {
-              callback(&mut (*characteristic.get()).value, &desc);
+              callback(&mut (*characteristic.get()), &desc);
             }
           }
         }

@@ -1,3 +1,7 @@
+## [0.10.0] - 2025-01-23
+- bump esp-idf-svc and embassy-time version ([#161](https://github.com/taks/esp32-nimble/pull/161))
+- Changed on_read closure argument from `AttValue` to `Self` ([#163](https://github.com/taks/esp32-nimble/pull/163))
+
 ## [0.9.0] - 2025-01-07
 - Added L2CAP support ([#117](https://github.com/taks/esp32-nimble/pull/117))
 - Added `BLEDevice::get_addr`

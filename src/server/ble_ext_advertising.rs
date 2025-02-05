@@ -292,7 +292,7 @@ impl BLEExtAdvertising {
   ) -> Result<(), BLEError> {
     unsafe {
       let mut buf = OsMBuf(os_msys_get_pkthdr(lsr.payload.len() as _, 0));
-      if buf.is_null() {
+      if buf.0.is_null() {
         return BLEError::fail();
       }
       let rc = buf.append(&lsr.payload);

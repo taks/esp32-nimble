@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 use crate::{
   ble,
   enums::*,
-  utilities::{as_void_ptr, os_mbuf_append, voidp_to_ref, BleUuid},
+  utilities::{as_void_ptr, voidp_to_ref, BleUuid, OsMBuf},
   BLEAddress, BLEError, BLEServer,
 };
 
@@ -264,16 +264,17 @@ impl BLEExtAdvertising {
         as_void_ptr(self),
       ))?;
 
-      let buf = os_msys_get_pkthdr(adv.payload.len() as _, 0);
-      if buf.is_null() {
+      let mut buf = OsMBuf(os_msys_get_pkthdr(adv.payload.len() as _, 0));
+      if buf.0.is_null() {
         return BLEError::fail();
       }
-      ble!(os_mbuf_append(buf, &adv.payload))?;
+      let rc = buf.append(&adv.payload);
+      assert_eq!(rc, 0);
 
       if (adv.params.scannable() != 0) && (adv.params.legacy_pdu() == 0) {
-        ble!(esp_idf_sys::ble_gap_ext_adv_rsp_set_data(inst_id, buf))?;
+        ble!(esp_idf_sys::ble_gap_ext_adv_rsp_set_data(inst_id, buf.0))?;
       } else {
-        ble!(esp_idf_sys::ble_gap_ext_adv_set_data(inst_id, buf))?;
+        ble!(esp_idf_sys::ble_gap_ext_adv_set_data(inst_id, buf.0))?;
       }
 
       if let Some(addr) = adv.adv_address {
@@ -290,13 +291,14 @@ impl BLEExtAdvertising {
     lsr: &BLEExtAdvertisement,
   ) -> Result<(), BLEError> {
     unsafe {
-      let buf = os_msys_get_pkthdr(lsr.payload.len() as _, 0);
+      let mut buf = OsMBuf(os_msys_get_pkthdr(lsr.payload.len() as _, 0));
       if buf.is_null() {
         return BLEError::fail();
       }
-      ble!(os_mbuf_append(buf, &lsr.payload))?;
+      let rc = buf.append(&lsr.payload);
+      assert_eq!(rc, 0);
 
-      ble!(esp_idf_sys::ble_gap_ext_adv_rsp_set_data(inst_id, buf))
+      ble!(esp_idf_sys::ble_gap_ext_adv_rsp_set_data(inst_id, buf.0))
     }
   }
 

@@ -1,5 +1,5 @@
 use crate::{utilities::OsMBuf, BLEConnDesc};
-use alloc::{boxed::Box, vec::Vec};
+use alloc::boxed::Box;
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
 use esp_idf_svc::sys as esp_idf_sys;
@@ -117,11 +117,8 @@ impl BLEDescriptor {
         }
       }
       esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_DSC => {
-        let mut buf = Vec::with_capacity(esp_idf_sys::BLE_ATT_ATTR_MAX_LEN as _);
-
-        for om in OsMBuf(ctxt.om).iter() {
-          buf.extend_from_slice(om.as_slice());
-        }
+        let om = OsMBuf(ctxt.om);
+        let buf = om.as_flat();
 
         unsafe {
           let descriptor = UnsafeCell::new(&mut descriptor);
@@ -129,7 +126,7 @@ impl BLEDescriptor {
             let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
             let mut arg = OnWriteDescriptorArgs {
               current_data: (*descriptor.get()).value.as_slice(),
-              recv_data: &buf,
+              recv_data: buf.as_slice(),
               desc: &desc,
               reject: false,
               error_code: 0,
@@ -141,7 +138,7 @@ impl BLEDescriptor {
             }
           }
         }
-        descriptor.set_value(&buf);
+        descriptor.set_value(buf.as_slice());
 
         0
       }

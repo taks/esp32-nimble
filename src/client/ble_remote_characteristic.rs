@@ -266,13 +266,8 @@ impl BLERemoteCharacteristic {
 
   pub(crate) unsafe fn notify(&mut self, om: *mut esp_idf_sys::os_mbuf) {
     if let Some(no_notify) = self.state.on_notify.as_mut() {
-      let mut buf = Vec::with_capacity(esp_idf_sys::BLE_ATT_ATTR_MAX_LEN as _);
-
-      for om in OsMBuf(om).iter() {
-        buf.extend_from_slice(om.as_slice());
-      }
-
-      no_notify(&buf);
+      let om = OsMBuf(om);
+      no_notify(om.as_flat().as_slice());
     }
   }
 }

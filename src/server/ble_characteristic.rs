@@ -347,10 +347,8 @@ impl BLECharacteristic {
         }
       }
       sys::BLE_GATT_ACCESS_OP_WRITE_CHR => {
-        let mut buf = Vec::with_capacity(sys::BLE_ATT_ATTR_MAX_LEN as _);
-        for om in OsMBuf(ctxt.om).iter() {
-          buf.extend_from_slice(om.as_slice());
-        }
+        let om = OsMBuf(ctxt.om);
+        let buf = om.as_flat();
 
         let mut notify = false;
 
@@ -360,7 +358,7 @@ impl BLECharacteristic {
             let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
             let mut arg = OnWriteArgs {
               current_data: (*characteristic.get()).value.as_slice(),
-              recv_data: &buf,
+              recv_data: buf.as_slice(),
               desc: &desc,
               reject: false,
               error_code: 0,
@@ -374,7 +372,7 @@ impl BLECharacteristic {
             notify = arg.notify;
           }
         }
-        characteristic.set_value(&buf);
+        characteristic.set_value(buf.as_slice());
         if notify {
           characteristic.notify();
         }

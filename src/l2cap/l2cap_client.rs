@@ -30,7 +30,7 @@ impl L2capClient {
         ble_client.conn_handle(),
         psm,
         mtu,
-        ret.l2cap.sdu_rx(),
+        ret.l2cap.sdu_rx().0,
         Some(Self::blecent_l2cap_coc_event_cb),
         ret.borrow_mut() as *mut Self as _,
       ))?;

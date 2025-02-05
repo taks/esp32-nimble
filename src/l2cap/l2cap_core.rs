@@ -1,4 +1,4 @@
-use crate::{ble, utilities::os_mbuf_append, BLEError};
+use crate::{ble, utilities::OsMBuf, BLEError};
 use alloc::vec::Vec;
 use esp_idf_svc::sys;
 
@@ -40,14 +40,14 @@ impl L2cap {
     let mut data = data;
 
     while !data.is_empty() {
-      let sdu_rx = self.sdu_rx();
+      let mut sdu_rx = self.sdu_rx();
       let (data0, data1) = data.split_at(if data.len() < mtu { data.len() } else { mtu });
 
-      let rc = os_mbuf_append(sdu_rx, data0);
+      let rc = sdu_rx.append(data0);
       assert_eq!(rc, 0);
 
       loop {
-        let rc = unsafe { sys::ble_l2cap_send(chan, sdu_rx) };
+        let rc = unsafe { sys::ble_l2cap_send(chan, sdu_rx.0) };
         match rc as _ {
           0 | sys::BLE_HS_ESTALLED => break,
           sys::BLE_HS_EBUSY => {}
@@ -62,11 +62,11 @@ impl L2cap {
     Ok(())
   }
 
-  pub fn sdu_rx(&mut self) -> *mut sys::os_mbuf {
+  pub fn sdu_rx(&mut self) -> OsMBuf {
     loop {
       let ret = unsafe { super::os_mbuf_get_pkthdr(&mut self.mbuf_pool, 0) };
       if !ret.is_null() {
-        return ret;
+        return OsMBuf(ret);
       }
       esp_idf_svc::hal::delay::FreeRtos::delay_ms(10);
     }
@@ -74,7 +74,7 @@ impl L2cap {
 
   pub(crate) fn ble_l2cap_recv_ready(&mut self, chan: *mut sys::ble_l2cap_chan) -> i32 {
     let sdu_rx = self.sdu_rx();
-    unsafe { sys::ble_l2cap_recv_ready(chan, sdu_rx) }
+    unsafe { sys::ble_l2cap_recv_ready(chan, sdu_rx.0) }
   }
 
   pub(crate) fn get_chan_info(chan: *mut sys::ble_l2cap_chan) -> sys::ble_l2cap_chan_info {

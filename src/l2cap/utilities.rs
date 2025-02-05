@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 
-use crate::utilities::os_mbuf_into_slice;
+use crate::utilities::OsMBuf;
 use esp_idf_svc::sys;
 
 pub struct ReceivedData(sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4);
@@ -18,7 +18,7 @@ impl ReceivedData {
 
   #[inline]
   pub fn data(&self) -> &[u8] {
-    os_mbuf_into_slice(self.0.sdu_rx)
+    OsMBuf(self.0.sdu_rx).as_slice()
   }
 }
 

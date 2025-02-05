@@ -1,4 +1,4 @@
-use crate::BLEConnDesc;
+use crate::{utilities::OsMBuf, BLEConnDesc};
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
@@ -7,8 +7,7 @@ use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
   utilities::{
-    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, os_mbuf_append,
-    voidp_to_ref, BleUuid,
+    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, voidp_to_ref, BleUuid,
   },
   AttValue, OnWriteDescriptorArgs,
 };
@@ -109,7 +108,7 @@ impl BLEDescriptor {
 
         ble_npl_hw_enter_critical();
         let value = descriptor.value.as_slice();
-        let rc = os_mbuf_append(ctxt.om, value);
+        let rc = OsMBuf(ctxt.om).append(value);
         ble_npl_hw_exit_critical();
         if rc == 0 {
           0
@@ -119,11 +118,9 @@ impl BLEDescriptor {
       }
       esp_idf_sys::BLE_GATT_ACCESS_OP_WRITE_DSC => {
         let mut buf = Vec::with_capacity(esp_idf_sys::BLE_ATT_ATTR_MAX_LEN as _);
-        let mut om = ctxt.om;
-        while !om.is_null() {
-          let slice = unsafe { core::slice::from_raw_parts((*om).om_data, (*om).om_len as _) };
-          buf.extend_from_slice(slice);
-          om = unsafe { (*om).om_next.sle_next };
+
+        for om in OsMBuf(ctxt.om).iter() {
+          buf.extend_from_slice(om.as_slice());
         }
 
         unsafe {

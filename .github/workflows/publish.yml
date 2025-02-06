@@ -23,4 +23,4 @@ jobs:
       - name: Login
         run: cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Build | Publish
-        run: export ESP_IDF_TOOLS_INSTALL_DIR=out; cargo publish
+        run: export ESP_IDF_TOOLS_INSTALL_DIR=out; cargo publish --allow-dirty

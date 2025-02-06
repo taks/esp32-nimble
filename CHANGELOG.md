@@ -1,3 +1,6 @@
+## [0.10.1] - 2025-02-06
+- Fix `on_notify` when data is long ([#167](https://github.com/taks/esp32-nimble/pull/167))
+
 ## [0.10.0] - 2025-01-23
 - bump esp-idf-svc and embassy-time version ([#161](https://github.com/taks/esp32-nimble/pull/161))
 - Changed on_read closure argument from `AttValue` to `Self` ([#163](https://github.com/taks/esp32-nimble/pull/163))

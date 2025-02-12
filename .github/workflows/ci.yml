@@ -21,28 +21,25 @@ jobs:
         include:
           - target: riscv32imc-esp-espidf
             idf-version: v5.1.3
-            rustflags: "--cfg espidf_time64"
-            ble5-example: true
           - target: riscv32imc-esp-espidf
             idf-version: v5.2.1
-            rustflags: " --cfg espidf_time64"
           - target: riscv32imc-esp-espidf
             idf-version: v5.3.2
-            rustflags: " --cfg espidf_time64"
+            ble5-example: true
+          - target: riscv32imc-esp-espidf
+            idf-version: v5.4
           - target: riscv32imac-esp-espidf
             idf-version: v5.1.3
-            rustflags: "--cfg espidf_time64"
             mcu: esp32c6
           - target: xtensa-esp32-espidf
             idf-version: v5.1.3
-            rustflags: "--cfg espidf_time64"
-            ble-example: true
           - target: xtensa-esp32-espidf
             idf-version: v5.2.1
-            rustflags: "--cfg espidf_time64"
           - target: xtensa-esp32-espidf
             idf-version: v5.3.2
-            rustflags: "--cfg espidf_time64"
+            ble-example: true
+          - target: xtensa-esp32-espidf
+            idf-version: v5.4
 
     steps:
       - name: Setup | Checkout
@@ -58,7 +55,7 @@ jobs:
       - name: Setup env
         run: |
           echo "ESP_IDF_VERSION=${{ matrix.idf-version }}" >> "$GITHUB_ENV"
-          echo "RUSTFLAGS=${{ matrix.rustflags }}" >> "$GITHUB_ENV"
+          echo "RUSTFLAGS=--cfg espidf_time64" >> "$GITHUB_ENV"
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check

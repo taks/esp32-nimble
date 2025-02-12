@@ -235,8 +235,8 @@ impl BLECharacteristic {
       });
     }
     self
-      .svc_def_descriptors
-      .push(sys::ble_gatt_dsc_def::default());
+        .svc_def_descriptors
+        .push(sys::ble_gatt_dsc_def::default());
     self.svc_def_descriptors.as_mut_ptr()
   }
 
@@ -318,10 +318,13 @@ impl BLECharacteristic {
     let ctxt = unsafe { &*ctxt };
 
     let mutex = unsafe { voidp_to_ref::<Mutex<Self>>(arg) };
-    let Some(mut characteristic) = mutex.try_lock() else {
-      return sys::BLE_ATT_ERR_UNLIKELY as _;
-    };
 
+    if crate::utilities::ble_gap_conn_find(conn_handle).is_err() {
+      ::log::warn!("the conn handle does not exist");
+      return sys::BLE_ATT_ERR_UNLIKELY as _;
+    }
+
+    let mut characteristic = mutex.lock();
     if unsafe { sys::ble_uuid_cmp((*ctxt.__bindgen_anon_1.chr).uuid, &characteristic.uuid.u) != 0 }
     {
       return sys::BLE_ATT_ERR_UNLIKELY as _;
@@ -401,9 +404,9 @@ impl BLECharacteristic {
     }
 
     if let Some(idx) = self
-      .subscribed_list
-      .iter()
-      .position(|x| x.0 == subscribe.conn_handle)
+        .subscribed_list
+        .iter()
+        .position(|x| x.0 == subscribe.conn_handle)
     {
       if !sub_val.is_empty() {
         self.subscribed_list[idx].1 = sub_val;
@@ -442,9 +445,9 @@ impl BLECharacteristic {
 impl core::fmt::Debug for BLECharacteristic {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.debug_struct("BLECharacteristic")
-      .field("uuid", &BleUuid::from(self.uuid))
-      .field("properties", &self.properties)
-      .finish()
+        .field("uuid", &BleUuid::from(self.uuid))
+        .field("properties", &self.properties)
+        .finish()
   }
 }
 

@@ -6,13 +6,13 @@ use esp_idf_svc::sys;
 use zerocopy::IntoBytes;
 
 use crate::{
-    ble,
-    cpfd::Cpfd,
-    utilities::{
-        ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, voidp_to_ref, BleUuid,
-        OsMBuf,
-    },
-    AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
+  ble,
+  cpfd::Cpfd,
+  utilities::{
+    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, voidp_to_ref, BleUuid,
+    OsMBuf,
+  },
+  AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
 };
 
 cfg_if::cfg_if! {
@@ -235,8 +235,8 @@ impl BLECharacteristic {
       });
     }
     self
-      .svc_def_descriptors
-      .push(sys::ble_gatt_dsc_def::default());
+        .svc_def_descriptors
+        .push(sys::ble_gatt_dsc_def::default());
     self.svc_def_descriptors.as_mut_ptr()
   }
 
@@ -319,82 +319,74 @@ impl BLECharacteristic {
 
     let mutex = unsafe { voidp_to_ref::<Mutex<Self>>(arg) };
 
-    match crate::utilities::ble_gap_conn_find(conn_handle) {
-      Ok(_) => {
-        let mut characteristic = mutex.lock();
-        println!("{:?}", conn_handle);
+    if crate::utilities::ble_gap_conn_find(conn_handle).is_err() {
+      ::log::warn!("the conn handle does not exist");
+      return sys::BLE_ATT_ERR_UNLIKELY as _;
+    }
 
-        if unsafe {
-          sys::ble_uuid_cmp((*ctxt.__bindgen_anon_1.chr).uuid, &characteristic.uuid.u) != 0
-        } {
-          return sys::BLE_ATT_ERR_UNLIKELY as _;
+    let mut characteristic = mutex.lock();
+    if unsafe { sys::ble_uuid_cmp((*ctxt.__bindgen_anon_1.chr).uuid, &characteristic.uuid.u) != 0 }
+    {
+      return sys::BLE_ATT_ERR_UNLIKELY as _;
+    }
+
+    match ctxt.op as _ {
+      sys::BLE_GATT_ACCESS_OP_READ_CHR => {
+        let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+
+        unsafe {
+          if (*(ctxt.om)).om_pkthdr_len > 8 || characteristic.value.len() <= (desc.mtu() - 3) as _ {
+            let characteristic = UnsafeCell::new(&mut characteristic);
+            if let Some(callback) = &mut (*characteristic.get()).on_read {
+              callback(*characteristic.get(), &desc);
+            }
+          }
         }
 
-        match ctxt.op as _ {
-          sys::BLE_GATT_ACCESS_OP_READ_CHR => {
+        ble_npl_hw_enter_critical();
+        let value = characteristic.value.as_slice();
+        let rc = OsMBuf(ctxt.om).append(value);
+        ble_npl_hw_exit_critical();
+        if rc == 0 {
+          0
+        } else {
+          sys::BLE_ATT_ERR_INSUFFICIENT_RES as _
+        }
+      }
+      sys::BLE_GATT_ACCESS_OP_WRITE_CHR => {
+        let om = OsMBuf(ctxt.om);
+        let buf = om.as_flat();
+
+        let mut notify = false;
+
+        unsafe {
+          let characteristic = UnsafeCell::new(&mut characteristic);
+          if let Some(callback) = &mut (*characteristic.get()).on_write {
             let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
+            let mut arg = OnWriteArgs {
+              current_data: (*characteristic.get()).value.as_slice(),
+              recv_data: buf.as_slice(),
+              desc: &desc,
+              reject: false,
+              error_code: 0,
+              notify: false,
+            };
+            callback(&mut arg);
 
-            unsafe {
-              if (*(ctxt.om)).om_pkthdr_len > 8
-                || characteristic.value.len() <= (desc.mtu() - 3) as _
-              {
-                let characteristic = UnsafeCell::new(&mut characteristic);
-                if let Some(callback) = &mut (*characteristic.get()).on_read {
-                  callback(*characteristic.get(), &desc);
-                }
-              }
+            if arg.reject {
+              return arg.error_code as _;
             }
-
-            ble_npl_hw_enter_critical();
-            let value = characteristic.value.as_slice();
-            let rc = OsMBuf(ctxt.om).append(value);
-            ble_npl_hw_exit_critical();
-            if rc == 0 {
-              0
-            } else {
-              sys::BLE_ATT_ERR_INSUFFICIENT_RES as _
-            }
+            notify = arg.notify;
           }
-          sys::BLE_GATT_ACCESS_OP_WRITE_CHR => {
-            let om = OsMBuf(ctxt.om);
-            let buf = om.as_flat();
-
-            let mut notify = false;
-
-            unsafe {
-              let characteristic = UnsafeCell::new(&mut characteristic);
-              if let Some(callback) = &mut (*characteristic.get()).on_write {
-                let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
-                let mut arg = OnWriteArgs {
-                  current_data: (*characteristic.get()).value.as_slice(),
-                  recv_data: buf.as_slice(),
-                  desc: &desc,
-                  reject: false,
-                  error_code: 0,
-                  notify: false,
-                };
-                callback(&mut arg);
-
-                if arg.reject {
-                  return arg.error_code as _;
-                }
-                notify = arg.notify;
-              }
-            }
-            characteristic.set_value(buf.as_slice());
-            if notify {
-              characteristic.notify();
-            }
-
-            0
-          }
-          _ => sys::BLE_ATT_ERR_UNLIKELY as _,
         }
+        characteristic.set_value(buf.as_slice());
+        if notify {
+          characteristic.notify();
+        }
+
+        0
       }
-      Err(_) => {
-        println!("the conn handle does not exist");
-        return sys::BLE_ATT_ERR_UNLIKELY as _;
-      }
+      _ => sys::BLE_ATT_ERR_UNLIKELY as _,
     }
   }
 
@@ -412,9 +404,9 @@ impl BLECharacteristic {
     }
 
     if let Some(idx) = self
-      .subscribed_list
-      .iter()
-      .position(|x| x.0 == subscribe.conn_handle)
+        .subscribed_list
+        .iter()
+        .position(|x| x.0 == subscribe.conn_handle)
     {
       if !sub_val.is_empty() {
         self.subscribed_list[idx].1 = sub_val;
@@ -453,9 +445,9 @@ impl BLECharacteristic {
 impl core::fmt::Debug for BLECharacteristic {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     f.debug_struct("BLECharacteristic")
-      .field("uuid", &BleUuid::from(self.uuid))
-      .field("properties", &self.properties)
-      .finish()
+        .field("uuid", &BleUuid::from(self.uuid))
+        .field("properties", &self.properties)
+        .finish()
   }
 }
 

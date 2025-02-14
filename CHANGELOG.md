@@ -1,3 +1,7 @@
+## [0.10.2] - 2025-02-13
+- Fix ESP-IDF v5.4 build ([#170](https://github.com/taks/esp32-nimble/pull/170))
+- Added connection Handle check before gap event is handled in characteristic to fix the deadlock issue in #151 ([#171](https://github.com/taks/esp32-nimble/pull/171))
+
 ## [0.10.1] - 2025-02-06
 - Fix `on_notify` when data is long ([#167](https://github.com/taks/esp32-nimble/pull/167))
 

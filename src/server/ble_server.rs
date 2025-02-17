@@ -23,7 +23,8 @@ pub struct BLEServer {
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
   on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
   on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-  on_authentication_complete: Option<Box<dyn Fn(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
+  on_authentication_complete:
+    Option<Box<dyn Fn(&mut Self, &BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
 }
 
 impl BLEServer {
@@ -101,7 +102,7 @@ impl BLEServer {
   ///   o BLE host error code: the encryption state change attempt failed for the specified reason.
   pub fn on_authentication_complete(
     &mut self,
-    callback: impl Fn(&BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
+    callback: impl Fn(&mut Self, &BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
   ) -> &mut Self {
     self.on_authentication_complete = Some(Box::new(callback));
     self
@@ -376,8 +377,16 @@ impl BLEServer {
         let Ok(desk) = ble_gap_conn_find(enc_change.conn_handle) else {
           return esp_idf_sys::BLE_ATT_ERR_INVALID_HANDLE as _;
         };
-        if let Some(callback) = &server.on_authentication_complete {
-          callback(&desk, BLEError::convert(enc_change.status as _));
+
+        let server = UnsafeCell::new(server);
+        unsafe {
+          if let Some(callback) = &(*server.get()).on_authentication_complete {
+            callback(
+              *server.get(),
+              &desk,
+              BLEError::convert(enc_change.status as _),
+            );
+          }
         }
       }
       esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {

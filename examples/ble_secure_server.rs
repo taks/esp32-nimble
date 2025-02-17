@@ -28,7 +28,7 @@ fn main() -> anyhow::Result<()> {
   server.on_disconnect(|_desc, reason| {
     ::log::info!("Client disconnected ({:?})", reason);
   });
-  server.on_authentication_complete(|desc, result| {
+  server.on_authentication_complete(|_, desc, result| {
     ::log::info!("AuthenticationComplete({:?}): {:?}", result, desc);
   });
 

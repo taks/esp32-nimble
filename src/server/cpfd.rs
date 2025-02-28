@@ -308,7 +308,7 @@ pub enum ChrUnit {
 }
 
 #[derive(TryFromBytes, KnownLayout, IntoBytes, Immutable)]
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct Cpfd {
   /// Format of the value of this characteristic.
   pub format: ChrFormat,

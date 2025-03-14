@@ -1,3 +1,7 @@
+## [0.11.0] - 2025-03-14
+- Added `&mut Self` argument to on_authentication_complete callback ([#174](https://github.com/taks/esp32-nimble/pull/174))
+- Fix null pointer dereferences ([#177](https://github.com/taks/esp32-nimble/pull/177))
+
 ## [0.10.2] - 2025-02-13
 - Fix ESP-IDF v5.4 build ([#170](https://github.com/taks/esp32-nimble/pull/170))
 - Added connection Handle check before gap event is handled in characteristic to fix the deadlock issue in #151 ([#171](https://github.com/taks/esp32-nimble/pull/171))

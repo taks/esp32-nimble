@@ -178,9 +178,9 @@ impl BLERemoteCharacteristic {
     }
 
     let error = unsafe { &*error };
-    let dsc = unsafe { &*dsc };
 
     if error.status == 0 {
+      let dsc = unsafe { &*dsc };
       let descriptor =
         BLERemoteDescriptor::new(ArcUnsafeCell::downgrade(&characteristic.state), dsc);
       characteristic

@@ -415,9 +415,9 @@ impl BLEClient {
     }
 
     let error = unsafe { &*error };
-    let service = unsafe { &*service };
 
     if error.status == 0 {
+      let service = unsafe { &*service };
       // Found a service - add it to the vector
       let service = BLERemoteService::new(ArcUnsafeCell::downgrade(&client.state), service);
       client.state.services.as_mut().unwrap().push(service);

@@ -92,9 +92,9 @@ impl BLERemoteService {
       return 0;
     }
     let error = unsafe { &*error };
-    let chr = unsafe { &*chr };
 
     if error.status == 0 {
+      let chr = unsafe { &*chr };
       let chr = BLERemoteCharacteristic::new(ArcUnsafeCell::downgrade(&service.state), chr);
       service.state.characteristics.as_mut().unwrap().push(chr);
       return 0;

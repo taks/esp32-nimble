@@ -1,3 +1,7 @@
+## [0.11.1] - 2025-04-14
+- Fixed building errors with latest nightly version ([#180](https://github.com/taks/esp32-nimble/pull/180))
+- Fix ESP-IDF v5.4.1 build
+
 ## [0.11.0] - 2025-03-14
 - Added `&mut Self` argument to on_authentication_complete callback ([#174](https://github.com/taks/esp32-nimble/pull/174))
 - Fix null pointer dereferences ([#177](https://github.com/taks/esp32-nimble/pull/177))

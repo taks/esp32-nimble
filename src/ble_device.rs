@@ -344,7 +344,7 @@ impl BLEDevice {
   }
 
   extern "C" fn on_reset(reason: i32) {
-    ::log::info!("Resetting state; reason={}", reason);
+    ::log::info!("Resetting state; reason={reason}");
   }
 
   extern "C" fn blecent_host_task(_: *mut c_void) {

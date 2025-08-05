@@ -286,7 +286,7 @@ impl BLEServer {
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]
         if server.advertise_on_disconnect {
           if let Err(err) = BLEDevice::take().get_advertising().lock().start() {
-            ::log::warn!("can't start advertising: {:?}", err);
+            ::log::warn!("can't start advertising: {err:?}");
           }
         }
       }
@@ -306,7 +306,7 @@ impl BLEServer {
               if !desc.encrypted() {
                 let rc = unsafe { esp_idf_sys::ble_gap_security_initiate(subscribe.conn_handle) };
                 if rc != 0 {
-                  ::log::error!("ble_gap_security_initiate: rc={}", rc);
+                  ::log::error!("ble_gap_security_initiate: rc={rc}");
                 }
               }
             }
@@ -404,7 +404,7 @@ impl BLEServer {
             };
 
             let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
-            ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {}", rc);
+            ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {rc}");
           }
           esp_idf_sys::BLE_SM_IOACT_NUMCMP => {
             if let Some(callback) = &server.on_confirm_pin {
@@ -413,7 +413,7 @@ impl BLEServer {
               ::log::warn!("on_passkey_request is not setted");
             }
             let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
-            ::log::debug!("BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: {}", rc);
+            ::log::debug!("BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: {rc}");
           }
           esp_idf_sys::BLE_SM_IOACT_INPUT => {
             if let Some(callback) = &server.on_passkey_request {
@@ -422,7 +422,7 @@ impl BLEServer {
               ::log::warn!("on_passkey_request is not setted");
             }
             let rc = unsafe { esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey) };
-            ::log::debug!("BLE_SM_IOACT_INPUT; ble_sm_inject_io result: {}", rc);
+            ::log::debug!("BLE_SM_IOACT_INPUT; ble_sm_inject_io result: {rc}");
           }
           esp_idf_sys::BLE_SM_IOACT_NONE => {
             ::log::debug!("BLE_SM_IOACT_NONE; No passkey action required");

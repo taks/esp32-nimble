@@ -105,7 +105,7 @@ impl BLEScan {
           result = Some(res);
 
           if let Err(err) = Self::stop() {
-            ::log::warn!("scan stop err: {:?}", err);
+            ::log::warn!("scan stop err: {err:?}");
           }
           scan.signal.signal(());
         }

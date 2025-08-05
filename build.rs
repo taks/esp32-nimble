@@ -17,7 +17,7 @@ fn main() {
   let version: Vec<usize> = ["major", "minor", "patch"]
     .iter()
     .filter_map(|ver_part| {
-      let search_string = format!("esp_idf_version_{}", ver_part);
+      let search_string = format!("esp_idf_version_{ver_part}");
       esp_idf_info.args.iter().find_map(|arg| {
         if arg.starts_with(&search_string) {
           let version_str = arg.split_terminator('"').nth(1).unwrap();

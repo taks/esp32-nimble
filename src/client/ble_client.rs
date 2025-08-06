@@ -104,10 +104,10 @@ impl BLEClient {
     ble!(self.state.signal.wait().await)?;
     self.state.address = Some(*addr);
 
-    let client = UnsafeCell::new(self);
+    let mut client = UnsafeCell::new(self);
     unsafe {
-      if let Some(callback) = &(*client.get()).state.on_connect {
-        callback(*client.get());
+      if let Some(callback) = &(&(*client.get())).state.on_connect {
+        callback(client.get_mut());
       }
     }
 

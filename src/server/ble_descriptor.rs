@@ -100,8 +100,8 @@ impl BLEDescriptor {
         unsafe {
           if (*(ctxt.om)).om_pkthdr_len > 8 || descriptor.value.len() <= (desc.mtu() - 3) as _ {
             let descriptor = UnsafeCell::new(&mut descriptor);
-            if let Some(callback) = &mut (*descriptor.get()).on_read {
-              callback(&mut (*descriptor.get()).value, &desc);
+            if let Some(callback) = &mut (&mut (*descriptor.get())).on_read {
+              callback(&mut (&mut (*descriptor.get())).value, &desc);
             }
           }
         }
@@ -122,10 +122,10 @@ impl BLEDescriptor {
 
         unsafe {
           let descriptor = UnsafeCell::new(&mut descriptor);
-          if let Some(callback) = &mut (*descriptor.get()).on_write {
+          if let Some(callback) = &mut (&mut (*descriptor.get())).on_write {
             let desc = crate::utilities::ble_gap_conn_find(conn_handle).unwrap();
             let mut arg = OnWriteDescriptorArgs {
-              current_data: (*descriptor.get()).value.as_slice(),
+              current_data: (&(*descriptor.get())).value.as_slice(),
               recv_data: buf.as_slice(),
               desc: &desc,
               reject: false,

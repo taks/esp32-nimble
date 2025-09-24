@@ -62,7 +62,7 @@ impl<T: AsRef<[u8]>> BLEAdvertisedData<T> {
     data.data.first().copied()
   }
 
-  pub fn service_data(&self) -> Option<BLEServiceData> {
+  pub fn service_data(&self) -> Option<BLEServiceData<'_>> {
     for x in self.decode() {
       match x.ty as u32 {
         sys::BLE_HS_ADV_TYPE_SVC_DATA_UUID16 => {
@@ -95,7 +95,7 @@ impl<T: AsRef<[u8]>> BLEAdvertisedData<T> {
     None
   }
 
-  pub fn manufacture_data(&self) -> Option<ManufactureData> {
+  pub fn manufacture_data(&self) -> Option<ManufactureData<'_>> {
     let data = self
       .decode()
       .find(|x| x.ty == (sys::BLE_HS_ADV_TYPE_MFG_DATA as _))?;

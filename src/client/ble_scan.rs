@@ -30,7 +30,7 @@ pub struct BLEScan {
 
 type CbArgType<'a> = (
   &'a mut BLEScan,
-  &'a mut (dyn FnMut(&mut BLEScan, &BLEAdvertisedDevice, BLEAdvertisedData<&[u8]>)),
+  &'a mut dyn FnMut(&mut BLEScan, &BLEAdvertisedDevice, BLEAdvertisedData<&[u8]>),
 );
 
 impl BLEScan {

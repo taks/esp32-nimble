@@ -100,7 +100,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
   }
   // ATT errors (BLE_HS_ERR_ATT_BASE : 0x100)
   else if rc < sys::BLE_HS_ERR_ATT_BASE + 0x100 {
-    return match rc - sys::BLE_HS_ERR_ATT_BASE {
+    match rc - sys::BLE_HS_ERR_ATT_BASE {
       sys::BLE_ATT_ERR_INVALID_HANDLE => Some("The attribute handle given was not valid on this server."),
       sys::BLE_ATT_ERR_READ_NOT_PERMITTED => Some("The attribute cannot be read."),
       sys::BLE_ATT_ERR_WRITE_NOT_PERMITTED => Some("The attribute cannot be written."),
@@ -119,7 +119,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
       sys::BLE_ATT_ERR_UNSUPPORTED_GROUP => Some("The attribute type is not a supported grouping attribute as defined by a higher layer specification."),
       sys::BLE_ATT_ERR_INSUFFICIENT_RES => Some("Insufficient Resources to complete the request."),
       _ => None,
-    };
+    }
   }
   // HCI errors (BLE_HS_ERR_HCI_BASE : 0x200)
   else if rc < sys::BLE_HS_ERR_HCI_BASE + 0x100 {

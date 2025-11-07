@@ -109,6 +109,10 @@ impl BLEDevice {
 
   /// Shutdown the NimBLE stack/controller
   pub fn deinit() -> Result<(), EspError> {
+    if !INITIALIZED.load(Ordering::Acquire) {
+      return Ok(());
+    }
+
     unsafe {
       esp!(esp_idf_sys::nimble_port_stop())?;
 

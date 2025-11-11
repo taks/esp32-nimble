@@ -39,10 +39,23 @@ cfg_if::cfg_if! {
 
 const NULL_HANDLE: u16 = 0xFFFF;
 
+cfg_if::cfg_if! {
+  if #[cfg(any(
+    all(
+      esp_idf_version_major = "5",
+      esp_idf_version_minor = "4",
+      not(any(esp_idf_version_patch = "0", esp_idf_version_patch = "1"))),
+  ))] {
+    type NimblePropertiesType = u32;
+  } else {
+    type NimblePropertiesType = u16;
+  }
+}
+
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-  pub struct NimbleProperties: u16 {
+  pub struct NimbleProperties: NimblePropertiesType {
     /// Read Access Permitted
     const READ = sys::BLE_GATT_CHR_F_READ as _;
     /// Read Requires Encryption

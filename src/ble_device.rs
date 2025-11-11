@@ -108,8 +108,11 @@ impl BLEDevice {
   }
 
   /// Shutdown the NimBLE stack/controller
+  ///
+  /// To restart, call `BLEDevice::init()`.
   pub fn deinit() -> Result<(), EspError> {
     if !INITIALIZED.load(Ordering::Acquire) {
+      ::log::info!("BLE stack is not initialized, skipping deinit.");
       return Ok(());
     }
 
@@ -136,8 +139,11 @@ impl BLEDevice {
     Ok(())
   }
 
-  /// Shutdown the NimBLE stack/controller
+  /// Shutdown the NimBLE stack/controller.
+  ///
   /// server/advertising/scan will be reset.
+  ///
+  /// To restart, call `BLEDevice::init()`.
   pub fn deinit_full() -> Result<(), EspError> {
     Self::deinit()?;
     unsafe {

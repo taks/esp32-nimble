@@ -47,6 +47,8 @@ jobs:
             idf-version: v5.4.1
           - target: xtensa-esp32-espidf
             idf-version: v5.4.3
+          - target: xtensa-esp32-espidf
+            idf-version: v5.5.1
 
     steps:
       - name: Setup | Checkout

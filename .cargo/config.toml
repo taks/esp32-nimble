@@ -34,4 +34,4 @@ rustflags = ["--cfg", "espidf_time64"]
 build-std = ["std", "panic_abort"]
 
 [env]
-ESP_IDF_VERSION = "v5.3.2"
+ESP_IDF_VERSION = "v5.4.3"

@@ -9,6 +9,7 @@ use esp_idf_svc::sys as esp_idf_sys;
 
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 const MAX_CONNECTIONS: usize = esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _;
+const EATT_CHAN_NUM: usize = esp_idf_sys::CONFIG_BT_NIMBLE_EATT_CHAN_NUM as _;
 
 #[allow(clippy::type_complexity)]
 pub struct BLEServer {
@@ -18,6 +19,7 @@ pub struct BLEServer {
   notify_characteristic: Vec<&'static mut BLECharacteristic>,
   connections: heapless::Vec<u16, MAX_CONNECTIONS>,
   indicate_wait: [u16; MAX_CONNECTIONS],
+  cids: heapless::Vec<u16, EATT_CHAN_NUM>,
 
   on_connect: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
   on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
@@ -36,6 +38,7 @@ impl BLEServer {
       notify_characteristic: Vec::new(),
       connections: heapless::Vec::new(),
       indicate_wait: [BLE_HS_CONN_HANDLE_NONE; MAX_CONNECTIONS],
+      cids: heapless::Vec::new(),
       on_connect: None,
       on_disconnect: None,
       on_passkey_request: None,
@@ -430,6 +433,33 @@ impl BLEServer {
           action => {
             todo!("implementation required: {}", action);
           }
+        }
+      }
+      esp_idf_sys::BLE_GAP_EVENT_EATT => {
+        let eatt = unsafe { &event.__bindgen_anon_1.eatt };
+        ::log::info!("EATT event; status={} cid={}", eatt.status, eatt.cid);
+
+        if eatt.status == 0 {
+          server.cids.push(eatt.cid).unwrap();
+
+          if server.cids.len() != EATT_CHAN_NUM {
+            // Wait until all EATT bearers are connected before proceeding
+            return 0;
+          }
+
+          let rc = unsafe {
+            esp_idf_sys::ble_att_set_default_bearer_using_cid(eatt.conn_handle, eatt.cid)
+          };
+          if rc != 0 {
+            ::log::info!("Cannot set default EATT bearer: {}", rc);
+            return rc;
+          }
+        } else if eatt.status == 1 {
+          if let Some(idx) = server.cids.iter().position(|x| *x == eatt.cid) {
+            server.cids.swap_remove(idx);
+          }
+
+          return 0;
         }
       }
       esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED

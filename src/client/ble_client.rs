@@ -9,6 +9,8 @@ use core::{cell::UnsafeCell, ffi::c_void, ptr};
 use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::*;
 
+const EATT_CHAN_NUM: usize = esp_idf_sys::CONFIG_BT_NIMBLE_EATT_CHAN_NUM as _;
+
 #[allow(clippy::type_complexity)]
 pub(crate) struct BLEClientState {
   address: Option<BLEAddress>,
@@ -25,6 +27,7 @@ pub(crate) struct BLEClientState {
 
 pub struct BLEClient {
   state: ArcUnsafeCell<BLEClientState>,
+  cids: heapless::Vec<u16, EATT_CHAN_NUM>,
 }
 
 impl BLEClient {
@@ -51,6 +54,7 @@ impl BLEClient {
         on_disconnect: None,
         on_connect: None,
       }),
+      cids: heapless::Vec::new(),
     }
   }
 
@@ -252,6 +256,8 @@ impl BLEClient {
     let event = unsafe { &*event };
     let client = unsafe { voidp_to_ref::<Self>(arg) };
 
+    ::log::info!("event type: {}", event.type_);
+
     match event.type_ as _ {
       BLE_GAP_EVENT_CONNECT => {
         let connect = unsafe { &event.__bindgen_anon_1.connect };
@@ -396,6 +402,35 @@ impl BLEClient {
           }
         }
       }
+      BLE_GAP_EVENT_EATT => {
+        let eatt = unsafe { &event.__bindgen_anon_1.eatt };
+        ::log::info!("EATT event; status={} cid={}", eatt.status, eatt.cid);
+
+        if eatt.status == 0 {
+          client.cids.push(eatt.cid).unwrap();
+
+          if client.cids.len() != EATT_CHAN_NUM {
+            // Wait until all EATT bearers are connected before proceeding
+            return 0;
+          }
+
+          // Set the default bearer to use for further procedures
+          let rc = unsafe {
+            esp_idf_sys::ble_att_set_default_bearer_using_cid(eatt.conn_handle, client.cids[0])
+          };
+          if rc != 0 {
+            ::log::info!("Cannot set default EATT bearer: {}", rc);
+            return rc;
+          }
+        } else if eatt.status == 1 {
+          if let Some(idx) = client.cids.iter().position(|x| *x == eatt.cid) {
+            client.cids.swap_remove(idx);
+          }
+
+          return 0;
+        }
+      }
+
       _ => {
         ::log::warn!("unhandled event: {}", event.type_);
       }

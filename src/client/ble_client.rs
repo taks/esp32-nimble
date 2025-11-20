@@ -339,7 +339,7 @@ impl BLEClient {
           }
         }
       }
-      BLE_GAP_EVENT_CONN_UPDATE | BLE_GAP_EVENT_L2CAP_UPDATE_REQ => {
+      BLE_GAP_EVENT_CONN_UPDATE_REQ | BLE_GAP_EVENT_L2CAP_UPDATE_REQ => {
         let conn_update_req = unsafe { &event.__bindgen_anon_1.conn_update_req };
         if client.state.conn_handle != conn_update_req.conn_handle {
           return 0;

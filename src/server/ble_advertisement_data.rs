@@ -1,4 +1,4 @@
-use crate::{enums::PowerType, utilities::BleUuid, BLEDevice};
+use crate::{BLEDevice, enums::PowerType, utilities::BleUuid};
 use alloc::{string::String, vec::Vec};
 use esp_idf_svc::sys as esp_idf_sys;
 

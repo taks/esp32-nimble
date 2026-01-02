@@ -1,9 +1,9 @@
 use alloc::sync::Arc;
 
 use crate::{
-  cpfd::*,
-  utilities::{mutex::Mutex, BleUuid},
   BLECharacteristic, BLEServer, BLEService, DescriptorProperties, NimbleProperties,
+  cpfd::*,
+  utilities::{BleUuid, mutex::Mutex},
 };
 
 const BLE_SVC_DIS_CHR_UUID16_MANUFACTURER_NAME: BleUuid = BleUuid::from_uuid16(0x2A29);

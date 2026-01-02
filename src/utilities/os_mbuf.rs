@@ -71,7 +71,7 @@ impl Iterator for OsMBufIterator {
     } else {
       let current = self.0;
 
-      self.0 = OsMBuf(unsafe { (*self.0 .0).om_next.sle_next });
+      self.0 = OsMBuf(unsafe { (*self.0.0).om_next.sle_next });
 
       Some(current)
     }

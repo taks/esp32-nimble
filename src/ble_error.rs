@@ -101,22 +101,46 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
   // ATT errors (BLE_HS_ERR_ATT_BASE : 0x100)
   else if rc < sys::BLE_HS_ERR_ATT_BASE + 0x100 {
     match rc - sys::BLE_HS_ERR_ATT_BASE {
-      sys::BLE_ATT_ERR_INVALID_HANDLE => Some("The attribute handle given was not valid on this server."),
+      sys::BLE_ATT_ERR_INVALID_HANDLE => {
+        Some("The attribute handle given was not valid on this server.")
+      }
       sys::BLE_ATT_ERR_READ_NOT_PERMITTED => Some("The attribute cannot be read."),
       sys::BLE_ATT_ERR_WRITE_NOT_PERMITTED => Some("The attribute cannot be written."),
       sys::BLE_ATT_ERR_INVALID_PDU => Some("The attribute PDU was invalid."),
-      sys::BLE_ATT_ERR_INSUFFICIENT_AUTHEN => Some("The attribute requires authentication before it can be read or written."),
-      sys::BLE_ATT_ERR_REQ_NOT_SUPPORTED => Some("Attribute server does not support the request received from the client."),
-      sys::BLE_ATT_ERR_INVALID_OFFSET => Some("Offset specified was past the end of the attribute."),
-      sys::BLE_ATT_ERR_INSUFFICIENT_AUTHOR => Some("The attribute requires authorization before it can be read or written."),
+      sys::BLE_ATT_ERR_INSUFFICIENT_AUTHEN => {
+        Some("The attribute requires authentication before it can be read or written.")
+      }
+      sys::BLE_ATT_ERR_REQ_NOT_SUPPORTED => {
+        Some("Attribute server does not support the request received from the client.")
+      }
+      sys::BLE_ATT_ERR_INVALID_OFFSET => {
+        Some("Offset specified was past the end of the attribute.")
+      }
+      sys::BLE_ATT_ERR_INSUFFICIENT_AUTHOR => {
+        Some("The attribute requires authorization before it can be read or written.")
+      }
       sys::BLE_ATT_ERR_PREPARE_QUEUE_FULL => Some("Too many prepare writes have been queued."),
-      sys::BLE_ATT_ERR_ATTR_NOT_FOUND => Some("No attribute found within the given attribute handle range."),
-      sys::BLE_ATT_ERR_ATTR_NOT_LONG => Some("The attribute cannot be read or written using the Read Blob Request."),
-      sys::BLE_ATT_ERR_INSUFFICIENT_KEY_SZ => Some("The Encryption Key Size used for encrypting this link is insufficient."),
-      sys::BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN => Some("The attribute value length is invalid for the operation."),
-      sys::BLE_ATT_ERR_UNLIKELY => Some("The attribute request has encountered an error that was unlikely, could not be completed as requested."),
-      sys::BLE_ATT_ERR_INSUFFICIENT_ENC => Some("The attribute requires encryption before it can be read or written."),
-      sys::BLE_ATT_ERR_UNSUPPORTED_GROUP => Some("The attribute type is not a supported grouping attribute as defined by a higher layer specification."),
+      sys::BLE_ATT_ERR_ATTR_NOT_FOUND => {
+        Some("No attribute found within the given attribute handle range.")
+      }
+      sys::BLE_ATT_ERR_ATTR_NOT_LONG => {
+        Some("The attribute cannot be read or written using the Read Blob Request.")
+      }
+      sys::BLE_ATT_ERR_INSUFFICIENT_KEY_SZ => {
+        Some("The Encryption Key Size used for encrypting this link is insufficient.")
+      }
+      sys::BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN => {
+        Some("The attribute value length is invalid for the operation.")
+      }
+      sys::BLE_ATT_ERR_UNLIKELY => Some(
+        "The attribute request has encountered an error that was unlikely, could not be completed as requested.",
+      ),
+      sys::BLE_ATT_ERR_INSUFFICIENT_ENC => {
+        Some("The attribute requires encryption before it can be read or written.")
+      }
+      sys::BLE_ATT_ERR_UNSUPPORTED_GROUP => Some(
+        "The attribute type is not a supported grouping attribute as defined by a higher layer specification.",
+      ),
       sys::BLE_ATT_ERR_INSUFFICIENT_RES => Some("Insufficient Resources to complete the request."),
       _ => None,
     }
@@ -165,20 +189,42 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
   // local Security Manager errors (BLE_HS_ERR_SM_US_BASE : 0x400)
   else if rc < sys::BLE_HS_ERR_SM_US_BASE + 0x100 {
     match rc - sys::BLE_HS_ERR_SM_US_BASE {
-      sys::BLE_SM_ERR_PASSKEY => Some("The user input of passkey failed, for example, the user cancelled the operation."),
+      sys::BLE_SM_ERR_PASSKEY => {
+        Some("The user input of passkey failed, for example, the user cancelled the operation.")
+      }
       sys::BLE_SM_ERR_OOB => Some("The OOB data is not available."),
-      sys::BLE_SM_ERR_AUTHREQ => Some("The pairing procedure cannot be performed as authentication requirements cannot be met due to IO capabilities of one or both devices."),
-      sys::BLE_SM_ERR_CONFIRM_MISMATCH => Some("The confirm value does not match the calculated compare value."),
+      sys::BLE_SM_ERR_AUTHREQ => Some(
+        "The pairing procedure cannot be performed as authentication requirements cannot be met due to IO capabilities of one or both devices.",
+      ),
+      sys::BLE_SM_ERR_CONFIRM_MISMATCH => {
+        Some("The confirm value does not match the calculated compare value.")
+      }
       sys::BLE_SM_ERR_PAIR_NOT_SUPP => Some("Pairing is not supported by the device."),
-      sys::BLE_SM_ERR_ENC_KEY_SZ => Some("The resultant encryption key size is insufficient for the security requirements of this device."),
-      sys::BLE_SM_ERR_CMD_NOT_SUPP => Some("The SMP command received is not supported on this device."),
+      sys::BLE_SM_ERR_ENC_KEY_SZ => Some(
+        "The resultant encryption key size is insufficient for the security requirements of this device.",
+      ),
+      sys::BLE_SM_ERR_CMD_NOT_SUPP => {
+        Some("The SMP command received is not supported on this device.")
+      }
       sys::BLE_SM_ERR_UNSPECIFIED => Some("Pairing failed due to an unspecified reason."),
-      sys::BLE_SM_ERR_REPEATED => Some("Pairing or authentication procedure is disallowed because too little time has elapsed since last pairing request or security request."),
-      sys::BLE_SM_ERR_INVAL => Some("The Invalid Parameters error code indicates that the command length is invalid or that a parameter is outside of the specified range."),
-      sys::BLE_SM_ERR_DHKEY => Some("Indicates to the remote device that the DHKey Check value received doesn’t match the one calculated by the local device."),
-      sys::BLE_SM_ERR_NUMCMP => Some("Indicates that the confirm values in the numeric comparison protocol do not match."),
-      sys::BLE_SM_ERR_ALREADY => Some("Indicates that the pairing over the LE transport failed due to a Pairing Request sent over the BR/EDR transport in process."),
-      sys::BLE_SM_ERR_CROSS_TRANS => Some("Indicates that the BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport."),
+      sys::BLE_SM_ERR_REPEATED => Some(
+        "Pairing or authentication procedure is disallowed because too little time has elapsed since last pairing request or security request.",
+      ),
+      sys::BLE_SM_ERR_INVAL => Some(
+        "The Invalid Parameters error code indicates that the command length is invalid or that a parameter is outside of the specified range.",
+      ),
+      sys::BLE_SM_ERR_DHKEY => Some(
+        "Indicates to the remote device that the DHKey Check value received doesn’t match the one calculated by the local device.",
+      ),
+      sys::BLE_SM_ERR_NUMCMP => {
+        Some("Indicates that the confirm values in the numeric comparison protocol do not match.")
+      }
+      sys::BLE_SM_ERR_ALREADY => Some(
+        "Indicates that the pairing over the LE transport failed due to a Pairing Request sent over the BR/EDR transport in process.",
+      ),
+      sys::BLE_SM_ERR_CROSS_TRANS => Some(
+        "Indicates that the BR/EDR Link Key generated on the BR/EDR transport cannot be used to derive and distribute keys for the LE transport.",
+      ),
       _ => None,
     }
   } else {
@@ -188,9 +234,7 @@ pub fn return_code_to_string(rc: i32) -> Option<&'static str> {
 
 #[cfg(not(feature = "debug"))]
 macro_rules! ble {
-  ($err:expr) => {{
-    $crate::BLEError::convert($err as _)
-  }};
+  ($err:expr) => {{ $crate::BLEError::convert($err as _) }};
 }
 #[cfg(feature = "debug")]
 macro_rules! ble {

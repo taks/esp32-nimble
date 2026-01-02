@@ -1,5 +1,5 @@
-use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
 use esp_idf_svc::hal::{delay::*, gpio, peripherals::Peripherals, uart::*, units::Hertz};
+use esp32_nimble::{BLEAdvertisementData, BLEDevice, NimbleProperties, uuid128};
 
 fn main() -> anyhow::Result<()> {
   esp_idf_svc::sys::link_patches();

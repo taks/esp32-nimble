@@ -1,4 +1,4 @@
-use esp32_nimble::{uuid128, BLEAdvertisementData, BLEDevice, NimbleProperties};
+use esp32_nimble::{BLEAdvertisementData, BLEDevice, NimbleProperties, uuid128};
 use std::format;
 
 fn main() -> anyhow::Result<()> {

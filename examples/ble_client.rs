@@ -1,10 +1,10 @@
 use bstr::ByteSlice;
-use esp32_nimble::{uuid128, BLEDevice, BLEScan};
 use esp_idf_svc::hal::{
   prelude::Peripherals,
   task::block_on,
   timer::{TimerConfig, TimerDriver},
 };
+use esp32_nimble::{BLEDevice, BLEScan, uuid128};
 
 fn main() -> anyhow::Result<()> {
   esp_idf_svc::sys::link_patches();

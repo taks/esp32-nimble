@@ -2,10 +2,9 @@ use core::ffi::{c_int, c_void};
 use esp_idf_svc::sys as esp_idf_sys;
 
 use crate::{
-  ble,
+  BLEAdvertisementData, BLEError, BLEServer, ble,
   enums::*,
   utilities::{as_void_ptr, voidp_to_ref},
-  BLEAdvertisementData, BLEError, BLEServer,
 };
 use alloc::boxed::Box;
 use once_cell::sync::Lazy;
@@ -173,10 +172,10 @@ impl BLEAdvertising {
   /// Start advertising.
   pub fn start_with_duration(&mut self, duration_ms: i32) -> Result<(), BLEError> {
     let mut server = unsafe { Lazy::get_mut(&mut crate::ble_device::BLE_SERVER) };
-    if let Some(server) = server.as_mut() {
-      if !server.started {
-        server.start()?;
-      }
+    if let Some(server) = server.as_mut()
+      && !server.started
+    {
+      server.start()?;
     }
 
     if self.adv_params.conn_mode == (ConnMode::Non as _) && !self.scan_response {
@@ -224,10 +223,10 @@ impl BLEAdvertising {
     let event = unsafe { &*event };
     let adv = unsafe { voidp_to_ref::<Self>(arg) };
 
-    if event.type_ == esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE as _ {
-      if let Some(callback) = adv.on_complete.as_mut() {
-        callback(unsafe { event.__bindgen_anon_1.adv_complete.reason });
-      }
+    if event.type_ == esp_idf_sys::BLE_GAP_EVENT_ADV_COMPLETE as _
+      && let Some(callback) = adv.on_complete.as_mut()
+    {
+      callback(unsafe { event.__bindgen_anon_1.adv_complete.reason });
     }
 
     0

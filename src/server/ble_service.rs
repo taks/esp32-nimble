@@ -3,9 +3,8 @@ use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::ble_uuid_any_t;
 
 use crate::{
-  ble,
-  utilities::{mutex::Mutex, BleUuid},
-  BLECharacteristic, BLEError,
+  BLECharacteristic, BLEError, ble,
+  utilities::{BleUuid, mutex::Mutex},
 };
 
 use super::ble_characteristic::NimbleProperties;

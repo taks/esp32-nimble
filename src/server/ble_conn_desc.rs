@@ -1,4 +1,4 @@
-use crate::{ble, BLEAddress, BLEError};
+use crate::{BLEAddress, BLEError, ble};
 use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::ble_gap_conn_desc;
 

@@ -18,7 +18,7 @@ pub(crate) use os_mbuf::*;
 #[inline]
 #[allow(unused)]
 pub(crate) unsafe fn extend_lifetime_mut<'a, 'b: 'a, T: ?Sized>(r: &'a mut T) -> &'b mut T {
-  core::mem::transmute::<&'a mut T, &'b mut T>(r)
+  unsafe { core::mem::transmute::<&'a mut T, &'b mut T>(r) }
 }
 
 #[inline]
@@ -34,5 +34,5 @@ pub(crate) unsafe fn as_void_ptr<T>(r: &mut T) -> *mut ::core::ffi::c_void {
 
 #[inline]
 pub(crate) unsafe fn voidp_to_ref<'a, T>(ptr: *mut core::ffi::c_void) -> &'a mut T {
-  &mut *ptr.cast()
+  unsafe { &mut *ptr.cast() }
 }

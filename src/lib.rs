@@ -29,8 +29,8 @@ mod ble_device;
 pub use self::ble_device::BLEDevice;
 
 mod ble_error;
-pub(crate) use self::ble_error::ble;
 pub use self::ble_error::BLEError;
+pub(crate) use self::ble_error::ble;
 
 mod ble_security;
 pub use self::ble_security::BLESecurity;

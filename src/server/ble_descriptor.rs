@@ -1,4 +1,4 @@
-use crate::{utilities::OsMBuf, BLEConnDesc};
+use crate::{BLEConnDesc, utilities::OsMBuf};
 use alloc::boxed::Box;
 use bitflags::bitflags;
 use core::{cell::UnsafeCell, ffi::c_void};
@@ -6,10 +6,10 @@ use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::{ble_uuid_any_t, ble_uuid_cmp};
 
 use crate::{
-  utilities::{
-    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, voidp_to_ref, BleUuid,
-  },
   AttValue, OnWriteDescriptorArgs,
+  utilities::{
+    BleUuid, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, voidp_to_ref,
+  },
 };
 
 bitflags! {

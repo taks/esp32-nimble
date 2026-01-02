@@ -1,8 +1,8 @@
 use bstr::ByteSlice;
 use core::str;
 use embassy_time::Duration;
-use esp32_nimble::{l2cap::L2capClient, BLEDevice, BLEScan};
 use esp_idf_svc::hal::task::block_on;
+use esp32_nimble::{BLEDevice, BLEScan, l2cap::L2capClient};
 
 fn main() -> anyhow::Result<()> {
   esp_idf_svc::sys::link_patches();

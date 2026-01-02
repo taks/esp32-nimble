@@ -1,5 +1,5 @@
-use esp32_nimble::{BLEDevice, BLEScan};
 use esp_idf_svc::hal::task::block_on;
+use esp32_nimble::{BLEDevice, BLEScan};
 use log::*;
 
 fn main() -> anyhow::Result<()> {

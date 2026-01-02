@@ -3,8 +3,8 @@ use alloc::vec::Vec;
 use super::ble_remote_characteristic::BLERemoteCharacteristicState;
 use super::{BLEReader, BLEWriter};
 use crate::{
-  utilities::{BleUuid, WeakUnsafeCell},
   BLEError,
+  utilities::{BleUuid, WeakUnsafeCell},
 };
 use esp_idf_svc::sys as esp_idf_sys;
 

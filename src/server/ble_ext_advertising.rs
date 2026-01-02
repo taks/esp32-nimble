@@ -4,10 +4,9 @@ use esp_idf_svc::sys as esp_idf_sys;
 use once_cell::sync::Lazy;
 
 use crate::{
-  ble,
+  BLEAddress, BLEError, BLEServer, ble,
   enums::*,
-  utilities::{as_void_ptr, voidp_to_ref, BleUuid, OsMBuf},
-  BLEAddress, BLEError, BLEServer,
+  utilities::{BleUuid, OsMBuf, as_void_ptr, voidp_to_ref},
 };
 
 #[cfg(not(esp_idf_soc_esp_nimble_controller))]
@@ -243,10 +242,10 @@ impl BLEExtAdvertising {
     }
 
     let mut server = unsafe { Lazy::get_mut(&mut crate::ble_device::BLE_SERVER) };
-    if let Some(server) = server.as_mut() {
-      if !server.started {
-        server.start()?;
-      }
+    if let Some(server) = server.as_mut()
+      && !server.started
+    {
+      server.start()?;
     }
 
     let handle_gap_event = if server.is_some() {

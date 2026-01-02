@@ -1,7 +1,7 @@
 #![feature(future_join)]
 
-use esp32_nimble::{l2cap::L2capServer, BLEAdvertisementData, BLEDevice};
 use esp_idf_svc::hal::task::block_on;
+use esp32_nimble::{BLEAdvertisementData, BLEDevice, l2cap::L2capServer};
 use std::future::join;
 
 fn main() {

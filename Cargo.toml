@@ -2,7 +2,7 @@
 name = "esp32-nimble"
 version = "0.11.1"
 authors = ["taks <857tn859@gmail.com>"]
-edition = "2021"
+edition = "2024"
 resolver = "2"
 repository = "https://github.com/taks/esp32-nimble"
 license = "Apache-2.0"
@@ -11,6 +11,10 @@ readme = "README.md"
 keywords = ["bluetooth", "ble", "esp32", "embedded", "async"]
 categories = ["embedded", "hardware-support"]
 documentation = "https://taks.github.io/esp32-nimble/esp32_nimble/index.html"
+
+[lib]
+bench = false
+test  = false
 
 [profile.release]
 opt-level = "s"

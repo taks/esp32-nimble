@@ -3,9 +3,8 @@ use core::ffi::c_void;
 use esp_idf_svc::sys as esp_idf_sys;
 
 use crate::{
-  ble,
-  utilities::{voidp_to_ref, OsMBuf},
-  BLEError, Signal,
+  BLEError, Signal, ble,
+  utilities::{OsMBuf, voidp_to_ref},
 };
 
 pub struct BLEReader {
@@ -54,14 +53,14 @@ impl BLEReader {
 
     let error = unsafe { &*error };
 
-    if error.status == 0 {
-      if let Some(attr) = unsafe { attr.as_ref() } {
-        for om in OsMBuf(attr.om).iter() {
-          data.extend_from_slice(om.as_slice());
-        }
-
-        return 0;
+    if error.status == 0
+      && let Some(attr) = unsafe { attr.as_ref() }
+    {
+      for om in OsMBuf(attr.om).iter() {
+        data.extend_from_slice(om.as_slice());
       }
+
+      return 0;
     }
 
     reader.signal.signal(error.status as _);

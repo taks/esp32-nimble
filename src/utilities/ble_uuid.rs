@@ -166,7 +166,5 @@ impl From<uuid::Uuid> for BleUuid {
 #[macro_export]
 /// Parse Uuid128 from string literals at compile time.
 macro_rules! uuid128 {
-  ($uuid:expr) => {{
-    $crate::utilities::BleUuid::Uuid128($crate::uuid_macro!($uuid).as_u128().to_le_bytes())
-  }};
+  ($uuid:expr) => {{ $crate::utilities::BleUuid::Uuid128($crate::uuid_macro!($uuid).as_u128().to_le_bytes()) }};
 }

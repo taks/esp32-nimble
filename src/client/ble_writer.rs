@@ -1,7 +1,6 @@
 use crate::{
-  ble,
-  utilities::{as_void_ptr, voidp_to_ref, OsMBuf},
-  BLEError, Signal,
+  BLEError, Signal, ble,
+  utilities::{OsMBuf, as_void_ptr, voidp_to_ref},
 };
 use esp_idf_svc::sys as esp_idf_sys;
 

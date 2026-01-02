@@ -1,5 +1,5 @@
-use esp32_nimble::{enums::*, utilities::BleUuid, BLEDevice, BLEScan};
 use esp_idf_svc::hal::task::block_on;
+use esp32_nimble::{BLEDevice, BLEScan, enums::*, utilities::BleUuid};
 use log::*;
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);

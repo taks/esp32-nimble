@@ -1,7 +1,7 @@
 use esp32_nimble::{
+  BLEAddress, BLEAddressType, BLEDevice, BLEExtAdvertisement, NimbleProperties,
   enums::{PrimPhy, SecPhy},
   utilities::BleUuid,
-  BLEAddress, BLEAddressType, BLEDevice, BLEExtAdvertisement, NimbleProperties,
 };
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);

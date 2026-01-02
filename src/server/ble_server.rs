@@ -1,7 +1,6 @@
 use crate::{
-  ble,
-  utilities::{ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex, BleUuid},
-  BLECharacteristic, BLEConnDesc, BLEDevice, BLEError, BLEService, NimbleProperties, NotifyTx,
+  BLECharacteristic, BLEConnDesc, BLEDevice, BLEError, BLEService, NimbleProperties, NotifyTx, ble,
+  utilities::{BleUuid, ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex},
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
@@ -284,10 +283,10 @@ impl BLEServer {
         }
 
         #[cfg(not(esp_idf_bt_nimble_ext_adv))]
-        if server.advertise_on_disconnect {
-          if let Err(err) = BLEDevice::take().get_advertising().lock().start() {
-            ::log::warn!("can't start advertising: {err:?}");
-          }
+        if server.advertise_on_disconnect
+          && let Err(err) = BLEDevice::take().get_advertising().lock().start()
+        {
+          ::log::warn!("can't start advertising: {err:?}");
         }
       }
       esp_idf_sys::BLE_GAP_EVENT_SUBSCRIBE => {
@@ -301,14 +300,12 @@ impl BLEServer {
             NimbleProperties::READ_AUTHEN
               | NimbleProperties::READ_AUTHOR
               | NimbleProperties::READ_ENC,
-          ) {
-            if let Ok(desc) = ble_gap_conn_find(subscribe.conn_handle) {
-              if !desc.encrypted() {
-                let rc = unsafe { esp_idf_sys::ble_gap_security_initiate(subscribe.conn_handle) };
-                if rc != 0 {
-                  ::log::error!("ble_gap_security_initiate: rc={rc}");
-                }
-              }
+          ) && let Ok(desc) = ble_gap_conn_find(subscribe.conn_handle)
+            && !desc.encrypted()
+          {
+            let rc = unsafe { esp_idf_sys::ble_gap_security_initiate(subscribe.conn_handle) };
+            if rc != 0 {
+              ::log::error!("ble_gap_security_initiate: rc={rc}");
             }
           }
 

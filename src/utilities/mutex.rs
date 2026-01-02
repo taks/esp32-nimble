@@ -18,20 +18,20 @@ impl RawMutex {
   #[inline(always)]
   #[allow(clippy::missing_safety_doc)]
   pub unsafe fn lock(&self) {
-    let r = pthread_mutex_lock(self.0.get());
+    let r = unsafe { pthread_mutex_lock(self.0.get()) };
     debug_assert_eq!(r, 0);
   }
 
   #[inline(always)]
   #[allow(clippy::missing_safety_doc)]
   pub unsafe fn try_lock(&self) -> bool {
-    pthread_mutex_trylock(self.0.get()) == 0
+    unsafe { pthread_mutex_trylock(self.0.get()) == 0 }
   }
 
   #[inline(always)]
   #[allow(clippy::missing_safety_doc)]
   pub unsafe fn unlock(&self) {
-    let r = pthread_mutex_unlock(self.0.get());
+    let r = unsafe { pthread_mutex_unlock(self.0.get()) };
     debug_assert_eq!(r, 0);
   }
 }
@@ -72,7 +72,7 @@ impl<T> Mutex<T> {
 
   #[inline]
   pub(crate) unsafe fn raw(&self) -> &'_ T {
-    self.1.get().as_mut().unwrap()
+    unsafe { self.1.get().as_mut().unwrap() }
   }
 }
 
@@ -105,7 +105,7 @@ impl<T> Drop for MutexGuard<'_, T> {
   #[inline(always)]
   fn drop(&mut self) {
     unsafe {
-      self.0 .0.unlock();
+      self.0.0.unlock();
     }
   }
 }
@@ -115,13 +115,13 @@ impl<T> Deref for MutexGuard<'_, T> {
 
   #[inline(always)]
   fn deref(&self) -> &Self::Target {
-    unsafe { self.0 .1.get().as_mut().unwrap() }
+    unsafe { self.0.1.get().as_mut().unwrap() }
   }
 }
 
 impl<T> DerefMut for MutexGuard<'_, T> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut Self::Target {
-    unsafe { self.0 .1.get().as_mut().unwrap() }
+    unsafe { self.0.1.get().as_mut().unwrap() }
   }
 }

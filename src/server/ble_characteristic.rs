@@ -6,13 +6,13 @@ use esp_idf_svc::sys;
 use zerocopy::IntoBytes;
 
 use crate::{
+  AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
   ble,
   cpfd::Cpfd,
   utilities::{
-    ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex, voidp_to_ref, BleUuid,
-    OsMBuf,
+    BleUuid, OsMBuf, ble_npl_hw_enter_critical, ble_npl_hw_exit_critical, mutex::Mutex,
+    voidp_to_ref,
   },
-  AttValue, BLEConnDesc, BLEDescriptor, BLEDevice, BLEError, DescriptorProperties, OnWriteArgs,
 };
 
 cfg_if::cfg_if! {

@@ -3,12 +3,11 @@ use core::borrow::Borrow;
 use super::ble_client::BLEClientState;
 use super::ble_remote_service::BLERemoteServiceState;
 use super::{BLEReader, BLEWriter};
-use crate::utilities::OsMBuf;
 use crate::BLEAttribute;
+use crate::utilities::OsMBuf;
 use crate::{
-  ble,
-  utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid, WeakUnsafeCell},
-  BLEError, BLERemoteDescriptor, Signal,
+  BLEError, BLERemoteDescriptor, Signal, ble,
+  utilities::{ArcUnsafeCell, BleUuid, WeakUnsafeCell, as_void_ptr, voidp_to_ref},
 };
 use alloc::{boxed::Box, vec::Vec};
 use bitflags::bitflags;

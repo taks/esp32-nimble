@@ -1,5 +1,5 @@
-use crate::enums::*;
 use crate::BLEAddress;
+use crate::enums::*;
 use esp_idf_svc::sys;
 
 #[cfg(esp_idf_bt_nimble_ext_adv)]

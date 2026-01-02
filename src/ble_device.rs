@@ -4,12 +4,12 @@ use core::{
   sync::atomic::{AtomicBool, Ordering},
 };
 use esp_idf_svc::sys as esp_idf_sys;
-use esp_idf_sys::{esp, esp_nofail, EspError};
+use esp_idf_sys::{EspError, esp, esp_nofail};
 use once_cell::sync::Lazy;
 
 use crate::{
-  ble, enums::*, utilities::mutex::Mutex, BLEAddress, BLEAddressType, BLEClient, BLEError,
-  BLESecurity, BLEServer,
+  BLEAddress, BLEAddressType, BLEClient, BLEError, BLESecurity, BLEServer, ble, enums::*,
+  utilities::mutex::Mutex,
 };
 
 #[cfg(not(esp_idf_bt_nimble_ext_adv))]
@@ -17,12 +17,12 @@ type BLEAdvertising = crate::BLEAdvertising;
 #[cfg(esp_idf_bt_nimble_ext_adv)]
 type BLEAdvertising = crate::BLEExtAdvertising;
 
-extern "C" {
+unsafe extern "C" {
   fn ble_store_config_init();
 }
 
 #[cfg(esp32)]
-extern "C" {
+unsafe extern "C" {
   fn ble_hs_pvcy_rpa_config(enable: u8) -> core::ffi::c_int;
 }
 #[cfg(esp32)]

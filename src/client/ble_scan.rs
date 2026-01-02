@@ -1,5 +1,5 @@
-use crate::{ble, enums::*, utilities::voidp_to_ref, BLEAdvertisedDevice, BLEError, Signal};
 use crate::{BLEAdvertisedData, BLEDevice};
+use crate::{BLEAdvertisedDevice, BLEError, Signal, ble, enums::*, utilities::voidp_to_ref};
 use core::ffi::c_void;
 use esp_idf_svc::sys;
 

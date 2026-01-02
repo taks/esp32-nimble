@@ -1,8 +1,7 @@
 use super::{L2cap, ReceivedData};
 use crate::{
-  ble,
+  BLEError, Channel, ble,
   utilities::{as_void_ptr, extend_lifetime_mut, mutex::Mutex, voidp_to_ref},
-  BLEError, Channel,
 };
 use esp_idf_svc::sys;
 

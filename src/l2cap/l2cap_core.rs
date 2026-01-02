@@ -1,4 +1,4 @@
-use crate::{ble, utilities::OsMBuf, BLEError};
+use crate::{BLEError, ble, utilities::OsMBuf};
 use alloc::vec::Vec;
 use esp_idf_svc::sys;
 

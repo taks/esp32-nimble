@@ -4,7 +4,7 @@ use esp_idf_svc::hal::task::block_on;
 use esp_idf_svc::sys;
 
 use super::{L2cap, ReceivedData};
-use crate::{ble, utilities::voidp_to_ref, BLEClient, BLEError, Channel, Signal};
+use crate::{BLEClient, BLEError, Channel, Signal, ble, utilities::voidp_to_ref};
 
 #[allow(clippy::type_complexity)]
 pub struct L2capClient {

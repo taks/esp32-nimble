@@ -2,8 +2,8 @@
 #![allow(dead_code)]
 
 use esp32_nimble::{
-  enums::*, hid::*, utilities::mutex::Mutex, BLEAdvertisementData, BLECharacteristic, BLEDevice,
-  BLEHIDDevice, BLEServer,
+  BLEAdvertisementData, BLECharacteristic, BLEDevice, BLEHIDDevice, BLEServer, enums::*, hid::*,
+  utilities::mutex::Mutex,
 };
 use std::sync::Arc;
 use zerocopy::IntoBytes;

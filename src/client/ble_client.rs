@@ -1,8 +1,7 @@
 use crate::{
-  ble,
+  BLEAddress, BLEConnDesc, BLEDevice, BLEError, BLERemoteService, Signal, ble,
   ble_device::OWN_ADDR_TYPE,
-  utilities::{as_void_ptr, voidp_to_ref, ArcUnsafeCell, BleUuid},
-  BLEAddress, BLEConnDesc, BLEDevice, BLEError, BLERemoteService, Signal,
+  utilities::{ArcUnsafeCell, BleUuid, as_void_ptr, voidp_to_ref},
 };
 use alloc::{boxed::Box, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void, ptr};

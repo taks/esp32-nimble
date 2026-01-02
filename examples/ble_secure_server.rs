@@ -1,5 +1,5 @@
 use esp32_nimble::{
-  enums::*, utilities::BleUuid, BLEAdvertisementData, BLEDevice, NimbleProperties,
+  BLEAdvertisementData, BLEDevice, NimbleProperties, enums::*, utilities::BleUuid,
 };
 
 fn main() -> anyhow::Result<()> {

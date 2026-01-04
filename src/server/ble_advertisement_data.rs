@@ -1,8 +1,8 @@
 use crate::{BLEDevice, enums::PowerType, utilities::BleUuid};
-use alloc::{string::String, vec::Vec};
+use alloc::vec::Vec;
 use esp_idf_svc::sys as esp_idf_sys;
 
-pub struct BLEAdvertisementData {
+pub struct BLEAdvertisementData<'a> {
   // 0x01 - Flags
   pub(crate) flags: u8,
   // 0x02,0x03 - 16-bit service class UUIDs
@@ -15,7 +15,7 @@ pub struct BLEAdvertisementData {
   service_uuids_128: Vec<esp_idf_sys::ble_uuid128_t>,
   uuids128_is_complete: bool,
   // 0x08,0x09 - Local name
-  name: String,
+  name: Option<&'a str>,
   name_is_complete: bool,
   // 0x0a - Tx power level
   tx_pwr_lvl_is_present: bool,
@@ -38,7 +38,7 @@ pub struct BLEAdvertisementData {
   mfg_data: Vec<u8>,
 }
 
-impl BLEAdvertisementData {
+impl<'a> BLEAdvertisementData<'a> {
   pub fn new() -> Self {
     Self {
       flags: (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _,
@@ -48,7 +48,7 @@ impl BLEAdvertisementData {
       uuids32_is_complete: true,
       service_uuids_128: Vec::new(),
       uuids128_is_complete: true,
-      name: String::new(),
+      name: None,
       name_is_complete: true,
       tx_pwr_lvl_is_present: false,
       svc_data_uuid16: Vec::new(),
@@ -60,9 +60,8 @@ impl BLEAdvertisementData {
   }
 
   /// Set the advertised name of the device.
-  pub fn name(&mut self, name: &str) -> &mut Self {
-    self.name.clear();
-    self.name.push_str(name);
+  pub fn name(&mut self, name: &'a str) -> &mut Self {
+    self.name = Some(name);
 
     self
   }
@@ -138,8 +137,8 @@ impl BLEAdvertisementData {
       payload_len += 2 + 16 * self.service_uuids_128.len();
     }
 
-    if !self.name.is_empty() {
-      payload_len += 2 + self.name.len();
+    if let Some(name) = self.name {
+      payload_len += 2 + name.len();
     }
 
     if self.tx_pwr_lvl_is_present {
@@ -199,9 +198,9 @@ impl BLEAdvertisementData {
       ret.num_uuids128 = self.service_uuids_128.len() as _;
     }
 
-    if !self.name.is_empty() {
-      ret.name = self.name.as_ptr().cast();
-      ret.name_len = self.name.len() as _;
+    if let Some(name) = self.name {
+      ret.name = name.as_ptr().cast();
+      ret.name_len = name.len() as _;
       ret.set_name_is_complete(self.name_is_complete as _);
     }
 

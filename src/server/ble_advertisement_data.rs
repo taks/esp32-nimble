@@ -35,7 +35,7 @@ pub struct BLEAdvertisementData<'a> {
   svc_data_uuid128: Vec<u8>,
   // Not Implemented: 0x24 - URI
   // 0xff - Manufacturer specific data.
-  mfg_data: Vec<u8>,
+  mfg_data: Option<&'a [u8]>,
 }
 
 impl<'a> BLEAdvertisementData<'a> {
@@ -55,7 +55,7 @@ impl<'a> BLEAdvertisementData<'a> {
       appearance: None,
       svc_data_uuid32: Vec::new(),
       svc_data_uuid128: Vec::new(),
-      mfg_data: Vec::new(),
+      mfg_data: None,
     }
   }
 

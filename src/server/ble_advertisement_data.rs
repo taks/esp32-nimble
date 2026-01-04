@@ -2,7 +2,7 @@ use crate::{BLEDevice, enums::PowerType, utilities::BleUuid};
 use alloc::vec::Vec;
 use esp_idf_svc::sys as esp_idf_sys;
 
-pub struct BLEAdvertisementData<'a> {
+pub struct BLEAdvertisementData<'d> {
   // 0x01 - Flags
   pub(crate) flags: u8,
   // 0x02,0x03 - 16-bit service class UUIDs
@@ -15,7 +15,7 @@ pub struct BLEAdvertisementData<'a> {
   service_uuids_128: Vec<esp_idf_sys::ble_uuid128_t>,
   uuids128_is_complete: bool,
   // 0x08,0x09 - Local name
-  name: Option<&'a str>,
+  name: Option<&'d str>,
   name_is_complete: bool,
   // 0x0a - Tx power level
   tx_pwr_lvl_is_present: bool,
@@ -35,10 +35,10 @@ pub struct BLEAdvertisementData<'a> {
   svc_data_uuid128: Vec<u8>,
   // Not Implemented: 0x24 - URI
   // 0xff - Manufacturer specific data.
-  mfg_data: Option<&'a [u8]>,
+  mfg_data: Option<&'d [u8]>,
 }
 
-impl<'a> BLEAdvertisementData<'a> {
+impl<'d> BLEAdvertisementData<'d> {
   pub fn new() -> Self {
     Self {
       flags: (esp_idf_sys::BLE_HS_ADV_F_DISC_GEN | esp_idf_sys::BLE_HS_ADV_F_BREDR_UNSUP) as _,
@@ -60,7 +60,7 @@ impl<'a> BLEAdvertisementData<'a> {
   }
 
   /// Set the advertised name of the device.
-  pub fn name(&mut self, name: &'a str) -> &mut Self {
+  pub fn name(&mut self, name: &'d str) -> &mut Self {
     self.name = Some(name);
 
     self
@@ -117,9 +117,8 @@ impl<'a> BLEAdvertisementData<'a> {
     self
   }
 
-  pub fn manufacturer_data(&mut self, data: &[u8]) -> &mut Self {
-    self.mfg_data.clear();
-    self.mfg_data.extend_from_slice(data);
+  pub fn manufacturer_data(&mut self, data: &'d [u8]) -> &mut Self {
+    self.mfg_data = Some(data);
 
     self
   }
@@ -161,8 +160,8 @@ impl<'a> BLEAdvertisementData<'a> {
       payload_len += 2 + (esp_idf_sys::BLE_HS_ADV_APPEARANCE_LEN as usize);
     }
 
-    if !self.mfg_data.is_empty() {
-      payload_len += 2 + self.mfg_data.len();
+    if let Some(mfg_data) = self.mfg_data {
+      payload_len += 2 + mfg_data.len();
     }
 
     // if self.uri_len > 0 {
@@ -230,9 +229,9 @@ impl<'a> BLEAdvertisementData<'a> {
       ret.appearance = appearance;
     }
 
-    if !self.mfg_data.is_empty() {
-      ret.mfg_data = self.mfg_data.as_ptr();
-      ret.mfg_data_len = self.mfg_data.len() as _;
+    if let Some(mfg_data) = self.mfg_data {
+      ret.mfg_data = mfg_data.as_ptr();
+      ret.mfg_data_len = mfg_data.len() as _;
     }
 
     ret

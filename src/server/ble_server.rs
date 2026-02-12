@@ -253,7 +253,15 @@ impl BLEServer {
       esp_idf_sys::BLE_GAP_EVENT_CONNECT => {
         let connect = unsafe { &event.__bindgen_anon_1.connect };
         if connect.status == 0 {
-          server.connections.push(connect.conn_handle).unwrap();
+          if !server.connections.contains(&connect.conn_handle)
+            && server.connections.push(connect.conn_handle).is_err() 
+            {
+              ::log::warn!(
+                "BLE connection table full; drop conn_handle={}",
+                connect.conn_handle
+              );
+              return esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES as _;
+            }
 
           if let Ok(desc) = ble_gap_conn_find(connect.conn_handle) {
             let server = UnsafeCell::new(server);
@@ -263,6 +271,36 @@ impl BLEServer {
               }
             }
           }
+        }
+      }
+      esp_idf_sys::BLE_GAP_EVENT_LINK_ESTAB => {
+        let link_estab = unsafe { &event.__bindgen_anon_1.link_estab };
+        if link_estab.status == 0 {
+          if !server.connections.contains(&link_estab.conn_handle)
+            && server.connections.push(link_estab.conn_handle).is_err() 
+            {
+              ::log::warn!(
+                "BLE connection table full on LINK_ESTAB; drop conn_handle={}",
+                link_estab.conn_handle
+              );
+              return esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES as _;
+            }
+
+          if let Ok(desc) = ble_gap_conn_find(link_estab.conn_handle) {
+            let server = UnsafeCell::new(server);
+            unsafe {
+              if let Some(callback) = (*server.get()).on_connect.as_mut() {
+                callback(*server.get(), &desc);
+              }
+            }
+          }
+        } 
+        else {
+          ::log::warn!(
+            "BLE_GAP_EVENT_LINK_ESTAB failed: status={} conn_handle={}",
+            link_estab.status,
+            link_estab.conn_handle
+          );
         }
       }
       esp_idf_sys::BLE_GAP_EVENT_DISCONNECT => {
@@ -431,6 +469,24 @@ impl BLEServer {
       }
       esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED
       | esp_idf_sys::BLE_GAP_EVENT_PHY_UPDATE_COMPLETE => {}
+      esp_idf_sys::BLE_GAP_EVENT_DATA_LEN_CHG => {
+        let data_len = unsafe { &event.__bindgen_anon_1.data_len_chg };
+        ::log::debug!(
+          "==========
+          data length changed:
+          conn_handle={}, 
+          tx_octets={},
+          tx_time={},
+          rx_octets={}, 
+          rx_time={}
+          ==========",
+          data_len.conn_handle,
+          data_len.max_tx_octets,
+          data_len.max_tx_time,
+          data_len.max_rx_octets,
+          data_len.max_rx_time
+        );
+      }
       _ => {
         ::log::warn!("unhandled event: {}", event.type_);
       }

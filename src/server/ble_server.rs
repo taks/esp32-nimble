@@ -273,36 +273,6 @@ impl BLEServer {
           }
         }
       }
-      esp_idf_sys::BLE_GAP_EVENT_LINK_ESTAB => {
-        let link_estab = unsafe { &event.__bindgen_anon_1.link_estab };
-        if link_estab.status == 0 {
-          if !server.connections.contains(&link_estab.conn_handle)
-            && server.connections.push(link_estab.conn_handle).is_err() 
-            {
-              ::log::warn!(
-                "BLE connection table full on LINK_ESTAB; drop conn_handle={}",
-                link_estab.conn_handle
-              );
-              return esp_idf_sys::BLE_ATT_ERR_INSUFFICIENT_RES as _;
-            }
-
-          if let Ok(desc) = ble_gap_conn_find(link_estab.conn_handle) {
-            let server = UnsafeCell::new(server);
-            unsafe {
-              if let Some(callback) = (*server.get()).on_connect.as_mut() {
-                callback(*server.get(), &desc);
-              }
-            }
-          }
-        } 
-        else {
-          ::log::warn!(
-            "BLE_GAP_EVENT_LINK_ESTAB failed: status={} conn_handle={}",
-            link_estab.status,
-            link_estab.conn_handle
-          );
-        }
-      }
       esp_idf_sys::BLE_GAP_EVENT_DISCONNECT => {
         let disconnect = unsafe { &event.__bindgen_anon_1.disconnect };
         if let Some(idx) = server

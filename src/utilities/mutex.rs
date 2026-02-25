@@ -10,37 +10,37 @@ const PTHREAD_MUTEX_INITIALIZER: u32 = 0xFFFFFFFF;
 pub struct RawMutex(UnsafeCell<pthread_mutex_t>);
 
 impl RawMutex {
-  #[inline(always)]
-  pub const fn new() -> Self {
-    Self(UnsafeCell::new(PTHREAD_MUTEX_INITIALIZER as _))
-  }
+    #[inline(always)]
+    pub const fn new() -> Self {
+        Self(UnsafeCell::new(PTHREAD_MUTEX_INITIALIZER as _))
+    }
 
-  #[inline(always)]
-  #[allow(clippy::missing_safety_doc)]
-  pub unsafe fn lock(&self) {
-    let r = unsafe { pthread_mutex_lock(self.0.get()) };
-    debug_assert_eq!(r, 0);
-  }
+    #[inline(always)]
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn lock(&self) {
+        let r = unsafe { pthread_mutex_lock(self.0.get()) };
+        debug_assert_eq!(r, 0);
+    }
 
-  #[inline(always)]
-  #[allow(clippy::missing_safety_doc)]
-  pub unsafe fn try_lock(&self) -> bool {
-    unsafe { pthread_mutex_trylock(self.0.get()) == 0 }
-  }
+    #[inline(always)]
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn try_lock(&self) -> bool {
+        unsafe { pthread_mutex_trylock(self.0.get()) == 0 }
+    }
 
-  #[inline(always)]
-  #[allow(clippy::missing_safety_doc)]
-  pub unsafe fn unlock(&self) {
-    let r = unsafe { pthread_mutex_unlock(self.0.get()) };
-    debug_assert_eq!(r, 0);
-  }
+    #[inline(always)]
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn unlock(&self) {
+        let r = unsafe { pthread_mutex_unlock(self.0.get()) };
+        debug_assert_eq!(r, 0);
+    }
 }
 
 impl Drop for RawMutex {
-  fn drop(&mut self) {
-    let r = unsafe { pthread_mutex_destroy(self.0.get_mut() as *mut _) };
-    debug_assert_eq!(r, 0);
-  }
+    fn drop(&mut self) {
+        let r = unsafe { pthread_mutex_destroy(self.0.get_mut() as *mut _) };
+        debug_assert_eq!(r, 0);
+    }
 }
 
 unsafe impl Sync for RawMutex {}
@@ -50,30 +50,30 @@ pub struct Mutex<T>(RawMutex, UnsafeCell<T>);
 
 #[allow(dead_code)]
 impl<T> Mutex<T> {
-  #[inline(always)]
-  pub const fn new(data: T) -> Self {
-    Self(RawMutex::new(), UnsafeCell::new(data))
-  }
+    #[inline(always)]
+    pub const fn new(data: T) -> Self {
+        Self(RawMutex::new(), UnsafeCell::new(data))
+    }
 
-  #[inline(always)]
-  pub fn lock(&self) -> MutexGuard<'_, T> {
-    MutexGuard::new(self)
-  }
+    #[inline(always)]
+    pub fn lock(&self) -> MutexGuard<'_, T> {
+        MutexGuard::new(self)
+    }
 
-  #[inline(always)]
-  pub fn try_lock(&self) -> Option<MutexGuard<'_, T>> {
-    MutexGuard::try_new(self)
-  }
+    #[inline(always)]
+    pub fn try_lock(&self) -> Option<MutexGuard<'_, T>> {
+        MutexGuard::try_new(self)
+    }
 
-  #[inline(always)]
-  pub(crate) fn into_innter(self) -> T {
-    self.1.into_inner()
-  }
+    #[inline(always)]
+    pub(crate) fn into_innter(self) -> T {
+        self.1.into_inner()
+    }
 
-  #[inline]
-  pub(crate) unsafe fn raw(&self) -> &'_ T {
-    unsafe { self.1.get().as_mut().unwrap() }
-  }
+    #[inline]
+    pub(crate) unsafe fn raw(&self) -> &'_ T {
+        unsafe { self.1.get().as_mut().unwrap() }
+    }
 }
 
 unsafe impl<T> Sync for Mutex<T> where T: Send {}
@@ -82,46 +82,46 @@ unsafe impl<T> Send for Mutex<T> where T: Send {}
 pub struct MutexGuard<'a, T>(&'a Mutex<T>);
 
 impl<'a, T> MutexGuard<'a, T> {
-  #[inline(always)]
-  fn new(mutex: &'a Mutex<T>) -> Self {
-    unsafe {
-      mutex.0.lock();
+    #[inline(always)]
+    fn new(mutex: &'a Mutex<T>) -> Self {
+        unsafe {
+            mutex.0.lock();
+        }
+
+        Self(mutex)
     }
 
-    Self(mutex)
-  }
-
-  #[inline(always)]
-  fn try_new(mutex: &'a Mutex<T>) -> Option<Self> {
-    if unsafe { mutex.0.try_lock() } {
-      Some(Self(mutex))
-    } else {
-      None
+    #[inline(always)]
+    fn try_new(mutex: &'a Mutex<T>) -> Option<Self> {
+        if unsafe { mutex.0.try_lock() } {
+            Some(Self(mutex))
+        } else {
+            None
+        }
     }
-  }
 }
 
 impl<T> Drop for MutexGuard<'_, T> {
-  #[inline(always)]
-  fn drop(&mut self) {
-    unsafe {
-      self.0.0.unlock();
+    #[inline(always)]
+    fn drop(&mut self) {
+        unsafe {
+            self.0.0.unlock();
+        }
     }
-  }
 }
 
 impl<T> Deref for MutexGuard<'_, T> {
-  type Target = T;
+    type Target = T;
 
-  #[inline(always)]
-  fn deref(&self) -> &Self::Target {
-    unsafe { self.0.1.get().as_mut().unwrap() }
-  }
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        unsafe { self.0.1.get().as_mut().unwrap() }
+    }
 }
 
 impl<T> DerefMut for MutexGuard<'_, T> {
-  #[inline(always)]
-  fn deref_mut(&mut self) -> &mut Self::Target {
-    unsafe { self.0.1.get().as_mut().unwrap() }
-  }
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { self.0.1.get().as_mut().unwrap() }
+    }
 }

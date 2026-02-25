@@ -20,10 +20,10 @@ mod ble_address;
 pub use self::ble_address::*;
 
 pub(crate) type Signal<T> =
-  embassy_sync::signal::Signal<esp_idf_svc::hal::task::embassy_sync::EspRawMutex, T>;
+    embassy_sync::signal::Signal<esp_idf_svc::hal::task::embassy_sync::EspRawMutex, T>;
 #[allow(dead_code)]
 pub(crate) type Channel<T, const N: usize> =
-  embassy_sync::channel::Channel<esp_idf_svc::hal::task::embassy_sync::EspRawMutex, T, N>;
+    embassy_sync::channel::Channel<esp_idf_svc::hal::task::embassy_sync::EspRawMutex, T, N>;
 
 mod ble_device;
 pub use self::ble_device::BLEDevice;
@@ -49,14 +49,14 @@ pub mod utilities;
 
 #[allow(unused)]
 macro_rules! dbg {
-  ($val:expr) => {
-    match $val {
-      tmp => {
-        ::log::info!("{} = {:#?}", stringify!($val), &tmp);
-        tmp
-      }
-    }
-  };
+    ($val:expr) => {
+        match $val {
+            tmp => {
+                ::log::info!("{} = {:#?}", stringify!($val), &tmp);
+                tmp
+            }
+        }
+    };
 }
 
 #[allow(unused)]

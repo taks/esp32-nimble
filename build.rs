@@ -7,13 +7,11 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(esp_idf_soc_esp_nimble_controller)");
     println!("cargo::rustc-check-cfg=cfg(esp_idf_bt_nimble_ext_adv)");
 
-    println!("cargo::rustc-check-cfg=cfg(esp_idf_version_major, values(\"4\", \"5\"))");
+    println!(r#"cargo::rustc-check-cfg=cfg(esp_idf_version_major, values("4", "5"))"#);
     println!(
-        "cargo::rustc-check-cfg=cfg(esp_idf_version_minor, values(\"2\", \"3\", \"4\", \"5\"))"
+        r#"cargo::rustc-check-cfg=cfg(esp_idf_version_minor, values("1", "2", "3", "4", "5"))"#
     );
-    println!("cargo::rustc-check-cfg=cfg(esp_idf_version_patch, values(\"0\"))");
-    println!("cargo::rustc-check-cfg=cfg(esp_idf_version_patch, values(\"1\"))");
-    println!("cargo::rustc-check-cfg=cfg(esp_idf_version_patch, values(\"2\"))");
+    println!(r#"cargo::rustc-check-cfg=cfg(esp_idf_version_patch, values("0", "1", "2"))"#);
 
     let esp_idf_info = embuild::espidf::sysenv::cfg_args().unwrap();
     let version: Vec<usize> = ["major", "minor", "patch"]

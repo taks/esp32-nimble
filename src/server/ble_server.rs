@@ -447,19 +447,21 @@ impl BLEServer {
                     }
                 }
             }
-            esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED
-            | esp_idf_sys::BLE_GAP_EVENT_PHY_UPDATE_COMPLETE => {}
+            #[cfg(not(all(
+                esp_idf_version_major = "5",
+                any(esp_idf_version_minor = "1", esp_idf_version_minor = "2"),
+            )))]
             esp_idf_sys::BLE_GAP_EVENT_DATA_LEN_CHG => {
                 let data_len = unsafe { &event.__bindgen_anon_1.data_len_chg };
                 ::log::debug!(
                     "==========
-          data length changed:
-          conn_handle={}, 
-          tx_octets={},
-          tx_time={},
-          rx_octets={}, 
-          rx_time={}
-          ==========",
+data length changed:
+conn_handle={},
+tx_octets={},
+tx_time={},
+rx_octets={},
+rx_time={}
+==========",
                     data_len.conn_handle,
                     data_len.max_tx_octets,
                     data_len.max_tx_time,
@@ -467,6 +469,8 @@ impl BLEServer {
                     data_len.max_rx_time
                 );
             }
+            esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED
+            | esp_idf_sys::BLE_GAP_EVENT_PHY_UPDATE_COMPLETE => {}
             _ => {
                 ::log::warn!("unhandled event: {}", event.type_);
             }

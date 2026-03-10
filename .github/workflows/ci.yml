@@ -23,30 +23,27 @@ jobs:
       matrix:
         include:
           - target: riscv32imc-esp-espidf
-            idf-version: v5.1.3
-          - target: riscv32imc-esp-espidf
-            idf-version: v5.2.1
+            idf-version: v5.2.5
           - target: riscv32imc-esp-espidf
             idf-version: v5.3.2
             ble5-example: true
           - target: riscv32imc-esp-espidf
-            idf-version: v5.4.1
-          - target: riscv32imc-esp-espidf
             idf-version: v5.4.3
+          - target: riscv32imc-esp-espidf
+            idf-version: v5.5.3
           - target: riscv32imac-esp-espidf
-            idf-version: v5.1.3
+            idf-version: v5.2.5
             mcu: esp32c6
           - target: xtensa-esp32-espidf
-            idf-version: v5.1.3
-          - target: xtensa-esp32-espidf
-            idf-version: v5.2.1
+            idf-version: v5.2.5
           - target: xtensa-esp32-espidf
             idf-version: v5.3.2
             ble-example: true
           - target: xtensa-esp32-espidf
-            idf-version: v5.4.1
-          - target: xtensa-esp32-espidf
             idf-version: v5.4.3
+          - target: xtensa-esp32-espidf
+            idf-version: v5.5.3
+
 
     steps:
       - name: Setup | Checkout

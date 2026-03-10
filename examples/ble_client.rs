@@ -1,8 +1,9 @@
+use std::time::Duration;
+
 use bstr::ByteSlice;
 use esp_idf_svc::hal::{
-    prelude::Peripherals,
     task::block_on,
-    timer::{TimerConfig, TimerDriver},
+    timer::{TimerDriver, config::TimerConfig},
 };
 use esp32_nimble::{BLEDevice, BLEScan, uuid128};
 
@@ -10,8 +11,7 @@ fn main() -> anyhow::Result<()> {
     esp_idf_svc::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
 
-    let peripherals = Peripherals::take()?;
-    let mut timer = TimerDriver::new(peripherals.timer00, &TimerConfig::new())?;
+    let timer = TimerDriver::new(&TimerConfig::default())?;
 
     block_on(async {
         let ble_device = BLEDevice::take();
@@ -66,7 +66,7 @@ fn main() -> anyhow::Result<()> {
                 .subscribe_notify(false)
                 .await?;
 
-            timer.delay(timer.tick_hz() * 10).await?;
+            timer.delay(Duration::from_secs(10)).await?;
 
             client.disconnect()?;
         }

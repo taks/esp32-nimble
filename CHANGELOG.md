@@ -1,3 +1,11 @@
+## [0.12.0] - 2026-03-11
+- Skip BLEDevice::deinit() when not initialized. ([#189](https://github.com/taks/esp32-nimble/pull/189))
+- Add support for ESP IDF v5.5.1 ([#190](https://github.com/taks/esp32-nimble/pull/190))
+- Fix ESP-IDF v5.4.3 build ([#191](https://github.com/taks/esp32-nimble/pull/191))
+- Fix wrong "connection update request" event mapping ([#192](https://github.com/taks/esp32-nimble/pull/192))
+- Fix unhandled BLE_GAP_LINK_ESTAB & DATA_LEN_CHG events & possible panic BLE connection table overflow handling in server connect event ([#194](https://github.com/taks/esp32-nimble/pull/194))
+- Bump esp-idf-svc version to 0.52 ([#195](https://github.com/taks/esp32-nimble/pull/195))
+
 ## [0.11.1] - 2025-04-14
 - Fixed building errors with latest nightly version ([#180](https://github.com/taks/esp32-nimble/pull/180))
 - Fix ESP-IDF v5.4.1 build

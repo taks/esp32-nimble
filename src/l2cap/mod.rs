@@ -6,6 +6,9 @@ use esp_idf_svc::sys::{
     r_os_mbuf_pool_init as os_mbuf_pool_init, r_os_mempool_init as os_mempool_init,
 };
 
+mod l2cap_channel;
+pub use l2cap_channel::L2capChannel;
+
 mod l2cap_client;
 pub use l2cap_client::L2capClient;
 

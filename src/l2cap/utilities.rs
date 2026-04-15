@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 
-use crate::utilities::OsMBuf;
+use crate::{l2cap::L2capChannel, utilities::OsMBuf};
 use esp_idf_svc::sys;
 
 pub struct ReceivedData(sys::ble_l2cap_event__bindgen_ty_1__bindgen_ty_4);
@@ -14,6 +14,11 @@ impl ReceivedData {
     #[inline]
     pub fn conn_handle(&self) -> u16 {
         self.0.conn_handle
+    }
+
+    #[inline]
+    pub fn channel(&self) -> L2capChannel {
+        L2capChannel(self.0.chan)
     }
 
     #[inline]

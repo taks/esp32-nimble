@@ -1,4 +1,4 @@
-use super::{L2cap, ReceivedData};
+use super::{L2cap, L2capChannel, ReceivedData};
 use crate::{
     BLEError, Channel, ble,
     utilities::{as_void_ptr, extend_lifetime_mut, mutex::Mutex, voidp_to_ref},
@@ -11,8 +11,6 @@ static SERVER_LIST: Mutex<heapless::Vec<L2capServer, N>> = Mutex::new(heapless::
 #[allow(clippy::type_complexity)]
 pub struct L2capServer {
     l2cap: L2cap,
-    coc_chan: *mut sys::ble_l2cap_chan,
-    peer_sdu_size: u16,
     channel: Channel<ReceivedData, 1>,
 }
 
@@ -21,8 +19,6 @@ impl L2capServer {
         let mut list = SERVER_LIST.lock();
         list.push(L2capServer {
             l2cap: Default::default(),
-            coc_chan: core::ptr::null_mut(),
-            peer_sdu_size: 0,
             channel: Channel::new(),
         })
         .map_err(|_| BLEError::convert(sys::BLE_HS_ENOMEM as _).unwrap_err())?;
@@ -41,8 +37,8 @@ impl L2capServer {
         Ok(unsafe { extend_lifetime_mut(server) })
     }
 
-    pub fn tx(&mut self, data: &[u8]) -> Result<(), BLEError> {
-        self.l2cap.tx(self.coc_chan, data)
+    pub fn tx(&mut self, channel: L2capChannel, data: &[u8]) -> Result<(), BLEError> {
+        self.l2cap.tx(channel.0, data)
     }
 
     pub async fn rx(&mut self) -> ReceivedData {
@@ -64,18 +60,15 @@ impl L2capServer {
                     return 0;
                 }
 
-                server.coc_chan = connect.chan;
                 0
             }
             sys::BLE_L2CAP_EVENT_COC_DISCONNECTED => {
                 let disconnect = unsafe { event.__bindgen_anon_1.disconnect };
                 ::log::debug!("LE CoC disconnected: {:?}", disconnect.chan);
-                server.coc_chan = core::ptr::null_mut();
                 0
             }
             sys::BLE_L2CAP_EVENT_COC_ACCEPT => {
                 let accept = unsafe { event.__bindgen_anon_1.accept };
-                server.peer_sdu_size = accept.peer_sdu_size;
                 server.l2cap.ble_l2cap_recv_ready(accept.chan);
                 0
             }

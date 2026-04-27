@@ -479,8 +479,25 @@ rx_time={}
         0
     }
 
-    pub(super) fn set_indicate_wait(&self, conn_handle: u16) -> bool {
-        !self.indicate_wait.contains(&conn_handle)
+    /// Reserve the single-indication-in-flight slot for `conn_handle`.
+    /// Returns `true` if the slot was free and is now held by this conn.
+    /// Returns `false` if another indication on this conn is already pending.
+    pub(super) fn set_indicate_wait(&mut self, conn_handle: u16) -> bool {
+        if self.indicate_wait.contains(&conn_handle) {
+            return false;
+        }
+        if let Some(slot) = self
+            .indicate_wait
+            .iter_mut()
+            .find(|x| **x == BLE_HS_CONN_HANDLE_NONE)
+        {
+            *slot = conn_handle;
+            true
+        } else {
+            // No free slot for a new connection - shouldn't happen since
+            // indicate_wait is sized to MAX_CONNECTIONS.
+            false
+        }
     }
 
     pub(super) fn clear_indicate_wait(&mut self, conn_handle: u16) {

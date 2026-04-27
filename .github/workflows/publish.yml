@@ -17,7 +17,7 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v6
       - name: Install Rust for Xtensa
-        uses: esp-rs/xtensa-toolchain@v1.6
+        uses: esp-rs/xtensa-toolchain@v1.7
         with:
           default: true
           ldproxy: false

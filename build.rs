@@ -11,7 +11,9 @@ fn main() {
     println!(
         r#"cargo::rustc-check-cfg=cfg(esp_idf_version_minor, values("1", "2", "3", "4", "5"))"#
     );
-    println!(r#"cargo::rustc-check-cfg=cfg(esp_idf_version_patch, values("0", "1", "2"))"#);
+    println!(
+        r#"cargo::rustc-check-cfg=cfg(esp_idf_version_patch, values("0", "1", "2", "3", "4", "5"))"#
+    );
     println!("cargo::rustc-check-cfg=cfg(esp_idf_version_at_least_5_4_2)");
 
     let esp_idf_info = embuild::espidf::sysenv::cfg_args().unwrap();

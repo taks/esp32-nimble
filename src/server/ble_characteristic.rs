@@ -47,6 +47,15 @@ cfg_if::cfg_if! {
   if #[cfg(any(
     all(
       esp_idf_version_major = "5",
+      esp_idf_version_minor = "3",
+      not(any(
+        esp_idf_version_patch = "0",
+        esp_idf_version_patch = "1",
+        esp_idf_version_patch = "2",
+        esp_idf_version_patch = "3",
+        esp_idf_version_patch = "4"))),
+    all(
+      esp_idf_version_major = "5",
       esp_idf_version_minor = "4",
       not(any(esp_idf_version_patch = "0", esp_idf_version_patch = "1"))),
     all(

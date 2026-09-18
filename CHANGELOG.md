@@ -1,3 +1,9 @@
+## [0.13.0] - 2026-09-18
+- Support for multiple L2cap connections ([#198](https://github.com/taks/esp32-nimble/pull/198))
+- Fix set_indicate_wait: actually reserve the in-flight slot ([#200](https://github.com/taks/esp32-nimble/pull/200))
+- Add ESP-IDF v6.0 support ([#203](https://github.com/taks/esp32-nimble/pull/203))
+- Update esp-idf-svc version to 0.53 ([#204](https://github.com/taks/esp32-nimble/pull/204))
+
 ## [0.12.0] - 2026-03-11
 - Skip BLEDevice::deinit() when not initialized. ([#189](https://github.com/taks/esp32-nimble/pull/189))
 - Add support for ESP IDF v5.5.1 ([#190](https://github.com/taks/esp32-nimble/pull/190))

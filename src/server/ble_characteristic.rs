@@ -172,7 +172,9 @@ pub struct BLECharacteristic {
     value: AttValue,
     on_read: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
     on_write: Option<Box<dyn FnMut(&mut OnWriteArgs) + Send + Sync>>,
-    pub(crate) on_notify_tx: Option<Box<dyn FnMut(NotifyTx) + Send + Sync>>,
+    /// Reached from `BLE_GAP_EVENT_NOTIFY_TX` without the lock, through a
+    /// shared reference (see `BLEServer::handle_gap_event`).
+    pub(crate) on_notify_tx: UnsafeCell<Option<Box<dyn FnMut(NotifyTx) + Send + Sync>>>,
     descriptors: Vec<Arc<Mutex<BLEDescriptor>>>,
     svc_def_descriptors: Vec<sys::ble_gatt_dsc_def>,
     subscribed_list: Vec<(u16, NimbleSub)>,
@@ -190,7 +192,7 @@ impl BLECharacteristic {
             value: AttValue::new(),
             on_read: None,
             on_write: None,
-            on_notify_tx: None,
+            on_notify_tx: UnsafeCell::new(None),
             descriptors: Vec::new(),
             svc_def_descriptors: Vec::new(),
             subscribed_list: Vec::new(),
@@ -241,7 +243,7 @@ impl BLECharacteristic {
         &mut self,
         callback: impl FnMut(NotifyTx) + Send + Sync + 'static,
     ) -> &mut Self {
-        self.on_notify_tx = Some(Box::new(callback));
+        *self.on_notify_tx.get_mut() = Some(Box::new(callback));
         self
     }
 
@@ -298,8 +300,11 @@ impl BLECharacteristic {
     }
 
     fn send_value(&self, value: &[u8], conn_handle: u16, flag: NimbleSub) -> Result<(), BLEError> {
-        let mtu = unsafe { sys::ble_att_mtu(conn_handle) - 3 };
-        if mtu == 0 || flag.is_empty() {
+        // A disconnect racing this call makes ble_att_mtu return zero. Check
+        // before subtracting the ATT header, or debug builds panic on u16
+        // underflow while release builds wrap.
+        let mtu = unsafe { sys::ble_att_mtu(conn_handle) };
+        if mtu <= 3 || flag.is_empty() {
             return BLEError::convert(sys::BLE_HS_EINVAL);
         }
         let server = BLEDevice::take().get_server();
@@ -472,8 +477,8 @@ impl BLECharacteristic {
         }
     }
 
-    /// Do not call `lock` on this characteristic inside the callback, use the first input instead.
-    /// In the future, this characteristic could be locked while the callback executes.
+    /// This characteristic is locked while the callback is executing. If you call `.lock()` on this characteristic from inside the callback, it will never execute.
+    /// Use the first input instead.
     /// * `callback` - Function to call when a subscription event is recieved, including subscribe and unsubscribe events
     ///   see [`crate::NimbleSub`] for event type
     pub fn on_subscribe(

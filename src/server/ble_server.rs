@@ -25,6 +25,8 @@ pub struct BLEServer {
     on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
     on_authentication_complete:
         Option<Box<dyn Fn(&mut Self, &BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
+
+    on_unhandled_gap_event: Option<Box<dyn Fn(&esp_idf_sys::ble_gap_event) -> bool + Send + Sync>>,
 }
 
 impl BLEServer {
@@ -41,6 +43,7 @@ impl BLEServer {
             on_passkey_request: None,
             on_confirm_pin: None,
             on_authentication_complete: None,
+            on_unhandled_gap_event: None,
         }
     }
 
@@ -239,6 +242,15 @@ impl BLEServer {
         self.on_passkey_request = None;
         self.on_confirm_pin = None;
         self.on_authentication_complete = None;
+    }
+
+    // Register a callback for Unhandled GAP events
+    pub fn on_unhandled_gap_event(
+        &mut self,
+        callback: impl Fn(&esp_idf_sys::ble_gap_event) -> bool + Send + Sync + 'static,
+    ) -> &mut Self {
+        self.on_unhandled_gap_event = Some(Box::new(callback));
+        self
     }
 
     pub(crate) extern "C" fn handle_gap_event(
@@ -472,7 +484,14 @@ rx_time={}
             esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED
             | esp_idf_sys::BLE_GAP_EVENT_PHY_UPDATE_COMPLETE => {}
             _ => {
-                ::log::warn!("unhandled event: {}", event.type_);
+                let handled = match server.on_unhandled_gap_event.as_ref() {
+                    Some(callback) => callback(event),
+                    None => false,
+                };
+
+                if !handled {
+                    ::log::warn!("unhandled event: {}", event.type_);
+                }
             }
         }
 

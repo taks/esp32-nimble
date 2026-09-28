@@ -10,6 +10,46 @@ use esp_idf_svc::sys as esp_idf_sys;
 const BLE_HS_CONN_HANDLE_NONE: u16 = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;
 const MAX_CONNECTIONS: usize = esp_idf_sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _;
 
+#[allow(unused_variables)]
+pub trait BLEServerCallbacks {
+    fn on_connect(&mut self, server: &mut BLEServer, desc: &BLEConnDesc) {}
+
+    /// Handle a client disconnection.
+    /// * callback first parameter: A reference to a `esp_idf_sys::ble_gap_conn_desc` instance with information about the peer connection parameters.
+    /// * callback second parameter: The reason code for the disconnection.
+    fn on_disconnect(&mut self, desc: &BLEConnDesc, reason: Result<(), BLEError>) {}
+
+    /// Set a callback fn for generating a passkey if required by the connection
+    /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
+    ///   will require the user to provide '001234'
+    /// * a static passkey can also be set by [`crate::BLESecurity::set_passkey`]
+    fn on_passkey_request(&mut self) -> u32 {
+        BLEDevice::take().security().get_passkey()
+    }
+    fn on_confirm_pin(&mut self, pin: u32) -> bool {
+        true
+    }
+    /// The callback function is called when the pairing procedure is complete.
+    /// * callback first parameter: A reference to a `BLEConnDesc` instance.
+    /// * callback second parameter: Indicates the result of the encryption state change attempt;
+    ///   o 0: the encrypted state was successfully updated;
+    ///   o BLE host error code: the encryption state change attempt failed for the specified reason.
+    fn on_authentication_complete(
+        &mut self,
+        server: &mut BLEServer,
+        desc: &BLEConnDesc,
+        result: Result<(), BLEError>,
+    ) {
+    }
+
+    fn on_unhandled_gap_event(&mut self, event: &esp_idf_sys::ble_gap_event) {
+        ::log::warn!("unhandled event: {}", event.type_);
+    }
+}
+
+struct DefaultCallbacks;
+impl BLEServerCallbacks for DefaultCallbacks {}
+
 #[allow(clippy::type_complexity)]
 pub struct BLEServer {
     pub(crate) started: bool,
@@ -18,13 +58,7 @@ pub struct BLEServer {
     notify_characteristic: Vec<&'static mut BLECharacteristic>,
     connections: heapless::Vec<u16, MAX_CONNECTIONS>,
     indicate_wait: [u16; MAX_CONNECTIONS],
-
-    on_connect: Option<Box<dyn FnMut(&mut Self, &BLEConnDesc) + Send + Sync>>,
-    on_disconnect: Option<Box<dyn FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
-    on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
-    on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-    on_authentication_complete:
-        Option<Box<dyn Fn(&mut Self, &BLEConnDesc, Result<(), BLEError>) + Send + Sync>>,
+    callbacks: Box<dyn BLEServerCallbacks>,
 }
 
 impl BLEServer {
@@ -36,75 +70,12 @@ impl BLEServer {
             notify_characteristic: Vec::new(),
             connections: heapless::Vec::new(),
             indicate_wait: [BLE_HS_CONN_HANDLE_NONE; MAX_CONNECTIONS],
-            on_connect: None,
-            on_disconnect: None,
-            on_passkey_request: None,
-            on_confirm_pin: None,
-            on_authentication_complete: None,
+            callbacks: Box::new(DefaultCallbacks),
         }
     }
 
-    pub fn on_connect(
-        &mut self,
-        callback: impl FnMut(&mut Self, &BLEConnDesc) + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.on_connect = Some(Box::new(callback));
-        self
-    }
-
-    /// Handle a client disconnection.
-    /// * callback first parameter: A reference to a `esp_idf_sys::ble_gap_conn_desc` instance with information about the peer connection parameters.
-    /// * callback second parameter: The reason code for the disconnection.
-    pub fn on_disconnect(
-        &mut self,
-        callback: impl FnMut(&BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.on_disconnect = Some(Box::new(callback));
-        self
-    }
-
-    /// Set a callback fn for generating a passkey if required by the connection
-    /// * The passkey will always be exactly 6 digits. Setting the passkey to 1234
-    ///   will require the user to provide '001234'
-    /// * a static passkey can also be set by [`crate::BLESecurity::set_passkey`]
-    pub fn on_passkey_request(
-        &mut self,
-        callback: impl Fn() -> u32 + Send + Sync + 'static,
-    ) -> &mut Self {
-        if cfg!(debug_assertions) {
-            self.on_passkey_request = Some(Box::new(move || {
-                let passkey = callback();
-                debug_assert!(
-                    passkey <= 999999,
-                    "passkey must be between 000000..=999999 inclusive"
-                );
-                passkey
-            }));
-        } else {
-            self.on_passkey_request = Some(Box::new(callback));
-        }
-
-        self
-    }
-
-    pub fn on_confirm_pin(
-        &mut self,
-        callback: impl Fn(u32) -> bool + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.on_confirm_pin = Some(Box::new(callback));
-        self
-    }
-
-    /// The callback function is called when the pairing procedure is complete.
-    /// * callback first parameter: A reference to a `BLEConnDesc` instance.
-    /// * callback second parameter: Indicates the result of the encryption state change attempt;
-    ///   o 0: the encrypted state was successfully updated;
-    ///   o BLE host error code: the encryption state change attempt failed for the specified reason.
-    pub fn on_authentication_complete(
-        &mut self,
-        callback: impl Fn(&mut Self, &BLEConnDesc, Result<(), BLEError>) + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.on_authentication_complete = Some(Box::new(callback));
+    pub fn set_callbacks(&mut self, callbacks: impl BLEServerCallbacks + 'static) -> &mut Self {
+        self.callbacks = Box::new(callbacks);
         self
     }
 
@@ -234,11 +205,7 @@ impl BLEServer {
         self.services.clear();
         self.notify_characteristic.clear();
         self.connections.clear();
-        self.on_connect = None;
-        self.on_disconnect = None;
-        self.on_passkey_request = None;
-        self.on_confirm_pin = None;
-        self.on_authentication_complete = None;
+        self.callbacks = Box::new(DefaultCallbacks);
     }
 
     pub(crate) extern "C" fn handle_gap_event(
@@ -265,9 +232,7 @@ impl BLEServer {
                     if let Ok(desc) = ble_gap_conn_find(connect.conn_handle) {
                         let server = UnsafeCell::new(server);
                         unsafe {
-                            if let Some(callback) = (*server.get()).on_connect.as_mut() {
-                                callback(*server.get(), &desc);
-                            }
+                            (*server.get()).callbacks.on_connect(*server.get(), &desc);
                         }
                     }
                 }
@@ -282,12 +247,10 @@ impl BLEServer {
                     server.connections.swap_remove(idx);
                 }
 
-                if let Some(callback) = server.on_disconnect.as_mut() {
-                    callback(
-                        &BLEConnDesc(disconnect.conn),
-                        BLEError::convert(disconnect.reason as _),
-                    );
-                }
+                server.callbacks.on_disconnect(
+                    &BLEConnDesc(disconnect.conn),
+                    BLEError::convert(disconnect.reason as _),
+                );
 
                 #[cfg(not(esp_idf_bt_nimble_ext_adv))]
                 if server.advertise_on_disconnect
@@ -387,13 +350,11 @@ impl BLEServer {
 
                 let server = UnsafeCell::new(server);
                 unsafe {
-                    if let Some(callback) = &(*server.get()).on_authentication_complete {
-                        callback(
-                            *server.get(),
-                            &desk,
-                            BLEError::convert(enc_change.status as _),
-                        );
-                    }
+                    (*server.get()).callbacks.on_authentication_complete(
+                        *server.get(),
+                        &desk,
+                        BLEError::convert(enc_change.status as _),
+                    );
                 }
             }
             esp_idf_sys::BLE_GAP_EVENT_PASSKEY_ACTION => {
@@ -404,12 +365,11 @@ impl BLEServer {
                 };
                 match passkey.params.action as _ {
                     esp_idf_sys::BLE_SM_IOACT_DISP => {
-                        pkey.__bindgen_anon_1.passkey =
-                            if let Some(callback) = &server.on_passkey_request {
-                                callback()
-                            } else {
-                                BLEDevice::take().security().get_passkey()
-                            };
+                        pkey.__bindgen_anon_1.passkey = server.callbacks.on_passkey_request();
+                        debug_assert!(
+                            unsafe { pkey.__bindgen_anon_1.passkey } <= 999999,
+                            "passkey must be between 000000..=999999 inclusive"
+                        );
 
                         let rc = unsafe {
                             esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey)
@@ -417,23 +377,21 @@ impl BLEServer {
                         ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {rc}");
                     }
                     esp_idf_sys::BLE_SM_IOACT_NUMCMP => {
-                        if let Some(callback) = &server.on_confirm_pin {
-                            pkey.__bindgen_anon_1.numcmp_accept =
-                                callback(passkey.params.numcmp) as _;
-                        } else {
-                            ::log::warn!("on_passkey_request is not setted");
-                        }
+                        pkey.__bindgen_anon_1.numcmp_accept =
+                            server.callbacks.on_confirm_pin(passkey.params.numcmp) as _;
+
                         let rc = unsafe {
                             esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey)
                         };
                         ::log::debug!("BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: {rc}");
                     }
                     esp_idf_sys::BLE_SM_IOACT_INPUT => {
-                        if let Some(callback) = &server.on_passkey_request {
-                            pkey.__bindgen_anon_1.passkey = callback();
-                        } else {
-                            ::log::warn!("on_passkey_request is not setted");
-                        }
+                        pkey.__bindgen_anon_1.passkey = server.callbacks.on_passkey_request();
+                        debug_assert!(
+                            unsafe { pkey.__bindgen_anon_1.passkey } <= 999999,
+                            "passkey must be between 000000..=999999 inclusive"
+                        );
+
                         let rc = unsafe {
                             esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey)
                         };
@@ -472,7 +430,7 @@ rx_time={}
             esp_idf_sys::BLE_GAP_EVENT_IDENTITY_RESOLVED
             | esp_idf_sys::BLE_GAP_EVENT_PHY_UPDATE_COMPLETE => {}
             _ => {
-                ::log::warn!("unhandled event: {}", event.type_);
+                server.callbacks.on_unhandled_gap_event(event);
             }
         }
 

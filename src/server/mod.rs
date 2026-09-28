@@ -27,6 +27,7 @@ pub use self::ble_hid_device::BLEHIDDevice;
 
 mod ble_server;
 pub use self::ble_server::BLEServer;
+pub use self::ble_server::BLEServerCallbacks;
 
 mod ble_service;
 pub use self::ble_service::BLEService;

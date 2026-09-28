@@ -8,6 +8,23 @@ use core::{cell::UnsafeCell, ffi::c_void, ptr};
 use esp_idf_svc::sys as esp_idf_sys;
 use esp_idf_sys::*;
 
+#[allow(unused_variables)]
+pub trait BLEClientCallbacks {
+    fn on_connect(&mut self, client: &mut BLEClient) {}
+    fn on_disconnect(&mut self, reason: i32) {}
+    fn on_passkey_request(&mut self) -> u32 {
+        BLEDevice::take().security().get_passkey()
+    }
+    fn on_confirm_pin(&mut self, pin: u32) -> bool {
+        true
+    }
+    fn on_unhandled_gap_event(&mut self, event: &esp_idf_sys::ble_gap_event) {
+        ::log::warn!("unhandled event: {}", event.type_);
+    }
+}
+struct DefaultCallbacks;
+impl BLEClientCallbacks for DefaultCallbacks {}
+
 #[allow(clippy::type_complexity)]
 pub(crate) struct BLEClientState {
     address: Option<BLEAddress>,
@@ -16,10 +33,7 @@ pub(crate) struct BLEClientState {
     signal: Signal<u32>,
     connect_timeout_ms: u32,
     ble_gap_conn_params: ble_gap_conn_params,
-    on_passkey_request: Option<Box<dyn Fn() -> u32 + Send + Sync>>,
-    on_confirm_pin: Option<Box<dyn Fn(u32) -> bool + Send + Sync>>,
-    on_connect: Option<Box<dyn Fn(&mut BLEClient) + Send + Sync>>,
-    on_disconnect: Option<Box<dyn Fn(i32) + Send + Sync>>,
+    callbacks: Box<dyn BLEClientCallbacks>,
 }
 
 pub struct BLEClient {
@@ -45,45 +59,18 @@ impl BLEClient {
                     max_ce_len: BLE_GAP_INITIAL_CONN_MAX_CE_LEN as _,
                 },
                 signal: Signal::new(),
-                on_passkey_request: None,
-                on_confirm_pin: None,
-                on_disconnect: None,
-                on_connect: None,
+                callbacks: Box::new(DefaultCallbacks),
             }),
         }
     }
 
+    pub fn set_callbacks(&mut self, callbacks: impl BLEClientCallbacks + 'static) -> &mut Self {
+        self.state.callbacks = Box::new(callbacks);
+        self
+    }
+
     pub(crate) fn conn_handle(&self) -> u16 {
         self.state.conn_handle
-    }
-
-    pub fn on_passkey_request(
-        &mut self,
-        callback: impl Fn() -> u32 + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.state.on_passkey_request = Some(Box::new(callback));
-        self
-    }
-
-    pub fn on_confirm_pin(
-        &mut self,
-        callback: impl Fn(u32) -> bool + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.state.on_confirm_pin = Some(Box::new(callback));
-        self
-    }
-
-    pub fn on_connect(
-        &mut self,
-        callback: impl Fn(&mut Self) + Send + Sync + 'static,
-    ) -> &mut Self {
-        self.state.on_connect = Some(Box::new(callback));
-        self
-    }
-
-    pub fn on_disconnect(&mut self, callback: impl Fn(i32) + Send + Sync + 'static) -> &mut Self {
-        self.state.on_disconnect = Some(Box::new(callback));
-        self
     }
 
     pub async fn connect(&mut self, addr: &BLEAddress) -> Result<(), BLEError> {
@@ -108,9 +95,10 @@ impl BLEClient {
 
         let mut client = UnsafeCell::new(self);
         unsafe {
-            if let Some(callback) = &(&(*client.get())).state.on_connect {
-                callback(client.get_mut());
-            }
+            (&mut (*client.get()))
+                .state
+                .callbacks
+                .on_connect(client.get_mut());
         }
 
         Ok(())
@@ -288,9 +276,7 @@ impl BLEClient {
                     BLEError::convert(disconnect.reason as _)
                 );
 
-                if let Some(callback) = &client.state.on_disconnect {
-                    callback(disconnect.reason);
-                }
+                client.state.callbacks.on_disconnect(disconnect.reason);
             }
             BLE_GAP_EVENT_ENC_CHANGE => {
                 let enc_change = unsafe { &event.__bindgen_anon_1.enc_change };
@@ -378,23 +364,16 @@ impl BLEClient {
                         ::log::debug!("BLE_SM_IOACT_DISP; ble_sm_inject_io result: {rc}");
                     }
                     esp_idf_sys::BLE_SM_IOACT_NUMCMP => {
-                        if let Some(callback) = &client.state.on_confirm_pin {
-                            pkey.__bindgen_anon_1.numcmp_accept =
-                                callback(passkey.params.numcmp) as _;
-                        } else {
-                            ::log::warn!("on_passkey_request is not setted");
-                        }
+                        pkey.__bindgen_anon_1.numcmp_accept =
+                            client.state.callbacks.on_confirm_pin(passkey.params.numcmp) as _;
+
                         let rc = unsafe {
                             esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey)
                         };
                         ::log::debug!("BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: {rc}");
                     }
                     esp_idf_sys::BLE_SM_IOACT_INPUT => {
-                        if let Some(callback) = &client.state.on_passkey_request {
-                            pkey.__bindgen_anon_1.passkey = callback();
-                        } else {
-                            ::log::warn!("on_passkey_request is not setted");
-                        }
+                        pkey.__bindgen_anon_1.passkey = client.state.callbacks.on_passkey_request();
                         let rc = unsafe {
                             esp_idf_sys::ble_sm_inject_io(passkey.conn_handle, &mut pkey)
                         };
@@ -409,7 +388,7 @@ impl BLEClient {
                 }
             }
             _ => {
-                ::log::warn!("unhandled event: {}", event.type_);
+                client.state.callbacks.on_unhandled_gap_event(event);
             }
         }
         0

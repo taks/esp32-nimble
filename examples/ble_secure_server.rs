@@ -1,6 +1,40 @@
 use esp32_nimble::{
-    BLEAdvertisementData, BLEDevice, NimbleProperties, enums::*, utilities::BleUuid,
+    BLEAdvertisementData, BLEDevice, BLEServerCallbacks, NimbleProperties, enums::*,
+    utilities::BleUuid,
 };
+
+struct ServerCallbacks;
+impl BLEServerCallbacks for ServerCallbacks {
+    fn on_connect(
+        &mut self,
+        server: &mut esp32_nimble::BLEServer,
+        desc: &esp32_nimble::BLEConnDesc,
+    ) {
+        ::log::info!("Client connected: {:?}", desc);
+
+        if server.connected_count() < (esp_idf_svc::sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
+            ::log::info!("Multi-connect support: start advertising");
+            BLEDevice::take().get_advertising().lock().start().unwrap();
+        }
+    }
+
+    fn on_disconnect(
+        &mut self,
+        _desc: &esp32_nimble::BLEConnDesc,
+        reason: Result<(), esp32_nimble::BLEError>,
+    ) {
+        ::log::info!("Client disconnected ({:?})", reason);
+    }
+
+    fn on_authentication_complete(
+        &mut self,
+        _server: &mut esp32_nimble::BLEServer,
+        desc: &esp32_nimble::BLEConnDesc,
+        result: Result<(), esp32_nimble::BLEError>,
+    ) {
+        ::log::info!("AuthenticationComplete({:?}): {:?}", result, desc);
+    }
+}
 
 fn main() -> anyhow::Result<()> {
     esp_idf_svc::sys::link_patches();
@@ -17,20 +51,7 @@ fn main() -> anyhow::Result<()> {
         .resolve_rpa();
 
     let server = device.get_server();
-    server.on_connect(|server, desc| {
-        ::log::info!("Client connected: {:?}", desc);
-
-        if server.connected_count() < (esp_idf_svc::sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
-            ::log::info!("Multi-connect support: start advertising");
-            ble_advertising.lock().start().unwrap();
-        }
-    });
-    server.on_disconnect(|_desc, reason| {
-        ::log::info!("Client disconnected ({:?})", reason);
-    });
-    server.on_authentication_complete(|_, desc, result| {
-        ::log::info!("AuthenticationComplete({:?}): {:?}", result, desc);
-    });
+    server.set_callbacks(ServerCallbacks);
 
     let service = server.create_service(BleUuid::Uuid16(0xABCD));
 

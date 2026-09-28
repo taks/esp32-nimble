@@ -9,6 +9,7 @@ pub(crate) use self::ble_attribute::*;
 
 mod ble_client;
 pub use self::ble_client::BLEClient;
+pub use self::ble_client::BLEClientCallbacks;
 
 mod ble_remote_characteristic;
 pub use self::ble_remote_characteristic::*;

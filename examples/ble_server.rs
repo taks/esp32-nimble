@@ -1,5 +1,35 @@
-use esp32_nimble::{BLEAdvertisementData, BLEDevice, NimbleProperties, uuid128};
+use esp32_nimble::{
+    BLEAdvertisementData, BLEDevice, BLEServerCallbacks, NimbleProperties, uuid128,
+};
 use std::format;
+
+struct ServerCallbacks;
+impl BLEServerCallbacks for ServerCallbacks {
+    fn on_connect(
+        &mut self,
+        server: &mut esp32_nimble::BLEServer,
+        desc: &esp32_nimble::BLEConnDesc,
+    ) {
+        ::log::info!("Client connected: {:?}", desc);
+
+        server
+            .update_conn_params(desc.conn_handle(), 24, 48, 0, 60)
+            .unwrap();
+
+        if server.connected_count() < (esp_idf_svc::sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
+            ::log::info!("Multi-connect support: start advertising");
+            BLEDevice::take().get_advertising().lock().start().unwrap();
+        }
+    }
+
+    fn on_disconnect(
+        &mut self,
+        _desc: &esp32_nimble::BLEConnDesc,
+        reason: Result<(), esp32_nimble::BLEError>,
+    ) {
+        ::log::info!("Client disconnected ({:?})", reason);
+    }
+}
 
 fn main() -> anyhow::Result<()> {
     esp_idf_svc::sys::link_patches();
@@ -9,22 +39,7 @@ fn main() -> anyhow::Result<()> {
     let ble_advertising = ble_device.get_advertising();
 
     let server = ble_device.get_server();
-    server.on_connect(|server, desc| {
-        ::log::info!("Client connected: {:?}", desc);
-
-        server
-            .update_conn_params(desc.conn_handle(), 24, 48, 0, 60)
-            .unwrap();
-
-        if server.connected_count() < (esp_idf_svc::sys::CONFIG_BT_NIMBLE_MAX_CONNECTIONS as _) {
-            ::log::info!("Multi-connect support: start advertising");
-            ble_advertising.lock().start().unwrap();
-        }
-    });
-
-    server.on_disconnect(|_desc, reason| {
-        ::log::info!("Client disconnected ({:?})", reason);
-    });
+    server.set_callbacks(ServerCallbacks);
 
     let service = server.create_service(uuid128!("fafafafa-fafa-fafa-fafa-fafafafafafa"));
 

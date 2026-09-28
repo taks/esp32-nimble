@@ -1,8 +1,15 @@
 use esp_idf_svc::hal::task::block_on;
-use esp32_nimble::{BLEDevice, BLEScan, enums::*, utilities::BleUuid};
+use esp32_nimble::{BLEClientCallbacks, BLEDevice, BLEScan, enums::*, utilities::BleUuid};
 use log::*;
 
 const SERVICE_UUID: BleUuid = BleUuid::Uuid16(0xABCD);
+
+struct ClientCallbacks;
+impl BLEClientCallbacks for ClientCallbacks {
+    fn on_passkey_request(&mut self) -> u32 {
+        123456
+    }
+}
 
 fn main() -> anyhow::Result<()> {
     esp_idf_svc::sys::link_patches();
@@ -38,8 +45,8 @@ fn main() -> anyhow::Result<()> {
         info!("Advertised Device: {:?}", device);
 
         let mut client = ble_device.new_client();
+        client.set_callbacks(ClientCallbacks);
         client.connect(&device.addr()).await?;
-        client.on_passkey_request(|| 123456);
         client.secure_connection().await?;
 
         let service = client.get_service(SERVICE_UUID).await?;

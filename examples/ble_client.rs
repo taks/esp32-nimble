@@ -5,7 +5,14 @@ use esp_idf_svc::hal::{
     task::block_on,
     timer::{TimerDriver, config::TimerConfig},
 };
-use esp32_nimble::{BLEDevice, BLEScan, uuid128};
+use esp32_nimble::{BLEClientCallbacks, BLEDevice, BLEScan, uuid128};
+
+struct ClientCallbacks;
+impl BLEClientCallbacks for ClientCallbacks {
+    fn on_connect(&mut self, client: &mut esp32_nimble::BLEClient) {
+        client.update_conn_params(120, 120, 0, 60).unwrap();
+    }
+}
 
 fn main() -> anyhow::Result<()> {
     esp_idf_svc::sys::link_patches();
@@ -32,9 +39,7 @@ fn main() -> anyhow::Result<()> {
 
         if let Some(device) = device {
             let mut client = ble_device.new_client();
-            client.on_connect(|client| {
-                client.update_conn_params(120, 120, 0, 60).unwrap();
-            });
+            client.set_callbacks(ClientCallbacks);
             client.connect(&device.addr()).await?;
 
             let service = client

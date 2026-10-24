@@ -128,6 +128,12 @@ impl BLEAdvertising {
         self
     }
 
+    /// Set channel map for advertisement.
+    pub fn channel_map(&mut self, map: AdvChannelMap) -> &mut Self {
+        self.adv_params.channel_map = map as _;
+        self
+    }
+
     /// Set the duty cycle for advertisement_type.
     ///
     /// Valid only if advertisement_type is directed-connectable.

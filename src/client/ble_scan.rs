@@ -25,6 +25,8 @@ use esp_idf_svc::sys;
 /// ```
 pub struct BLEScan {
     scan_params: sys::ble_gap_disc_params,
+    #[cfg(esp_idf_bt_nimble_ext_adv)]
+    phy: ScanPhy,
     signal: Signal<()>,
 }
 
@@ -42,6 +44,8 @@ impl BLEScan {
                 filter_policy: sys::BLE_HCI_SCAN_FILT_NO_WL as _,
                 ..Default::default()
             },
+            #[cfg(esp_idf_bt_nimble_ext_adv)]
+            phy: ScanPhy::all(),
             signal: Signal::new(),
         };
         ret.limited(false);
@@ -85,6 +89,15 @@ impl BLEScan {
         self
     }
 
+    /// Set the PHYs to scan. Defaults to both.
+    /// Scanning both splits the scan time between them.
+    /// With neither, `start` fails.
+    #[cfg(esp_idf_bt_nimble_ext_adv)]
+    pub fn phy(&mut self, phy: ScanPhy) -> &mut Self {
+        self.phy = phy;
+        self
+    }
+
     /// The callback function must return Option type.
     /// If it returns None, the scan continues.
     /// If Some(r) is returned, the scan stops and the start function returns the return value of the callback.
@@ -121,6 +134,14 @@ impl BLEScan {
                 ..Default::default()
             };
             scan_params.set_passive(cb_arg.0.scan_params.passive());
+            let phy = cb_arg.0.phy;
+            let params_for = |flag| {
+                if phy.contains(flag) {
+                    &raw const scan_params
+                } else {
+                    core::ptr::null()
+                }
+            };
             unsafe {
                 ble!(sys::ble_gap_ext_disc(
                     crate::ble_device::OWN_ADDR_TYPE as _,
@@ -129,8 +150,8 @@ impl BLEScan {
                     cb_arg.0.scan_params.filter_duplicates(),
                     cb_arg.0.scan_params.filter_policy,
                     cb_arg.0.scan_params.limited(),
-                    &scan_params,
-                    &scan_params,
+                    params_for(ScanPhy::Phy1M),
+                    params_for(ScanPhy::Coded),
                     Some(Self::handle_gap_event),
                     core::ptr::addr_of!(cb_arg) as _,
                 ))?;

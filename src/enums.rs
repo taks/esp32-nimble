@@ -233,3 +233,16 @@ pub enum SecPhy {
     /// Coded phy
     Coded = BLE_HCI_LE_PHY_CODED as _,
 }
+
+#[cfg(esp_idf_bt_nimble_ext_adv)]
+bitflags! {
+  /// PHYs to scan.
+  #[repr(transparent)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+  pub struct ScanPhy: u8 {
+    /// 1Mbps phy
+    const Phy1M = 0b01;
+    /// Coded phy
+    const Coded = 0b10;
+  }
+}

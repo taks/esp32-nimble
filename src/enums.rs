@@ -113,6 +113,19 @@ pub enum DiscMode {
     Gen = BLE_GAP_DISC_MODE_GEN as _,
 }
 
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum AdvChannelMap {
+    /// use channel 37
+    Ch37 = 0x01,
+    /// use channel 38
+    Ch38 = 0x02,
+    /// use channel 39
+    Ch39 = 0x04,
+    /// use all channels
+    All = 0x07,
+}
+
 bitflags! {
   #[repr(transparent)]
   #[derive(Debug, Clone, Copy, PartialEq, Eq)]

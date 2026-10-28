@@ -1,7 +1,7 @@
 use crate::{
     BLECharacteristic, BLEConnDesc, BLEDevice, BLEError, BLEService, NimbleProperties, NotifyTx,
     ble,
-    utilities::{BleUuid, ble_gap_conn_find, extend_lifetime_mut, mutex::Mutex},
+    utilities::{BleUuid, ble_gap_conn_find, mutex::Mutex},
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use core::{cell::UnsafeCell, ffi::c_void};
@@ -15,7 +15,8 @@ pub struct BLEServer {
     pub(crate) started: bool,
     advertise_on_disconnect: bool,
     services: Vec<Arc<Mutex<BLEService>>>,
-    notify_characteristic: Vec<&'static mut BLECharacteristic>,
+    /// Characteristics that notify or indicate, with their value handles.
+    notify_characteristic: Vec<(u16, Arc<Mutex<BLECharacteristic>>)>,
     connections: heapless::Vec<u16, MAX_CONNECTIONS>,
     indicate_wait: [u16; MAX_CONNECTIONS],
 
@@ -133,14 +134,14 @@ impl BLEServer {
                     &mut svc.handle
                 ))?;
 
-                for chr in &svc.characteristics {
-                    let mut chr = chr.lock();
+                for chr_arc in &svc.characteristics {
+                    let chr = chr_arc.lock();
                     if chr
                         .properties
                         .intersects(NimbleProperties::INDICATE | NimbleProperties::NOTIFY)
                     {
-                        let chr = &mut *chr;
-                        self.notify_characteristic.push(extend_lifetime_mut(chr));
+                        self.notify_characteristic
+                            .push((chr.handle, chr_arc.clone()));
                     }
                 }
             }
@@ -298,16 +299,18 @@ impl BLEServer {
             }
             esp_idf_sys::BLE_GAP_EVENT_SUBSCRIBE => {
                 let subscribe = unsafe { &event.__bindgen_anon_1.subscribe };
-                if let Some(chr) = server
+                if let Some((_, chr)) = server
                     .notify_characteristic
-                    .iter_mut()
-                    .find(|x| x.handle == subscribe.attr_handle)
+                    .iter()
+                    .find(|x| x.0 == subscribe.attr_handle)
                 {
-                    if chr.properties.intersects(
+                    let needs_encryption = chr.lock().properties.intersects(
                         NimbleProperties::READ_AUTHEN
                             | NimbleProperties::READ_AUTHOR
                             | NimbleProperties::READ_ENC,
-                    ) && let Ok(desc) = ble_gap_conn_find(subscribe.conn_handle)
+                    );
+                    if needs_encryption
+                        && let Ok(desc) = ble_gap_conn_find(subscribe.conn_handle)
                         && !desc.encrypted()
                     {
                         let rc = unsafe {
@@ -318,7 +321,9 @@ impl BLEServer {
                         }
                     }
 
-                    chr.subscribe(subscribe);
+                    // `notify_with` and `notify` read `subscribed_list` on other
+                    // tasks under this lock, so change it only while holding it.
+                    chr.lock().subscribe(subscribe);
                 }
             }
             esp_idf_sys::BLE_GAP_EVENT_MTU => {
@@ -331,11 +336,21 @@ impl BLEServer {
             }
             esp_idf_sys::BLE_GAP_EVENT_NOTIFY_TX => {
                 let notify_tx = unsafe { &event.__bindgen_anon_1.notify_tx };
-                if let Some(chr) = server
+                if let Some((_, chr)) = server
                     .notify_characteristic
-                    .iter_mut()
-                    .find(|x| x.handle == notify_tx.attr_handle)
+                    .iter()
+                    .find(|x| x.0 == notify_tx.attr_handle)
                 {
+                    // Not locked: NimBLE reports every notification and
+                    // indication attempt from inside
+                    // `ble_gatts_notify_custom` / `ble_gatts_indicate_custom`
+                    // (`ble_gattc.c`, `ble_gap_notify_tx_event`), on the task
+                    // that called `notify_with` or `notify` while holding this
+                    // characteristic's lock, which is not recursive. That
+                    // caller holds a shared borrow of the characteristic, so
+                    // only a shared one is taken here, and the callback is
+                    // reached through its `UnsafeCell`.
+                    let chr = unsafe { chr.raw() };
                     if notify_tx.indication() > 0 {
                         if notify_tx.status == 0 {
                             return 0;
@@ -346,7 +361,7 @@ impl BLEServer {
                             .clear_indicate_wait(notify_tx.conn_handle);
                     }
 
-                    if let Some(callback) = &mut chr.on_notify_tx {
+                    if let Some(callback) = unsafe { &mut *chr.on_notify_tx.get() } {
                         callback(NotifyTx { notify_tx });
                     }
                 }

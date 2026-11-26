@@ -185,9 +185,9 @@ impl BLEDevice {
         }
     }
 
-    pub fn get_power(&self, power_type: PowerType) -> PowerLevel {
-        PowerLevel::try_from(unsafe { esp_idf_sys::esp_ble_tx_power_get(power_type.into()) })
-            .unwrap()
+    /// Get the transmission power.
+    pub fn get_power(&self, power_type: PowerType) -> Option<PowerLevel> {
+        PowerLevel::try_from(unsafe { esp_idf_sys::esp_ble_tx_power_get(power_type.into()) }).ok()
     }
 
     /// Sets the preferred ATT MTU; the device will indicate this value in all subsequent ATT MTU exchanges.

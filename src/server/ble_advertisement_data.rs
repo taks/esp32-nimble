@@ -209,7 +209,10 @@ impl BLEAdvertisementData {
         if self.tx_pwr_lvl_is_present {
             ret.set_tx_pwr_lvl_is_present(1);
             let ble_device = BLEDevice::take();
-            ret.tx_pwr_lvl = ble_device.get_power(PowerType::Advertising).to_dbm();
+            ret.tx_pwr_lvl = ble_device
+                .get_power(PowerType::Advertising)
+                .unwrap()
+                .to_dbm();
         }
 
         if !self.svc_data_uuid16.is_empty() {

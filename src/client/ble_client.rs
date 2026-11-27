@@ -10,7 +10,7 @@ use esp_idf_sys::*;
 
 #[allow(clippy::type_complexity)]
 pub(crate) struct BLEClientState {
-    address: Option<BLEAddress>,
+    address: BLEAddress,
     pub(crate) conn_handle: u16,
     services: Option<Vec<BLERemoteService>>,
     signal: Signal<u32>,
@@ -35,7 +35,9 @@ impl BLEClient {
     pub(crate) fn new() -> Self {
         Self {
             state: ArcUnsafeCell::new(BLEClientState {
-                address: None,
+                address: BLEAddress {
+                    value: ble_addr_t::default(),
+                },
                 conn_handle: esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _,
                 services: None,
                 awaiting_mtu: false,
@@ -99,6 +101,7 @@ impl BLEClient {
                 return BLEError::fail();
             }
 
+            self.state.address = *addr;
             self.state.awaiting_mtu = true;
             ble!(esp_idf_sys::ble_gap_connect(
                 OWN_ADDR_TYPE as _,
@@ -111,7 +114,6 @@ impl BLEClient {
         }
 
         ble!(self.state.signal.wait().await)?;
-        self.state.address = Some(*addr);
 
         let mut client = UnsafeCell::new(self);
         unsafe {
@@ -287,7 +289,10 @@ impl BLEClient {
             }
             BLE_GAP_EVENT_DISCONNECT => {
                 let disconnect = unsafe { &event.__bindgen_anon_1.disconnect };
-                if client.state.conn_handle != disconnect.conn.conn_handle {
+                if client.state.conn_handle != disconnect.conn.conn_handle
+                    && client.state.address != BLEAddress::from(disconnect.conn.peer_ota_addr)
+                    && client.state.address != BLEAddress::from(disconnect.conn.peer_id_addr)
+                {
                     return 0;
                 }
                 client.state.conn_handle = esp_idf_sys::BLE_HS_CONN_HANDLE_NONE as _;

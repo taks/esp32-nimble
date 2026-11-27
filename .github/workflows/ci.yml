@@ -41,7 +41,12 @@ jobs:
             idf-version: v5.5.5
           - target: xtensa-esp32-espidf
             idf-version: v6.0.3
-
+    env:
+      ESP_IDF_VERSION: ${{ matrix.idf-version }}
+      # The clang toolchain of ESP-IDF v5.1 - v5.3 needs `libxml2.so.2`, which Ubuntu 26.04 does not have
+      ESP_IDF_INSTALL_CLANG: ${{ (startsWith(matrix.idf-version, 'v5.1.') || startsWith(matrix.idf-version, 'v5.2.') || startsWith(matrix.idf-version, 'v5.3.')) && 'off' || 'on' }}
+      # `libc` needs `--cfg espidf_picolibc` with picolibc
+      RUSTFLAGS: "--cfg espidf_time64${{ (matrix.libc == 'picolibc' || (!matrix.libc && startsWith(matrix.idf-version, 'v6'))) && ' --cfg espidf_picolibc' || '' }}"
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v7
@@ -55,10 +60,6 @@ jobs:
       - name: Setup | MCU
         if: ${{ matrix.mcu }}
         run: echo "MCU=${{ matrix.mcu }}" >> "$GITHUB_ENV"
-      - name: Setup env
-        run: |
-          echo "ESP_IDF_VERSION=${{ matrix.idf-version }}" >> "$GITHUB_ENV"
-          echo "RUSTFLAGS=--cfg espidf_time64" >> "$GITHUB_ENV"
       - name: Fmt check
         run: cargo fmt --check
       - name: Clippy check
